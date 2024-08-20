@@ -15,9 +15,11 @@
 
 #pragma once
 
+#include "AP_Proximity.h"
 #include <AP_Common/AP_Common.h>
 #include <AP_Math/AP_Math.h>
 #include <Filter/LowPassFilter.h>
+#include <Filter/ModeFilter.h>
 
 #define PROXIMITY_NUM_SECTORS         8       // number of sectors
 #define PROXIMITY_NUM_LAYERS          5       // num of layers in a sector
@@ -198,13 +200,22 @@ public:
     void add_distance(const AP_Proximity_Boundary_3D::Face &face, float pitch, float yaw, float distance);
     void add_distance(const AP_Proximity_Boundary_3D::Face &face, float yaw, float distance) { add_distance(face, 0.0f, yaw, distance); }
 
+    void add_unfiltered_distance(const AP_Proximity_Boundary_3D::Face &face, float pitch, float yaw, float distance);
+    void add_unfiltered_distance(const AP_Proximity_Boundary_3D::Face &face, float yaw, float distance) { add_unfiltered_distance(face, 0.0f, yaw, distance); }
+
     // fill the original 3D boundary with the contents of this temporary boundary
     // prx_instance should be set to the proximity sensor's backend instance number
     void update_3D_boundary(uint8_t prx_instance, AP_Proximity_Boundary_3D &boundary);
+
+    void filter_distances();
+
 
 private:
 
     float _distances[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS];      // distance to closest object within each sector and layer. Will start with FLT_MAX, and then be changed to a valid distance if needed
     float _angle[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS];          // yaw angle in degrees to closest object within each sector and layer
     float _pitch[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS];          // pitch angle in degrees to the closest object within each sector and layer
+
+    float _unfiltered_distances[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS];      // filtered distance to closest object within each sector and layer.
+    ModeFilterFloat_Size5 distance_filters[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS]; 
 };

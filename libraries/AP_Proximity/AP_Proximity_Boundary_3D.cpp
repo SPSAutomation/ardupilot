@@ -37,6 +37,7 @@ void AP_Proximity_Boundary_3D::init()
             const float angle_rad = ((float)_sector_middle_deg[sector]+(PROXIMITY_SECTOR_WIDTH_DEG/2.0f));
             _sector_edge_vector[layer][sector].offset_bearing(angle_rad, pitch, 100.0f);
             _boundary_points[layer][sector] = _sector_edge_vector[layer][sector] * PROXIMITY_BOUNDARY_DIST_DEFAULT;
+            distance_filters[layer][sector](2);
         }
     }
 }
@@ -445,6 +446,7 @@ void AP_Proximity_Temp_Boundary::reset()
     for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
         for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
             _distances[layer][sector] = FLT_MAX;
+            _unfiltered_distances[layer][sector] = FLT_MAX;
         }
     }
 }
@@ -469,6 +471,28 @@ void AP_Proximity_Temp_Boundary::update_3D_boundary(uint8_t prx_instance, AP_Pro
             if (_distances[layer][sector] < FLT_MAX) {
                 AP_Proximity_Boundary_3D::Face face{layer, sector};
                 boundary.set_face_attributes(face, _pitch[layer][sector], _angle[layer][sector], _distances[layer][sector], prx_instance);
+            }
+        }
+    }
+}
+
+// add a distance to the temp boundary if it is shorter than any other provided distance since the last time the boundary was reset
+// pitch and yaw are in degrees, distance is in meters
+void AP_Proximity_Temp_Boundary::add_unfiltered_distance(const AP_Proximity_Boundary_3D::Face &face, float pitch, float yaw, float distance)
+{
+    if (face.valid() && distance < _unfiltered_distances[face.layer][face.sector]) {
+        _unfiltered_distances[face.layer][face.sector] = distance;
+        _angle[face.layer][face.sector] = yaw;
+        _pitch[face.layer][face.sector] = pitch;
+    }
+}
+
+void AP_Proximity_Temp_Boundary::filter_distances()
+{
+    for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
+        for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
+            if ((distance_filters[layer][sector].get_sample(0) < FLT_MAX) || (_unfiltered_distances[layer][sector] < FLT_MAX)) {
+                _distances[layer][sector] = distance_filters[layer][sector].apply(_unfiltered_distances[layer][sector]);
             }
         }
     }

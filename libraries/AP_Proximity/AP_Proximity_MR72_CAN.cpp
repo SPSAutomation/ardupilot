@@ -77,6 +77,9 @@ bool AP_Proximity_MR72_CAN::handle_frame(AP_HAL::CANFrame &frame)
         // number of objects
         _object_count = frame.data[0];
         _current_object_index = 0;
+        if (get_median_filt_enabled()) {
+            _temp_boundary.filter_distances();
+        }
         _temp_boundary.update_3D_boundary(state.instance, frontend.boundary);
         _temp_boundary.reset();
         last_update_ms = AP_HAL::millis();
@@ -116,7 +119,13 @@ bool AP_Proximity_MR72_CAN::parse_distance_message(AP_HAL::CANFrame &frame)
     }
 
     const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(yaw);
-    _temp_boundary.add_distance(face, yaw, objects_dist);
+
+    if (get_median_filt_enabled()) {
+        _temp_boundary.add_unfiltered_distance(face, yaw, objects_dist);
+    } else {
+        _temp_boundary.add_distance(face, yaw, objects_dist);
+    }
+    
     return true;
 }
 

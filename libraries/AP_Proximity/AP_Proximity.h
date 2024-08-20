@@ -113,6 +113,9 @@ public:
     // return distance filter frequency
     float get_filter_freq() const { return _filt_freq; }
 
+    // return whether proximity median filter is enabled
+    bool get_median_filt_enabled() const { return _median_filt_enabled; }
+
     // return sensor health
     Status get_instance_status(uint8_t instance) const;
 
@@ -228,6 +231,7 @@ private:
     AP_Int8 _ign_gnd_enable;                           // true if land detection should be enabled
     AP_Float _filt_freq;                               // cutoff frequency for low pass filter
     AP_Float _alt_min;                                 // Minimum altitude -in meters- below which proximity should not work.
+    bool _median_filt_enabled;
 
     // get alt from rangefinder in meters. This reading is corrected for vehicle tilt
     bool get_rangefinder_alt(float &alt_m) const;
