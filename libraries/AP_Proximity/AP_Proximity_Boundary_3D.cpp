@@ -64,7 +64,7 @@ void AP_Proximity_Boundary_3D::set_face_attributes(const Face &face, float pitch
     }
 
     // ignore update if another instance has provided a shorter distance within the last 0.2 seconds
-    if ((prx_instance != _prx_instance[face.layer][face.sector]) && _distance_valid[face.layer][face.sector] && (_filtered_distance[face.layer][face.sector].get() < distance)) {
+    if ((prx_instance != _prx_instance[face.layer][face.sector]) && _distance_valid[face.layer][face.sector] && (_filtered_distance[face.layer][face.sector].get() <= distance)) {
         // check if recent
         const uint32_t now_ms = AP_HAL::millis();
         if (now_ms - _last_update_ms[face.layer][face.sector] < PROXIMITY_FACE_RESET_MS) {
@@ -468,10 +468,13 @@ void AP_Proximity_Temp_Boundary::add_distance(const AP_Proximity_Boundary_3D::Fa
 // prx_instance should be set to the proximity sensor's backend instance number
 void AP_Proximity_Temp_Boundary::update_3D_boundary(uint8_t prx_instance, AP_Proximity_Boundary_3D &boundary)
 {
+    float distance;
     for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
         for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
-            if (_distances[layer][sector] < FLT_MAX) {
-                AP_Proximity_Boundary_3D::Face face{layer, sector};
+            AP_Proximity_Boundary_3D::Face face{layer, sector};
+            
+            if ((_distances[layer][sector] < FLT_MAX) || (boundary.get_distance(face, distance))) {
+                
                 boundary.set_face_attributes(face, _pitch[layer][sector], _angle[layer][sector], _distances[layer][sector], prx_instance);
             }
         }
