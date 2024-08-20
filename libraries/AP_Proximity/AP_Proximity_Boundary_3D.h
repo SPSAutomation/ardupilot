@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include "AP_Proximity.h"
 #include <AP_Common/AP_Common.h>
 #include <AP_Math/AP_Math.h>
 #include <Filter/LowPassFilter.h>
@@ -217,5 +216,5 @@ private:
     float _pitch[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS];          // pitch angle in degrees to the closest object within each sector and layer
 
     float _unfiltered_distances[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS];      // filtered distance to closest object within each sector and layer.
-    ModeFilterFloat_Size5 distance_filters[PROXIMITY_NUM_LAYERS][PROXIMITY_NUM_SECTORS]; 
+    std::vector<std::vector<ModeFilterFloat_Size5>> distance_filters;
 };

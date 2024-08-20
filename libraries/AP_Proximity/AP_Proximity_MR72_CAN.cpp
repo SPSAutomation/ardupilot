@@ -42,6 +42,8 @@ AP_Proximity_MR72_CAN::AP_Proximity_MR72_CAN(AP_Proximity &_frontend,
         AP_BoardConfig::allocation_error("Failed to create proximity multican");
     }
 
+    _median_filt_enabled = _frontend.get_median_filt_enabled();    
+
     AP_Param::setup_object_defaults(this, var_info);
     state.var_info = var_info;
 }
@@ -77,7 +79,7 @@ bool AP_Proximity_MR72_CAN::handle_frame(AP_HAL::CANFrame &frame)
         // number of objects
         _object_count = frame.data[0];
         _current_object_index = 0;
-        if (get_median_filt_enabled()) {
+        if (_median_filt_enabled) {
             _temp_boundary.filter_distances();
         }
         _temp_boundary.update_3D_boundary(state.instance, frontend.boundary);
@@ -120,7 +122,7 @@ bool AP_Proximity_MR72_CAN::parse_distance_message(AP_HAL::CANFrame &frame)
 
     const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(yaw);
 
-    if (get_median_filt_enabled()) {
+    if (_median_filt_enabled) {
         _temp_boundary.add_unfiltered_distance(face, yaw, objects_dist);
     } else {
         _temp_boundary.add_distance(face, yaw, objects_dist);
