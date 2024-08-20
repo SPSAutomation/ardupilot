@@ -72,14 +72,17 @@ void AP_Proximity_Boundary_3D::set_face_attributes(const Face &face, float pitch
         }
     }
 
-    _angle[face.layer][face.sector] = angle;
-    _pitch[face.layer][face.sector] = pitch;
-    _distance[face.layer][face.sector] = distance;
-    _distance_valid[face.layer][face.sector] = true;
-    _prx_instance[face.layer][face.sector] = prx_instance;
-
-    // apply filter
-    set_filtered_distance(face, distance);
+    if (distance == FLT_MAX) {
+        _distance_valid[face.layer][face.sector] = false;
+    } else {
+        _angle[face.layer][face.sector] = angle;
+        _pitch[face.layer][face.sector] = pitch;
+        _distance[face.layer][face.sector] = distance;
+        _distance_valid[face.layer][face.sector] = true;
+        _prx_instance[face.layer][face.sector] = prx_instance;
+        // apply filter
+        set_filtered_distance(face, distance);
+    }
 
     // update boundary used for simple avoidance
     update_boundary(face);
