@@ -37,7 +37,6 @@ void AP_Proximity_Boundary_3D::init()
             const float angle_rad = ((float)_sector_middle_deg[sector]+(PROXIMITY_SECTOR_WIDTH_DEG/2.0f));
             _sector_edge_vector[layer][sector].offset_bearing(angle_rad, pitch, 100.0f);
             _boundary_points[layer][sector] = _sector_edge_vector[layer][sector] * PROXIMITY_BOUNDARY_DIST_DEFAULT;
-            distance_filters[layer][sector](2);
         }
     }
 }
