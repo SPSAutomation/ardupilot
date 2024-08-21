@@ -446,10 +446,19 @@ bool AP_Proximity_Boundary_3D::get_layer_distances(uint8_t layer_number, float d
 void AP_Proximity_Temp_Boundary::reset()
 {
     for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
-        std::vector<ModeFilterFloat_Size5> group;
         for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
             _distances[layer][sector] = FLT_MAX;
             _unfiltered_distances[layer][sector] = FLT_MAX;
+        }
+    }
+}
+
+// Initialise the distance filters
+void AP_Proximity_Temp_Boundary::configure_median_filters()
+{
+    for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
+        std::vector<ModeFilterFloat_Size5> group;
+        for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
             group.emplace_back(2);
         }
         distance_filters.push_back(group);

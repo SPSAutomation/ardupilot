@@ -189,10 +189,15 @@ class AP_Proximity_Temp_Boundary
 {
 public:
     // constructor. This incorporates initialisation as well.
-	AP_Proximity_Temp_Boundary() { reset(); }
+	AP_Proximity_Temp_Boundary() { 
+        reset();
+        configure_median_filters();    
+    }
 
     // reset the temporary boundary. This fills in distances with FLT_MAX
     void reset();
+
+    void configure_median_filters();
 
     // add a distance to the temp boundary if it is shorter than any other provided distance since the last time the boundary was reset
     // pitch and yaw are in degrees, distance is in meters
