@@ -43,8 +43,6 @@ private:
     uint32_t _current_object_index;     // current object index
     uint32_t last_update_ms;            // last update time in ms
 
-    bool _median_filt_enabled;
-
     AP_Int32 receive_id;                // ID of the sensor
 
     MultiCAN* multican_MR72;            // Allows for multiple CAN rangefinders on a single bus
