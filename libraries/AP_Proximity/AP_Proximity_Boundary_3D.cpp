@@ -147,11 +147,6 @@ void AP_Proximity_Boundary_3D::update_boundary(const Face &face)
     }
     _boundary_points[layer][sector] = _sector_edge_vector[layer][sector] * shortest_distance;
 
-    // if the next sector (clockwise) has an invalid distance, set boundary to create a cup like boundary
-    if (!_distance_valid[layer][next_sector]) {
-        _boundary_points[layer][next_sector] = _sector_edge_vector[layer][next_sector] * shortest_distance;
-    }
-
     // repeat for edge between sector and previous sector
     const uint8_t prev_sector = get_prev_sector(sector);
     shortest_distance = PROXIMITY_BOUNDARY_DIST_DEFAULT;
@@ -163,12 +158,6 @@ void AP_Proximity_Boundary_3D::update_boundary(const Face &face)
         shortest_distance = _filtered_distance[layer][sector].get();
     }
     _boundary_points[layer][prev_sector] = _sector_edge_vector[layer][prev_sector] * shortest_distance;
-
-    // if the sector counter-clockwise from the previous sector has an invalid distance, set boundary to create a cup-like boundary
-    const uint8_t prev_sector_ccw = get_prev_sector(prev_sector);
-    if (!_distance_valid[layer][prev_sector_ccw]) {
-        _boundary_points[layer][prev_sector_ccw] = _sector_edge_vector[layer][prev_sector_ccw] * shortest_distance;
-    }
 }
 
 // reset boundary.  marks all distances as invalid
