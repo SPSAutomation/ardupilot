@@ -72,7 +72,7 @@ void AP_Proximity_Boundary_3D::set_face_attributes(const Face &face, float pitch
         }
     }
 
-    if (distance == FLT_MAX) {
+    if (is_zero(distance - FLT_MAX)) {
         _distance_valid[face.layer][face.sector] = false;
     } else {
         _angle[face.layer][face.sector] = angle;
