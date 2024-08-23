@@ -91,7 +91,9 @@ private:
 #if AP_GENERATOR_RICHENPOWER_ENABLED
         RICHENPOWER = 3,
 #endif
-        // LOWEHEISER = 4,
+#if AP_GENERATOR_GX_7_ENABLED
+        GX_7 = 4,
+#endif
     };
 
     // Helper to get param and cast to GenType
