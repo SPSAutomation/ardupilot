@@ -35,7 +35,7 @@ public:
     void update(void) override;
 
     static void subscribe_msgs(AP_DroneCAN* ap_dronecan);
-    static void handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_ExtenderInfo &msg);
+    static void handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const aeronavics_ExtenderInfo &msg);
     static AP_Generator_GX_7* get_dronecan_backend(AP_DroneCAN* ap_dronecan);
 
     // methods to control the generator state:
