@@ -20,7 +20,6 @@
 #include <AP_Beacon/AP_Beacon.h>
 #include <AP_Logger/AP_Logger.h>
 #include <AP_Vehicle/AP_Vehicle_Type.h>
-#include <GCS_MAVLink/GCS.h>
 #include <stdio.h>
 
 #if !APM_BUILD_TYPE(APM_BUILD_ArduPlane)
@@ -278,15 +277,6 @@ void AC_Avoid::adjust_velocity(Vector3f &desired_vel_cms, bool &backing_up, floa
         }
     }
 #endif
-
-    uint32_t current_time = AP_HAL::millis();
-    if (((current_time - _last_print_ms) > 1000) && (_avoiding_list_to_display)) {
-        _last_print_ms = current_time;
-        _avoiding_list_to_display = false;
-        gcs().send_text(MAV_SEVERITY_CRITICAL, "Avoiding: 0:%.0f, 1:%.0f, 2:%.0f, 3:%.0f, 4:%.0f, 5:%.0f, 6:%.0f, 7:%.0f", 
-                                            avoiding_list[0], avoiding_list[1], avoiding_list[2], avoiding_list[3], 
-                                            avoiding_list[4], avoiding_list[5], avoiding_list[6], avoiding_list[7]);
-    }
 }
 
 /*
@@ -1169,8 +1159,6 @@ void AC_Avoid::adjust_velocity_proximity(float kP, float accel_cmss, Vector3f &d
     // safe_vel will be adjusted to stay away from Proximity Obstacles
     Vector3f safe_vel = Vector3f{desired_vel_body_cms.x, desired_vel_body_cms.y, desired_vel_cms.z};
     const Vector3f safe_vel_orig = safe_vel;
-    
-    std::vector<float> temp_avoiding_list(8, 0.0f);
 
     // calc margin in cm
     const float margin_cm = MAX(_margin * 100.0f, 0.0f);
@@ -1256,17 +1244,8 @@ void AC_Avoid::adjust_velocity_proximity(float kP, float accel_cmss, Vector3f &d
                 break;
             }
         }
-
-        
         }
-        temp_avoiding_list[i % 8] = dist_to_boundary;
     }
-
-    if (safe_vel != safe_vel_orig) {
-        avoiding_list = temp_avoiding_list;
-        _avoiding_list_to_display = true;
-    }
-
 
     // desired backup velocity is sum of maximum velocity component in each quadrant 
     const Vector2f desired_back_vel_cms_xy = quad_1_back_vel + quad_2_back_vel + quad_3_back_vel + quad_4_back_vel;
