@@ -172,6 +172,9 @@ public:
     Canard::Publisher<uavcan_equipment_hardpoint_Command> relay_hardpoint{canard_iface};
 #endif
 
+    void send_gx_7_control();
+    Canard::Publisher<com_aeronavics_ExtenderCtrl> extender_control{canard_iface};
+
 private:
     void loop(void);
 
@@ -278,6 +281,9 @@ private:
     // notify vehicle state
     uint32_t _last_notify_state_ms;
     uavcan_protocol_NodeStatus node_status_msg;
+
+    // last time extender ctrl msg
+    uint32_t _last_extender_ctrl_ms;
 
 #if AP_RELAY_DRONECAN_ENABLED
     void relay_hardpoint_send();

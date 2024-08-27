@@ -30,8 +30,6 @@ extern const AP_HAL::HAL& hal;
 // init method; configure communications with the generator
 void AP_Generator_GX_7::init()
 {
-    // TODO get DroneCan interface
-
     // Tell frontend what measurements are available for this generator
     _frontend._has_current = true;
     _frontend._has_consumed_energy = false;
@@ -40,21 +38,81 @@ void AP_Generator_GX_7::init()
 }
 
 
+//links the rangefinder uavcan message to this backend
+void AP_Generator_GX_7::subscribe_msgs(AP_DroneCAN* ap_dronecan)
+{
+    if (ap_dronecan == nullptr) {
+        return;
+    }
+    get_dronecan_backend(ap_dronecan);
+
+    if (Canard::allocate_sub_arg_callback(ap_dronecan, &handle_measurement, ap_dronecan->get_driver_index()) == nullptr) {
+        AP_BoardConfig::allocation_error("measurement_sub");
+    }
+}
+
+//Method to find the backend relating to the node id
+AP_Generator_GX_7* AP_Generator_GX_7::get_dronecan_backend(AP_DroneCAN* ap_dronecan)
+{
+    if (ap_dronecan == nullptr) {
+        return nullptr;
+    }
+    AP_Generator_GX_7* driver = nullptr;
+    AP_Generator &frontend = *AP::generator();
+
+    driver = (AP_Generator_GX_7*)frontend._driver_ptr;
+    //Double check if the driver was initialised as UAVCAN Type
+    if (driver != nullptr) {
+        if (driver->_ap_dronecan == ap_dronecan) {
+            return driver;
+        } else {
+            driver->_ap_dronecan = ap_dronecan;
+            return driver;
+        }
+    }
+
+    return driver;
+}
+
+//RangeFinder message handler
+void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_ExtenderInfo &msg)
+{
+    AP_Generator_GX_7* driver = get_dronecan_backend(ap_dronecan);
+    if (driver == nullptr)
+    {
+        return;
+    }
+
+    WITH_SEMAPHORE(driver->_sem);
+    //fetch the matching uavcan driver, node id and sensor id backend instance
+    driver->last_reading_ms = AP_HAL::millis();
+    driver->engine_speed = msg.EngineSpeed;
+    driver->throttle_position = msg.ThrottlePosition;
+    driver->fuel_level = msg.FuelPosition;
+    driver->motor_temperature = msg.Motortemperature;
+    driver->engine_cyclinder_temperature = msg.EngineCylinderTemperature;
+    driver->output_voltage = msg.OutputVoltage;
+    driver->output_current = msg.OutputCurrent;
+    driver->total_run_time = msg.total_run_minutes;
+    driver->extender_error = msg.ExtenderAlarm;
+    driver->working_state = (WorkingState)msg.WorkingState;
+
+    if (
+        driver->commanded_runstate == RunState::RUN &&
+        !(driver->working_state == WorkingState::CRANK || driver->working_state == WorkingState::RUN)
+    )
+    {
+        driver->pilot_desired_runstate = RunState::STOP;
+    }
+}
+
+
 // returns true if the generator should be allowed to move into
 // the "run" (high-RPM) state:
 bool AP_Generator_GX_7::generator_ok_to_run() const
 {
-    return heat > heat_required_for_run();
-}
-
-// returns an amount of synthetic heat required for the generator
-// to move into the "run" state:
-constexpr float AP_Generator_GX_7::heat_required_for_run()
-{
-    // Return if motor is warmed up enough to start
     return motor_temperature >= start_temp;
 }
-
 
 void AP_Generator_GX_7::check_maintenance_required()
 {
@@ -80,8 +138,9 @@ void AP_Generator_GX_7::check_maintenance_required()
 */
 void AP_Generator_GX_7::update(void)
 {
+    update_runstate();
     if (last_reading_ms != 0) {
-        update_runstate();
+        
         check_maintenance_required();
     }
 
@@ -97,16 +156,6 @@ void AP_Generator_GX_7::update(void)
 // the RC inputcontrol and the temperature the generator is at.
 void AP_Generator_GX_7::update_runstate()
 {
-    // don't run the generator while the safety is on:
-    // if (hal.util->safety_switch_state() == AP_HAL::Util::SAFETY_DISARMED) {
-    //     _servo_channel->set_output_pwm(SERVO_PWM_STOP);
-    //     return;
-    // }
-
-    static const uint16_t SERVO_PWM_STOP = 1200;
-    static const uint16_t SERVO_PWM_IDLE = 1500;
-    static const uint16_t SERVO_PWM_RUN = 1900;
-
     // if the vehicle crashes then we assume the pilot wants to stop
     // the motor.  This is done as a once-off when the crash is
     // detected to allow the operator to rearm the vehicle, or we end
@@ -130,38 +179,13 @@ void AP_Generator_GX_7::update_runstate()
         commanded_runstate = RunState::IDLE;
         switch (pilot_desired_runstate) {
         case RunState::STOP:
-            // The H2 will keep the motor running for ~20 seconds for cool-down
-            // we must go via the idle state or the H2 disallows moving to stop!
-            if (time_in_idle_state_ms() > 1000) {
-                commanded_runstate = pilot_desired_runstate;
-            }
-            break;
-        case RunState::IDLE:
-            // can always switch to idle
             commanded_runstate = pilot_desired_runstate;
             break;
+        case RunState::IDLE:
         case RunState::RUN:
-            // must have idled for a while before moving to run:
-            if (generator_ok_to_run()) {
-                commanded_runstate = pilot_desired_runstate;
-            }
+            commanded_runstate = RunState::RUN;
             break;
         }
-    }
-
-    switch (commanded_runstate) {
-    case RunState::STOP:
-        // TODO: Send DroneCan message to stop generator.
-        break;
-    case RunState::START:
-    // TODO: Send DroneCan message to start generator.
-        break;
-    case RunState::IDLE:
-        // TODO: Send DroneCan message to tell generator we are disarmed.
-        break;
-    case RunState::RUN:
-        // TODO: Send DroneCan message to tell generator we are armed.
-        break;
     }
 }
 
@@ -178,6 +202,7 @@ void AP_Generator_GX_7::Log_Write()
     }
     last_logged_reading_ms = last_reading_ms;
 
+    WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "GEN",
         "TimeUS,rpm,throttle,fuel_level,temp,cyclinder_temp,ovolt,ocurr,runtime,error,state",
@@ -210,10 +235,6 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         hal.util->snprintf(failmsg, failmsg_len, "no messages in %ums", unsigned(now - last_reading_ms));
         return false;
     }
-    if (SRV_Channels::get_channel_for(SRV_Channel::k_generator_control) == nullptr) {
-        hal.util->snprintf(failmsg, failmsg_len, "need a servo output channel");
-        return false;
-    }
 
     uint32_t errors = extender_error;
 
@@ -226,7 +247,7 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
 
         for (uint8_t i=0; i<32; i++) {
             if (errors & (1U << i)) {
-                if (errors < ExtenderError::LAST) {
+                if (errors < (uint32_t)ExtenderError::LAST) {
                     hal.util->snprintf(failmsg, failmsg_len, "error: %s", error_strings[i]);
                 } else {
                     hal.util->snprintf(failmsg, failmsg_len, "unknown error: 1U<<%u", i);
@@ -241,16 +262,24 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return false;
     }
 
+    if (!generator_ok_to_run())
+    {
+        hal.util->snprintf(failmsg, failmsg_len, "warming up");
+        return false;
+    }
+
     return true;
 }
 
 // Update front end with voltage, current, and rpm values
 void AP_Generator_GX_7::update_frontend_readings(void)
 {
+    WITH_SEMAPHORE(_sem);
     _voltage = output_voltage;
     _current = output_current;
     _rpm = engine_speed;
     _fuel_remaining = fuel_level;
+    _state = (uint8_t)commanded_runstate;
 
     update_frontend();
 }
@@ -280,66 +309,80 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         // nothing to report
         return;
     }
+    WITH_SEMAPHORE(_sem);
 
     uint64_t status = 0;
-    if (last_reading.rpm == 0) {
+    if (engine_speed == 0) {
         status |= MAV_GENERATOR_STATUS_FLAG_OFF;
     } else {
-        switch (last_reading.mode) {
-        case Mode::OFF:
+        switch (working_state) {
+        case WorkingState::STOP:
             status |= MAV_GENERATOR_STATUS_FLAG_OFF;
             break;
-        case Mode::IDLE:
-            if (pilot_desired_runstate == RunState::RUN) {
+        case WorkingState::RUN:
+            if (!generator_ok_to_run()) {
                 status |= MAV_GENERATOR_STATUS_FLAG_WARMING_UP;
             } else {
-                status |= MAV_GENERATOR_STATUS_FLAG_IDLE;
+                if (AP::arming().is_armed()) {
+                    status |= MAV_GENERATOR_STATUS_FLAG_GENERATING;
+                }
+                else {
+                    status |= MAV_GENERATOR_STATUS_FLAG_IDLE;
+                }
             }
             break;
-        case Mode::RUN:
-            status |= MAV_GENERATOR_STATUS_FLAG_GENERATING;
+        case WorkingState::INHIBIT:
+            status |= MAV_GENERATOR_STATUS_FLAG_START_INHIBITED;
             break;
-        case Mode::CHARGE:
-            status |= MAV_GENERATOR_STATUS_FLAG_GENERATING;
-            status |= MAV_GENERATOR_STATUS_FLAG_CHARGING;
-            break;
-        case Mode::BALANCE:
-            status |= MAV_GENERATOR_STATUS_FLAG_GENERATING;
-            status |= MAV_GENERATOR_STATUS_FLAG_CHARGING;
+        default:
             break;
         }
     }
 
-    if (last_reading.errors & (uint8_t)Errors::Overload) {
+    if (extender_error & (uint8_t)ExtenderError::OVER_CURRENT_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_OVERCURRENT_FAULT;
     }
-    if (last_reading.errors & (uint8_t)Errors::LowVoltageOutput) {
+    if (extender_error & (uint8_t)ExtenderError::LOW_VOLTAGE_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_REDUCED_POWER;
     }
 
-    if (last_reading.errors & (uint8_t)Errors::MaintenanceRequired) {
+    if (extender_error & (uint8_t)ExtenderError::MAINTENANCE_TIME_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_MAINTENANCE_REQUIRED;
     }
-    if (last_reading.errors & (uint8_t)Errors::StartDisabled) {
-        status |= MAV_GENERATOR_STATUS_FLAG_START_INHIBITED;
+
+    if (extender_error & (uint8_t)ExtenderError::COMMUNICATION_ERROR) {
+        status |= MAV_GENERATOR_STATUS_FLAG_COMMUNICATION_WARNING;
     }
-    if (last_reading.errors & (uint8_t)Errors::LowBatteryVoltage) {
+
+    if (extender_error & (uint8_t)ExtenderError::COIL_OVER_TEMP_ERROR) {
+        status |= MAV_GENERATOR_STATUS_FLAG_ELECTRONICS_OVERTEMP_WARNING;
+    }
+
+    if (extender_error & (uint8_t)ExtenderError::COOLANT_OVER_TEMP_ERROR) {
+        status |= MAV_GENERATOR_STATUS_FLAG_OVERTEMP_WARNING;
+    }
+
+    if (extender_error & (uint8_t)ExtenderError::LOW_VOLTAGE_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_BATTERY_UNDERVOLT_FAULT;
+    }
+
+    if (extender_error & (uint8_t)ExtenderError::OVER_VOLTAGE_ERROR) {
+        status |= MAV_GENERATOR_STATUS_FLAG_OVERVOLTAGE_FAULT;
     }
 
     mavlink_msg_generator_status_send(
         channel.get_chan(),
         status,
-        last_reading.rpm, // generator_speed
+        engine_speed, // generator_speed
         std::numeric_limits<double>::quiet_NaN(), // battery_current; current into/out of battery
-        last_reading.output_current, // load_current; Current going to UAV
+        output_current, // load_current; Current going to UAV
         std::numeric_limits<double>::quiet_NaN(), // power_generated; the power being generated
-        last_reading.output_voltage, // bus_voltage; Voltage of the bus seen at the generator
+        output_voltage, // bus_voltage; Voltage of the bus seen at the generator
         INT16_MAX, // rectifier_temperature
         std::numeric_limits<double>::quiet_NaN(), // bat_current_setpoint; The target battery current
-        INT16_MAX, // generator temperature
-        last_reading.runtime,
-        (int32_t)last_reading.seconds_until_maintenance
+        motor_temperature, // generator temperature
+        total_run_time * 60,
+        MAINTAINANCE_SCHEDULE - (total_run_time * 60)
         );
 }
 
@@ -347,12 +390,6 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
 bool AP_Generator_GX_7::stop() 
 {
     set_pilot_desired_runstate(RunState::STOP); 
-    return true;
-}
-
-bool AP_Generator_GX_7::start() 
-{
-    set_pilot_desired_runstate(RunState::START); 
     return true;
 }
 

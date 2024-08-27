@@ -5,6 +5,10 @@
 
 #if AP_GENERATOR_GX_7_ENABLED
 
+#include <AP_DroneCAN/AP_DroneCAN.h>
+#include <canard.h>
+#include <dronecan_msgs.h>
+#include <AP_HAL/Semaphores.h>
 #include <AP_Logger/AP_Logger_config.h>
 #include <AP_Common/AP_Common.h>
 #include <stdint.h>
@@ -23,7 +27,6 @@ class AP_Generator_GX_7 : public AP_Generator_Backend
 {
 
 public:
-    // constructor
     using AP_Generator_Backend::AP_Generator_Backend;
 
     // init should be called at vehicle startup to get the generator library ready
@@ -31,9 +34,12 @@ public:
     // update should be called regularly to update the generator state
     void update(void) override;
 
+    static void subscribe_msgs(AP_DroneCAN* ap_dronecan);
+    static void handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_ExtenderInfo &msg);
+    static AP_Generator_GX_7* get_dronecan_backend(AP_DroneCAN* ap_dronecan);
+
     // methods to control the generator state:
     bool stop(void) override;
-    bool start(void);
     bool idle(void) override;
     bool run(void) override;
 
@@ -57,9 +63,8 @@ private:
     // methods and state to record pilot desired runstate and actual runstate:
     enum class RunState {
         STOP = 17,
-        START = 18,  
-        IDLE = 19,
-        RUN = 20,
+        IDLE = 18,
+        RUN = 19,
     };
     RunState pilot_desired_runstate = RunState::STOP;
     RunState commanded_runstate = RunState::STOP;  // output is based on this
@@ -67,9 +72,6 @@ private:
         pilot_desired_runstate = newstate;
     }
     void update_runstate();
-
-    // boolean so we can emit the RichenPower protocol version once
-    bool protocol_information_anounced;
 
     // reported mode from the generator:
     enum class WorkingState {
@@ -117,8 +119,7 @@ private:
 
     uint32_t last_reading_ms;
 
-    const char *error_strings[5] = {
-        "No Error",
+    const char *error_strings[12] = {
         "Lock Time Expired",
         "Maintenance Required",
         "Low Oil",
@@ -138,7 +139,6 @@ private:
     bool generator_ok_to_run() const;
     // returns an amount of synthetic heat required for the generator
     // to move into the "run" state:
-    static constexpr float heat_required_for_run();
 
     // approximate run and idle speeds for the generator:
     static const uint16_t RUN_RPM = 15000;
@@ -147,9 +147,16 @@ private:
     // Temperature 
     static const uint8_t start_temp = 30;
 
+    static const int32_t MAINTAINANCE_SCHEDULE = 720000; // 200 Hours in seconds
+
     // boolean so we can announce we've stopped the generator due to a
     // crash just once:
     bool vehicle_was_crashed;
+
+    // semaphore for access to shared frontend data
+    HAL_Semaphore _sem;
+
+    AP_DroneCAN* _ap_dronecan;
 
     // data and methods to handle time-in-idle-state:
     uint32_t idle_state_start_ms;

@@ -1096,16 +1096,38 @@ void RC_Channel::do_aux_function_generator(const AuxSwitchPos ch_flag)
         return;
     }
 
-    switch (ch_flag) {
-    case AuxSwitchPos::LOW:
-        generator->stop();
-        break;
-    case AuxSwitchPos::MIDDLE:
-        generator->idle();
-        break;
-    case AuxSwitchPos::HIGH:
-        generator->run();
-        break;
+    if ((uint8_t)generator->get_type() == 4) 
+    {
+        if (_channel_reset && ch_flag == AuxSwitchPos::HIGH)
+        {
+            if (generator->get_state() == 17)
+            {
+                generator->run();
+            }
+            else
+            {
+                generator->stop();
+            }
+            _channel_reset = false;
+        }
+        else if (!_channel_reset && ch_flag == AuxSwitchPos::LOW)
+        {
+            _channel_reset = true;
+        }
+    }
+    else
+    {
+        switch (ch_flag) {
+            case AuxSwitchPos::LOW:
+                generator->stop();
+                break;
+            case AuxSwitchPos::MIDDLE:
+                generator->idle();
+                break;
+            case AuxSwitchPos::HIGH:
+                generator->run();
+                break;
+        }
     }
 }
 #endif

@@ -46,6 +46,7 @@ protected:
     float _fuel_remaining; // Decimal from 0 to 1
     float _consumed_mah;
     uint16_t _rpm;
+    uint8_t _state;
 
     AP_Generator& _frontend;
 

@@ -20,6 +20,7 @@
 #include "AP_Generator_IE_650_800.h"
 #include "AP_Generator_IE_2400.h"
 #include "AP_Generator_RichenPower.h"
+#include "AP_Generator_GX_7.h"
 
 #include <GCS_MAVLink/GCS.h>
 
@@ -28,7 +29,7 @@ const AP_Param::GroupInfo AP_Generator::var_info[] = {
     // @Param: TYPE
     // @DisplayName: Generator type
     // @Description: Generator type
-    // @Values: 0:Disabled, 1:IE 650w 800w Fuel Cell, 2:IE 2.4kW Fuel Cell, 3: Richenpower
+    // @Values: 0:Disabled, 1:IE 650w 800w Fuel Cell, 2:IE 2.4kW Fuel Cell, 3: Richenpower, 4: GX-7
     // @User: Standard
     // @RebootRequired: True
     AP_GROUPINFO_FLAGS("TYPE", 1, AP_Generator, _type, 0, AP_PARAM_FLAG_ENABLE),
@@ -80,6 +81,11 @@ void AP_Generator::init()
 #if AP_GENERATOR_RICHENPOWER_ENABLED
         case Type::RICHENPOWER:
             _driver_ptr = new AP_Generator_RichenPower(*this);
+            break;
+#endif
+#if AP_GENERATOR_GX_7_ENABLED
+        case Type::GX_7:
+            _driver_ptr = new AP_Generator_GX_7(*this);
             break;
 #endif
     }

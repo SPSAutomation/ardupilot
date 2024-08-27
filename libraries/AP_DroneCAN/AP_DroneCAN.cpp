@@ -36,6 +36,7 @@
 #include <AP_RangeFinder/AP_RangeFinder_DroneCAN.h>
 #include <AP_RCProtocol/AP_RCProtocol_DroneCAN.h>
 #include <AP_EFI/AP_EFI_DroneCAN.h>
+#include <AP_Generator/AP_Generator_GX_7.h>
 #include <AP_GPS/AP_GPS_DroneCAN.h>
 #include <AP_GPS/AP_GPS.h>
 #include <AP_BattMonitor/AP_BattMonitor_DroneCAN.h>
@@ -391,6 +392,9 @@ void AP_DroneCAN::init(uint8_t driver_index, bool enable_filters)
 #if HAL_MOUNT_XACTI_ENABLED
     AP_Mount_Xacti::subscribe_msgs(this);
 #endif
+#if AP_GENERATOR_GX_7_ENABLED
+    AP_Generator_GX_7::subscribe_msgs(this);
+#endif
 
     act_out_array.set_timeout_ms(5);
     act_out_array.set_priority(CANARD_TRANSFER_PRIORITY_HIGH);
@@ -515,6 +519,11 @@ void AP_DroneCAN::loop(void)
         send_parameter_save_request();
         send_node_status();
         _dna_server.verify_nodes();
+
+        if ((uint8_t)AP::generator()->get_type() == 4)
+        {
+            send_gx_7_control();
+        }
 
 #if AP_DRONECAN_SEND_GPS && AP_GPS_DRONECAN_ENABLED
         if (option_is_set(AP_DroneCAN::Options::SEND_GNSS) && !AP_GPS_DroneCAN::instance_exists(this)) {
@@ -897,6 +906,37 @@ void AP_DroneCAN::SRV_send_esc_hobbywing(void)
     }
 }
 #endif // AP_DRONECAN_HOBBYWING_ESC_SUPPORT
+
+void AP_DroneCAN::send_gx_7_control()
+{
+    uint32_t now = AP_HAL::millis();
+    if (now - _last_extender_ctrl_ms < 100) {
+        // update at 10Hz
+        return;
+    }
+    _last_extender_ctrl_ms = now;
+
+    com_aeronavics_ExtenderCtrl extender_msg;
+    if (AP::generator()->get_state() == 17 || AP::generator()->get_state() == 0)
+    {
+        extender_msg.ExtenderControlCmd = 0;
+        extender_msg.DroneStatus = 0;
+    }
+    else 
+    {
+        extender_msg.ExtenderControlCmd = 1;
+        if (AP::arming().is_armed())
+        {
+            extender_msg.DroneStatus = 1;
+        }
+        else
+        {
+            extender_msg.DroneStatus = 0;
+        }
+    }
+
+    extender_control.broadcast(extender_msg);
+}
 
 void AP_DroneCAN::SRV_push_servos()
 {
