@@ -145,7 +145,7 @@ private:
     static const uint16_t IDLE_RPM = 6000;
 
     // Temperature 
-    static const uint8_t start_temp = 30;
+    static const uint8_t start_temp = 80;
 
     static const int32_t MAINTAINANCE_SCHEDULE = 720000; // 200 Hours in seconds
 

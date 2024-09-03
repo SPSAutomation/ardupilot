@@ -89,8 +89,8 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
     driver->engine_speed = msg.EngineSpeed;
     driver->throttle_position = msg.ThrottlePosition;
     driver->fuel_level = msg.FuelPosition;
-    driver->motor_temperature = msg.Motortemperature;
-    driver->engine_cyclinder_temperature = msg.EngineCylinderTemperature;
+    driver->motor_temperature = msg.Motortemperature - 40;
+    driver->engine_cyclinder_temperature = msg.EngineCylinderTemperature - 40;
     driver->output_voltage = msg.OutputVoltage;
     driver->output_current = msg.OutputCurrent;
     driver->total_run_time = msg.total_run_minutes;
