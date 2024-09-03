@@ -22,7 +22,7 @@
 #include <AP_Vehicle/AP_Vehicle_Type.h>
 #include <stdio.h>
 
-#if !APM_BUILD_TYPE(APM_BUILD_ArduPlane)
+#if 1
 
 #if APM_BUILD_TYPE(APM_BUILD_Rover)
  # define AP_AVOID_BEHAVE_DEFAULT AC_Avoid::BehaviourType::BEHAVIOR_STOP
@@ -207,6 +207,107 @@ void AC_Avoid::adjust_velocity(Vector3f &desired_vel_cms, bool &backing_up, floa
         // Store velocity needed to back away from physical obstacles
         Vector3f backup_vel_proximity;
         adjust_velocity_proximity(kP, accel_cmss_limited, desired_vel_cms, backup_vel_proximity, kP_z,accel_cmss_z, dt);
+        find_max_quadrant_velocity_3D(backup_vel_proximity, quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel, back_vel_up, back_vel_down);
+    }
+    
+    // Avoidance in response to various fences 
+    Vector3f backup_vel_fence;
+    adjust_velocity_fence(kP, accel_cmss, desired_vel_cms, backup_vel_fence, kP_z, accel_cmss_z, dt);
+    find_max_quadrant_velocity_3D(backup_vel_fence , quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel, back_vel_up, back_vel_down);
+    
+    // Desired backup velocity is sum of maximum velocity component in each quadrant
+    const Vector2f desired_backup_vel_xy = quad_1_back_vel + quad_2_back_vel + quad_3_back_vel + quad_4_back_vel;
+    const float desired_backup_vel_z = back_vel_down + back_vel_up;
+    Vector3f desired_backup_vel{desired_backup_vel_xy.x, desired_backup_vel_xy.y, desired_backup_vel_z};
+
+    const float max_back_spd_cms = _backup_speed_max * 100.0f;
+    if (!desired_backup_vel.is_zero() && is_positive(max_back_spd_cms)) {
+        backing_up = true;
+        // Constrain backing away speed
+        if (desired_backup_vel.length() > max_back_spd_cms) {
+            desired_backup_vel = desired_backup_vel.normalized() * max_back_spd_cms;
+        }
+    
+        // let user take control if they are backing away at a greater speed than what we have calculated
+        // this has to be done for x,y,z separately. For eg, user is doing fine in "x" direction but might need backing up in "y".
+        if (!is_zero(desired_backup_vel.x)) {
+            if (is_positive(desired_backup_vel.x)) {
+                desired_vel_cms.x = MAX(desired_vel_cms.x, desired_backup_vel.x);
+            } else {
+                desired_vel_cms.x = MIN(desired_vel_cms.x, desired_backup_vel.x);
+            }
+        }
+        if (!is_zero(desired_backup_vel.y)) {
+            if (is_positive(desired_backup_vel.y)) {
+                desired_vel_cms.y = MAX(desired_vel_cms.y, desired_backup_vel.y);
+            } else {
+                desired_vel_cms.y = MIN(desired_vel_cms.y, desired_backup_vel.y);
+            }
+        }
+        if (!is_zero(desired_backup_vel.z)) {
+            if (is_positive(desired_backup_vel.z)) {
+                desired_vel_cms.z = MAX(desired_vel_cms.z, desired_backup_vel.z);
+            } else {
+                desired_vel_cms.z = MIN(desired_vel_cms.z, desired_backup_vel.z);
+            }
+        }
+    }
+    // limit acceleration
+    limit_accel(desired_vel_cms_original, desired_vel_cms, dt);
+
+    if (desired_vel_cms_original != desired_vel_cms) {
+        _last_limit_time = AP_HAL::millis();
+    }
+
+#if HAL_LOGGING_ENABLED
+    if (limits_active()) {
+        // log at not more than 10hz (adjust_velocity method can be potentially called at 400hz!)
+        uint32_t now = AP_HAL::millis();
+        if ((now - _last_log_ms) > 100) {
+            _last_log_ms = now;
+            Write_SimpleAvoidance(true, desired_vel_cms_original, desired_vel_cms, backing_up);
+        }
+    } else {
+        // avoidance isn't active anymore
+        // log once so that it registers in logs
+        if (_last_log_ms) {
+            Write_SimpleAvoidance(false, desired_vel_cms_original, desired_vel_cms, backing_up);
+            // this makes sure logging won't run again till it is active
+            _last_log_ms = 0;
+        }
+    }
+#endif
+}
+
+/*
+* Adjusts the desired velocity so that the vehicle can stop
+* before the fence/object.
+* kP, accel_cmss are for the horizontal axis
+* kP_z, accel_cmss_z are for vertical axis
+*/
+void AC_Avoid::adjust_velocity_and_accel(Vector3f &desired_vel_cms, Vector2f &desired_accel_cmss, bool &backing_up, float kP, float accel_cmss, float kP_z, float accel_cmss_z, float dt)
+{
+    // exit immediately if disabled
+    if (_enabled == AC_AVOID_DISABLED) {
+        return;
+    }
+
+    // make a copy of input velocity, because desired_vel_cms might be changed
+    const Vector3f desired_vel_cms_original = desired_vel_cms;
+
+    // limit acceleration
+    const float accel_cmss_limited = MIN(accel_cmss, AC_AVOID_ACCEL_CMSS_MAX);
+
+    // maximum component of horizontal desired  backup velocity in each quadrant 
+    Vector2f quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel;
+    float back_vel_up = 0.0f;
+    float back_vel_down = 0.0f;
+    
+    // Avoidance in response to proximity sensor
+    if (proximity_avoidance_enabled() && _proximity_alt_enabled) {
+        // Store velocity needed to back away from physical obstacles
+        Vector3f backup_vel_proximity;
+        adjust_velocity_and_accel_proximity(kP, accel_cmss, accel_cmss_limited, desired_vel_cms, desired_accel_cmss, backup_vel_proximity, kP_z,accel_cmss_z, dt);
         find_max_quadrant_velocity_3D(backup_vel_proximity, quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel, back_vel_up, back_vel_down);
     }
     
@@ -552,6 +653,20 @@ void AC_Avoid::limit_velocity_3D(float kP, float accel_cmss, Vector3f &desired_v
     }
 }
 
+void AC_Avoid::limit_accel_2D(float max_accel_cmss, Vector2f &desired_accel_cms, const Vector3f& obstacle_vector, float margin_cm)
+{
+    float distance_to_boundary = obstacle_vector.length() - margin_cm;
+    float safe_accel = max_accel_cmss * MIN(1, distance_to_boundary / AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE); 
+
+    const Vector2f limit_direction_xy{obstacle_vector.x, obstacle_vector.y};
+
+    // project onto limit direction
+    const float desired_accel_towards_obstacle = desired_accel_cms * limit_direction_xy.normalized();
+    if (desired_accel_towards_obstacle > safe_accel) {
+        // subtract difference between desired accel and maximum acceptable accel
+        desired_accel_cms += limit_direction_xy*(safe_accel - desired_accel_towards_obstacle);
+    }
+}
 /*
  * Compute the back away horizontal velocity required to avoid breaching margin
  * INPUT: This method requires the breach in margin distance (back_distance_cm), direction towards the breach (limit_direction)
@@ -1239,6 +1354,147 @@ void AC_Avoid::adjust_velocity_proximity(float kP, float accel_cmss, Vector3f &d
                 } else {
                     // vehicle inside the given edge, adjust velocity to not violate this edge
                     limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
+                }
+
+                break;
+            }
+        }
+        }
+    }
+
+    // desired backup velocity is sum of maximum velocity component in each quadrant 
+    const Vector2f desired_back_vel_cms_xy = quad_1_back_vel + quad_2_back_vel + quad_3_back_vel + quad_4_back_vel;
+    const float desired_back_vel_cms_z = max_back_vel_z + min_back_vel_z;
+
+    if (safe_vel == safe_vel_orig && desired_back_vel_cms_xy.is_zero() && is_zero(desired_back_vel_cms_z)) {
+        // proximity avoidance did nothing, no point in doing the calculations below. Return early
+        backup_vel.zero();
+        return;
+    }
+
+    // set modified desired velocity vector and back away velocity vector
+    // vectors were in body-frame, rotate resulting vector back to earth-frame
+    const Vector2f safe_vel_2d = _ahrs.body_to_earth2D(Vector2f{safe_vel.x, safe_vel.y});
+    desired_vel_cms = Vector3f{safe_vel_2d.x, safe_vel_2d.y, safe_vel.z};
+    const Vector2f backup_vel_xy = _ahrs.body_to_earth2D(desired_back_vel_cms_xy);
+    backup_vel = Vector3f{backup_vel_xy.x, backup_vel_xy.y, desired_back_vel_cms_z};
+#endif // HAL_PROXIMITY_ENABLED
+}
+
+/*
+ * Adjusts the desired velocity based on output from the proximity sensor
+ */
+void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_loiter_limit, float accel_cmss, Vector3f &desired_vel_cms, Vector2f &desired_accel_cmss, Vector3f &backup_vel, float kP_z, float accel_cmss_z, float dt)
+{
+#if HAL_PROXIMITY_ENABLED
+    // exit immediately if proximity sensor is not present
+    AP_Proximity *proximity = AP::proximity();
+    if (!proximity) {
+        return;
+    }
+
+    AP_Proximity &_proximity = *proximity;
+    // get total number of obstacles
+    const uint8_t obstacle_num = _proximity.get_obstacle_count();
+    if (obstacle_num == 0) {
+        // no obstacles
+        return;
+    }
+ 
+    const AP_AHRS &_ahrs = AP::ahrs();
+    
+    // for backing away
+    Vector2f quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel;
+    float max_back_vel_z = 0.0f;
+    float min_back_vel_z = 0.0f; 
+
+    // rotate velocity vector from earth frame to body-frame since obstacles are in body-frame
+    const Vector2f desired_vel_body_cms = _ahrs.earth_to_body2D(Vector2f{desired_vel_cms.x, desired_vel_cms.y});
+    
+    // safe_vel will be adjusted to stay away from Proximity Obstacles
+    Vector3f safe_vel = Vector3f{desired_vel_body_cms.x, desired_vel_body_cms.y, desired_vel_cms.z};
+    const Vector3f safe_vel_orig = safe_vel;
+
+    // calc margin in cm
+    const float margin_cm = MAX(_margin * 100.0f, 0.0f);
+    Vector3f stopping_point_plus_margin;
+    if (!desired_vel_cms.is_zero()) {
+        // only used for "stop mode". Pre-calculating the stopping point here makes sure we do not need to repeat the calculations under iterations.
+        const float speed = safe_vel.length();
+        stopping_point_plus_margin = safe_vel * ((2.0f + margin_cm + get_stopping_distance(kP, accel_cmss, speed))/speed);
+    }
+
+    for (uint8_t i = 0; i<obstacle_num; i++) {
+        // get obstacle from proximity library
+        Vector3f vector_to_obstacle;
+        if (!_proximity.get_obstacle(i, vector_to_obstacle)) {
+            // this one is not valid
+            continue;
+        }
+
+        const float dist_to_boundary = vector_to_obstacle.length();
+        if (is_zero(dist_to_boundary)) {
+            continue;
+        }
+
+        // back away if vehicle has breached margin
+        if (is_negative(dist_to_boundary - margin_cm)) {
+            const float breach_dist = margin_cm - dist_to_boundary;
+            // add a deadzone so that the vehicle doesn't backup and go forward again and again
+            const float deadzone = MAX(0.0f, _backup_deadzone) * 100.0f;
+            if (breach_dist > deadzone) {
+                // this vector will help us decide how much we have to back away horizontally and vertically
+                const Vector3f margin_vector = vector_to_obstacle.normalized() * breach_dist;
+                const float xy_back_dist = margin_vector.xy().length();
+                const float z_back_dist = margin_vector.z;
+                calc_backup_velocity_3D(kP, accel_cmss, quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel, xy_back_dist, vector_to_obstacle, kP_z, accel_cmss_z, z_back_dist, min_back_vel_z, max_back_vel_z, dt);
+            }
+        }
+
+        if (desired_vel_cms.is_zero()) {
+            // cannot limit velocity if there is nothing to limit
+            // backing up (if needed) has already been done
+            continue;
+        }
+
+        switch (_behavior) {
+        case BEHAVIOR_SLIDE: {
+            Vector3f limit_direction{vector_to_obstacle};
+            // distance to closest point
+            const float limit_distance_cm = limit_direction.length();
+            if (is_zero(limit_distance_cm)) {
+                // We are exactly on the edge, this should ideally never be possible
+                // i.e. do not adjust velocity.
+                continue;
+            }
+            // Adjust velocity to not violate margin.
+            limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
+            limit_accel_2D(accel_cmss_loiter_limit, desired_accel_cmss, limit_direction, margin_cm);
+            break;
+        }
+
+        case BEHAVIOR_STOP: {
+            // vector from current position to obstacle
+            Vector3f limit_direction;
+            // find closest point with line segment
+            // also see if the vehicle will "roughly" intersect the boundary with the projected stopping point
+            const bool intersect = _proximity.closest_point_from_segment_to_obstacle(i, Vector3f{}, stopping_point_plus_margin, limit_direction);
+            if (intersect) {
+                // the vehicle is intersecting the plane formed by the boundary
+                // distance to the closest point from the stopping point
+                float limit_distance_cm = limit_direction.length();
+                if (is_zero(limit_distance_cm)) {
+                    // We are exactly on the edge, this should ideally never be possible
+                    // i.e. do not adjust velocity.
+                    return;
+                }
+                if (limit_distance_cm <= margin_cm) {
+                    // we are within the margin so stop vehicle
+                    safe_vel.zero();
+                } else {
+                    // vehicle inside the given edge, adjust velocity to not violate this edge
+                    limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
+                    limit_accel_2D(accel_cmss_loiter_limit, desired_accel_cmss, limit_direction, margin_cm);
                 }
 
                 break;

@@ -21,6 +21,8 @@
 #define AC_AVOID_ACTIVE_LIMIT_TIMEOUT_MS    500     // if limiting is active if last limit is happened in the last x ms
 #define AC_AVOID_ACCEL_TIMEOUT_MS           200     // stored velocity used to calculate acceleration will be reset if avoidance is active after this many ms
 
+#define AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE 5 //Distance away from proximity boundary at whichh point the drone is allowed to accelerate at it full limit if desired
+
 /*
  * This class prevents the vehicle from leaving a polygon fence or hitting proximity-based obstacles
  * Additionally the vehicle may back up if the margin to obstacle is breached
@@ -48,6 +50,14 @@ public:
     void adjust_velocity(Vector3f &desired_vel_cms, float kP, float accel_cmss, float kP_z, float accel_cmss_z, float dt) {
         bool backing_up = false;
         adjust_velocity(desired_vel_cms, backing_up, kP, accel_cmss, kP_z, accel_cmss_z, dt);
+    }
+
+    // Adjusts the desired velocity so that the vehicle can stop, and adjust the desired accceleration so the user can't input a start accelerating towards a close obstacle
+    // before the fence/object.
+    void adjust_velocity_and_accel(Vector3f &desired_vel_cms, Vector2f &desired_accel_cmss, bool &backing_up, float kP, float accel_cmss, float kP_z, float accel_cmss_z, float dt);
+    void adjust_velocity_and_accel(Vector3f &desired_vel_cms, Vector2f &desired_accel_cmss, float kP, float accel_cmss, float kP_z, float accel_cmss_z, float dt) {
+        bool backing_up = false;
+        adjust_velocity_and_accel(desired_vel_cms, desired_accel_cmss, backing_up, kP, accel_cmss, kP_z, accel_cmss_z, dt);
     }
 
     // This method limits velocity and calculates backaway velocity from various supported fences
@@ -95,6 +105,8 @@ public:
     // Limits the component of desired_vel_cms in the direction of the obstacle_vector based on the passed value of "margin"
     void limit_velocity_3D(float kP, float accel_cmss, Vector3f &desired_vel_cms, const Vector3f& limit_direction, float limit_distance_cm, float kP_z, float accel_cmss_z ,float dt);
     
+    void limit_accel_2D(float accel_cmss, Vector2f &desired_accel_cms, const Vector3f& obstacle_vector, float margin_cm);
+
      // compute the speed such that the stopping distance of the vehicle will
      // be exactly the input distance.
      // kP should be non-zero for Copter which has a non-linear response
@@ -150,6 +162,12 @@ private:
      */
     void adjust_velocity_proximity(float kP, float accel_cmss, Vector3f &desired_vel_cms, Vector3f &backup_vel, float kP_z, float accel_cmss_z, float dt);
 
+    /*
+     * Adjusts the desired velocity and acceleration based on output from the proximity sensor
+     */
+    void adjust_velocity_and_accel_proximity(float kP, float accel_cmss_loiter_limit, float accel_cmss, Vector3f &desired_vel_cms, Vector2f &desired_accel_cmss, Vector3f &backup_vel, float kP_z, float accel_cmss_z, float dt);
+
+    
     /*
      * Adjusts the desired velocity given an array of boundary points
      * The boundary must be in Earth Frame
