@@ -255,9 +255,6 @@ void AC_Loiter::calc_desired_velocity(bool avoidance_on)
         desired_vel = desired_vel_norm * desired_speed;
     }
 
-    // add braking to the desired acceleration
-    _desired_accel -= loiter_accel_brake;
-
     // Apply EKF limit to desired velocity -  this limit is calculated by the EKF and adjusted as required to ensure certain sensor limits are respected (eg optical flow sensing)
     float horizSpdDem = desired_vel.length();
     if (horizSpdDem > gnd_speed_limit_cms) {
@@ -277,6 +274,9 @@ void AC_Loiter::calc_desired_velocity(bool avoidance_on)
         }
     }
 #endif // !APM_BUILD_ArduPlane
+
+    // add braking to the desired acceleration
+    _desired_accel -= loiter_accel_brake;
 
     // get loiters desired velocity from the position controller where it is being stored.
     Vector2p target_pos = _pos_control.get_pos_target_cm().xy();
