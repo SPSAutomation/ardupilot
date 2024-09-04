@@ -75,7 +75,7 @@ AP_Generator_GX_7* AP_Generator_GX_7::get_dronecan_backend(AP_DroneCAN* ap_drone
 }
 
 //RangeFinder message handler
-void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const aeronavics_ExtenderInfo &msg)
+void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_ExtenderInfo &msg)
 {
     AP_Generator_GX_7* driver = get_dronecan_backend(ap_dronecan);
     if (driver == nullptr)

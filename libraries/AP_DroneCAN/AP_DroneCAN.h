@@ -173,7 +173,7 @@ public:
 #endif
 
     void send_gx_7_control();
-    Canard::Publisher<aeronavics_ExtenderCtrl> extender_control{canard_iface};
+    Canard::Publisher<com_aeronavics_ExtenderCtrl> extender_control{canard_iface};
 
 private:
     void loop(void);
