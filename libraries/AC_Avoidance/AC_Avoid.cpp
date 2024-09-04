@@ -1410,6 +1410,9 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
 
     // rotate velocity vector from earth frame to body-frame since obstacles are in body-frame
     const Vector2f desired_vel_body_cms = _ahrs.earth_to_body2D(Vector2f{desired_vel_cms.x, desired_vel_cms.y});
+
+    // rotate acceleration vector from earth frame to body-frame since obstacles are in body-frame
+    Vector2f desired_accel_body_cmss = _ahrs.earth_to_body2D(desired_accel_cmss);
     
     // safe_vel will be adjusted to stay away from Proximity Obstacles
     Vector3f safe_vel = Vector3f{desired_vel_body_cms.x, desired_vel_body_cms.y, desired_vel_cms.z};
@@ -1469,7 +1472,7 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
             }
             // Adjust velocity to not violate margin.
             limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
-            limit_accel_2D(accel_cmss_loiter_limit, desired_accel_cmss, limit_direction, margin_cm);
+            limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
             break;
         }
 
@@ -1494,7 +1497,7 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
                 } else {
                     // vehicle inside the given edge, adjust velocity to not violate this edge
                     limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
-                    limit_accel_2D(accel_cmss_loiter_limit, desired_accel_cmss, limit_direction, margin_cm);
+                    limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
                 }
 
                 break;
@@ -1519,6 +1522,9 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
     desired_vel_cms = Vector3f{safe_vel_2d.x, safe_vel_2d.y, safe_vel.z};
     const Vector2f backup_vel_xy = _ahrs.body_to_earth2D(desired_back_vel_cms_xy);
     backup_vel = Vector3f{backup_vel_xy.x, backup_vel_xy.y, desired_back_vel_cms_z};
+
+    // rotate acceleration vector back to earth frame
+    desired_accel_cmss = _ahrs.body_to_earth2D(desired_accel_body_cmss);
 #endif // HAL_PROXIMITY_ENABLED
 }
 
