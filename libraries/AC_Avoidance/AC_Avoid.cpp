@@ -653,7 +653,7 @@ void AC_Avoid::limit_velocity_3D(float kP, float accel_cmss, Vector3f &desired_v
     }
 }
 
-void AC_Avoid::limit_accel_2D(float max_accel_cmss, Vector2f &desired_accel_cms, const Vector3f& obstacle_vector, float margin_cm)
+void AC_Avoid::limit_accel_2D(float max_accel_cmss, Vector2f &desired_accel_cmss, const Vector3f& obstacle_vector, float margin_cm)
 {
     float distance_to_boundary = obstacle_vector.length() - margin_cm;
     float safe_accel = max_accel_cmss * MAX(0, MIN(1, distance_to_boundary / AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE)); 
@@ -661,10 +661,10 @@ void AC_Avoid::limit_accel_2D(float max_accel_cmss, Vector2f &desired_accel_cms,
     const Vector2f limit_direction_xy{obstacle_vector.x, obstacle_vector.y};
 
     // project onto limit direction
-    const float desired_accel_towards_obstacle = desired_accel_cms * limit_direction_xy.normalized();
+    const float desired_accel_towards_obstacle = desired_accel_cmss * limit_direction_xy.normalized();
     if (desired_accel_towards_obstacle > safe_accel) {
         // subtract difference between desired accel and maximum acceptable accel
-        desired_accel_cms += limit_direction_xy*(safe_accel - desired_accel_towards_obstacle);
+        desired_accel_cmss += limit_direction_xy*(safe_accel - desired_accel_towards_obstacle);
     }
 }
 /*
