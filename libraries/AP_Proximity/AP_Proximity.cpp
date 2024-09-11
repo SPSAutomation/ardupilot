@@ -68,6 +68,13 @@ const AP_Param::GroupInfo AP_Proximity::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("_FILT", 18, AP_Proximity, _filt_freq, 0.25f),
 
+    // @Param: _MEDIAN_FILT
+    // @DisplayName: Proximity sensor median filter
+    // @Description:Enabling proximity median filter applied to each face in the proximity boundary
+    // @Values: 0:Disabled, 1:Enabled
+    // @User: Advanced
+    AP_GROUPINFO("_MEDIAN_FILT", 30, AP_Proximity, _median_filt_enabled, false),
+
     // 19 was _MIN
     // 20 was _MAX
 

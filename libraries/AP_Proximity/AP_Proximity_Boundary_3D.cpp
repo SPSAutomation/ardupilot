@@ -64,7 +64,7 @@ void AP_Proximity_Boundary_3D::set_face_attributes(const Face &face, float pitch
     }
 
     // ignore update if another instance has provided a shorter distance within the last 0.2 seconds
-    if ((prx_instance != _prx_instance[face.layer][face.sector]) && _distance_valid[face.layer][face.sector] && (_filtered_distance[face.layer][face.sector].get() < distance)) {
+    if ((prx_instance != _prx_instance[face.layer][face.sector]) && _distance_valid[face.layer][face.sector] && (_filtered_distance[face.layer][face.sector].get() <= distance)) {
         // check if recent
         const uint32_t now_ms = AP_HAL::millis();
         if (now_ms - _last_update_ms[face.layer][face.sector] < PROXIMITY_FACE_RESET_MS) {
@@ -72,14 +72,17 @@ void AP_Proximity_Boundary_3D::set_face_attributes(const Face &face, float pitch
         }
     }
 
-    _angle[face.layer][face.sector] = angle;
-    _pitch[face.layer][face.sector] = pitch;
-    _distance[face.layer][face.sector] = distance;
-    _distance_valid[face.layer][face.sector] = true;
-    _prx_instance[face.layer][face.sector] = prx_instance;
-
-    // apply filter
-    set_filtered_distance(face, distance);
+    if (is_zero(distance - FLT_MAX)) {
+        _distance_valid[face.layer][face.sector] = false;
+    } else {
+        _angle[face.layer][face.sector] = angle;
+        _pitch[face.layer][face.sector] = pitch;
+        _distance[face.layer][face.sector] = distance;
+        _distance_valid[face.layer][face.sector] = true;
+        _prx_instance[face.layer][face.sector] = prx_instance;
+        // apply filter
+        set_filtered_distance(face, distance);
+    }
 
     // update boundary used for simple avoidance
     update_boundary(face);
@@ -434,7 +437,20 @@ void AP_Proximity_Temp_Boundary::reset()
     for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
         for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
             _distances[layer][sector] = FLT_MAX;
+            _unfiltered_distances[layer][sector] = FLT_MAX;
         }
+    }
+}
+
+// Initialise the distance filters
+void AP_Proximity_Temp_Boundary::configure_median_filters()
+{
+    for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
+        std::vector<ModeFilterFloat_Size5> group;
+        for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
+            group.emplace_back(2);
+        }
+        distance_filters.push_back(group);
     }
 }
 
@@ -453,11 +469,36 @@ void AP_Proximity_Temp_Boundary::add_distance(const AP_Proximity_Boundary_3D::Fa
 // prx_instance should be set to the proximity sensor's backend instance number
 void AP_Proximity_Temp_Boundary::update_3D_boundary(uint8_t prx_instance, AP_Proximity_Boundary_3D &boundary)
 {
+    float distance;
     for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
         for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
-            if (_distances[layer][sector] < FLT_MAX) {
-                AP_Proximity_Boundary_3D::Face face{layer, sector};
+            AP_Proximity_Boundary_3D::Face face{layer, sector};
+            
+            if ((_distances[layer][sector] < FLT_MAX) || (boundary.get_distance(face, distance))) {
+                
                 boundary.set_face_attributes(face, _pitch[layer][sector], _angle[layer][sector], _distances[layer][sector], prx_instance);
+            }
+        }
+    }
+}
+
+// add a distance to the temp boundary if it is shorter than any other provided distance since the last time the boundary was reset
+// pitch and yaw are in degrees, distance is in meters
+void AP_Proximity_Temp_Boundary::add_unfiltered_distance(const AP_Proximity_Boundary_3D::Face &face, float pitch, float yaw, float distance)
+{
+    if (face.valid() && distance < _unfiltered_distances[face.layer][face.sector]) {
+        _unfiltered_distances[face.layer][face.sector] = distance;
+        _angle[face.layer][face.sector] = yaw;
+        _pitch[face.layer][face.sector] = pitch;
+    }
+}
+
+void AP_Proximity_Temp_Boundary::filter_distances()
+{
+    for (uint8_t layer=0; layer < PROXIMITY_NUM_LAYERS; layer++) {
+        for (uint8_t sector=0; sector < PROXIMITY_NUM_SECTORS; sector++) {
+            if ((distance_filters[layer][sector].get_sample(0) < FLT_MAX) || (_unfiltered_distances[layer][sector] < FLT_MAX)) {
+                _distances[layer][sector] = distance_filters[layer][sector].apply(_unfiltered_distances[layer][sector]);
             }
         }
     }
