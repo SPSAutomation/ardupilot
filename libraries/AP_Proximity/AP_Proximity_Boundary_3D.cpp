@@ -15,7 +15,7 @@
 
 #include "AP_Proximity_Boundary_3D.h"
 
-#define PROXIMITY_BOUNDARY_3D_TIMEOUT_MS 750 // we should check the 3D boundary faces after this many ms
+#define PROXIMITY_BOUNDARY_3D_TIMEOUT_MS 100 // we should check the 3D boundary faces after this many ms
 
 /*
   Constructor. 

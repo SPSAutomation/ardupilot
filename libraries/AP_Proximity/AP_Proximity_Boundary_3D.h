@@ -27,7 +27,7 @@
 #define PROXIMITY_BOUNDARY_DIST_MIN   0.6f    // minimum distance for a boundary point.  This ensures the object avoidance code doesn't think we are outside the boundary.
 #define PROXIMITY_BOUNDARY_DIST_DEFAULT 100   // if we have no data for a sector, boundary is placed 100m out
 #define PROXIMITY_FILT_RESET_TIME     1000    // reset filter if last distance was pushed more than this many ms away
-#define PROXIMITY_FACE_RESET_MS       1000    // face will be reset if not updated within this many ms
+#define PROXIMITY_FACE_RESET_MS       300   // face will be reset if not updated within this many ms
 
 // structure holding distances in PROXIMITY_MAX_DIRECTION directions. used for sending distances to ground station
 #define PROXIMITY_MAX_DIRECTION 8
