@@ -26,8 +26,6 @@
 extern const AP_HAL::HAL& hal;
 
 
-ObjectBuffer_TS<AP_Proximity_DroneCAN::ObstacleItem> AP_Proximity_DroneCAN::items(50);
-
 #define PROXIMITY_TIMEOUT_MS    500 // distance messages must arrive within this many milliseconds
 
 
@@ -155,18 +153,18 @@ void AP_Proximity_DroneCAN::handle_measurement(AP_DroneCAN *ap_dronecan, const C
             driver->_status = AP_Proximity::Status::Good;
 
             if (is_zero(msg.distance)) {
-                if (frontend.get_median_filt_enabled()) {
+                if (driver->frontend.get_median_filt_enabled()) {
                     driver->temp_boundary.filter_distances();
                 }
-                driver->temp_boundary.update_3D_boundary(state.instance, frontend.boundary);
+                driver->temp_boundary.update_3D_boundary(driver->state.instance, driver->frontend.boundary);
                 driver->temp_boundary.reset();
                 break;
             }
 
             // allot to correct layer and sector based on calculated pitch and yaw
-            const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(msg.pitch, msg.yaw);
+            const AP_Proximity_Boundary_3D::Face face = driver->frontend.boundary.get_face(msg.pitch, msg.yaw);
             
-            if (frontend.get_median_filt_enabled()) {
+            if (driver->frontend.get_median_filt_enabled()) {
                 driver->temp_boundary.add_unfiltered_distance(face, msg.pitch, msg.yaw, msg.distance);
             } else {
                 driver->temp_boundary.add_distance(face, msg.pitch, msg.yaw, msg.distance);
