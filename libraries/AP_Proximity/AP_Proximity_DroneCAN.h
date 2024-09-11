@@ -42,7 +42,7 @@ private:
         float distance_m;
     };
 
-    static ObjectBuffer_TS<ObstacleItem> items;
+    AP_Proximity_Temp_Boundary temp_boundary;
 
     AP_Proximity::Status _status;
 };

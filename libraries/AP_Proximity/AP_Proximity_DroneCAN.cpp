@@ -121,20 +121,6 @@ void AP_Proximity_DroneCAN::update(void)
     } else {
         set_status(_status);
     }
-
-    if (_status == AP_Proximity::Status::Good) {
-        ObstacleItem object_item;
-        WITH_SEMAPHORE(_sem);
-        while (items.pop(object_item)) {
-            const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(object_item.pitch_deg, object_item.yaw_deg);
-            if (!is_zero(object_item.distance_m) && !ignore_reading(object_item.pitch_deg, object_item.yaw_deg, object_item.distance_m, false)) {
-                // update boundary used for avoidance
-                frontend.boundary.set_face_attributes(face, object_item.pitch_deg, object_item.yaw_deg, object_item.distance_m, state.instance);
-                // update OA database
-                database_push(object_item.pitch_deg, object_item.yaw_deg, object_item.distance_m);
-            }
-        }
-    }
 }
 
 // get maximum and minimum distances (in meters)
@@ -167,11 +153,23 @@ void AP_Proximity_DroneCAN::handle_measurement(AP_DroneCAN *ap_dronecan, const C
             //update the states in backend instance
             driver->_last_update_ms = AP_HAL::millis();
             driver->_status = AP_Proximity::Status::Good;
-            const ObstacleItem item = {msg.yaw, msg.pitch, msg.distance};
 
-            if (driver->items.space()) {
-                // ignore reading if no place to put it in the queue
-                driver->items.push(item);
+            if (is_zero(msg.distance)) {
+                if (frontend.get_median_filt_enabled()) {
+                    driver->temp_boundary.filter_distances();
+                }
+                driver->temp_boundary.update_3D_boundary(state.instance, frontend.boundary);
+                driver->temp_boundary.reset();
+                break;
+            }
+
+            // allot to correct layer and sector based on calculated pitch and yaw
+            const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(msg.pitch, msg.yaw);
+            
+            if (frontend.get_median_filt_enabled()) {
+                driver->temp_boundary.add_unfiltered_distance(face, msg.pitch, msg.yaw, msg.distance);
+            } else {
+                driver->temp_boundary.add_distance(face, msg.pitch, msg.yaw, msg.distance);
             }
             break;
         }
