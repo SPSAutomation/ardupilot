@@ -268,7 +268,6 @@ void AC_Loiter::calc_desired_velocity(bool avoidance_on)
         AC_Avoid *_avoid = AP::ac_avoid();
         if (_avoid != nullptr) {
             Vector3f avoidance_vel_3d{desired_vel.x, desired_vel.y, 0.0f};
-            Vector2f avoidance_accel{_desired_accel.x, _desired_accel.y};
             _avoid->adjust_velocity_and_accel(avoidance_vel_3d, _desired_accel, _pos_control.get_pos_xy_p().kP(), _accel_cmss, _pos_control.get_pos_z_p().kP(), _pos_control.get_max_accel_z_cmss(), dt);
             desired_vel = Vector2f{avoidance_vel_3d.x, avoidance_vel_3d.y};
         }
