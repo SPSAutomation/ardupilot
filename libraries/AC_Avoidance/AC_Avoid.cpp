@@ -1432,81 +1432,81 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
     while (!all_sectors_checked) {
         for (uint8_t layer = 0; layer<PROXIMITY_NUM_LAYERS; layer++) {
             uint8_t face_num = layer*PROXIMITY_NUM_SECTORS+sector;
-        // get obstacle from proximity library
-        Vector3f vector_to_obstacle;
+            // get obstacle from proximity library
+            Vector3f vector_to_obstacle;
             if (!_proximity.get_obstacle(face_num, vector_to_obstacle)) {
-            // this one is not valid
-            continue;
-        }
-
-        const float dist_to_boundary = vector_to_obstacle.length();
-        if (is_zero(dist_to_boundary)) {
-            continue;
-        }
-
-        // back away if vehicle has breached margin
-        if (is_negative(dist_to_boundary - margin_cm)) {
-            const float breach_dist = margin_cm - dist_to_boundary;
-            // add a deadzone so that the vehicle doesn't backup and go forward again and again
-            const float deadzone = MAX(0.0f, _backup_deadzone) * 100.0f;
-            if (breach_dist > deadzone) {
-                // this vector will help us decide how much we have to back away horizontally and vertically
-                const Vector3f margin_vector = vector_to_obstacle.normalized() * breach_dist;
-                const float xy_back_dist = margin_vector.xy().length();
-                const float z_back_dist = margin_vector.z;
-                calc_backup_velocity_3D(kP, accel_cmss, quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel, xy_back_dist, vector_to_obstacle, kP_z, accel_cmss_z, z_back_dist, min_back_vel_z, max_back_vel_z, dt);
-            }
-        }
-
-        if (desired_vel_cms.is_zero()) {
-            // cannot limit velocity if there is nothing to limit
-            // backing up (if needed) has already been done
-            continue;
-        }
-
-        switch (_behavior) {
-        case BEHAVIOR_SLIDE: {
-            Vector3f limit_direction{vector_to_obstacle};
-            // distance to closest point
-            const float limit_distance_cm = limit_direction.length();
-            if (is_zero(limit_distance_cm)) {
-                // We are exactly on the edge, this should ideally never be possible
-                // i.e. do not adjust velocity.
+                // this one is not valid
                 continue;
             }
-            // Adjust velocity to not violate margin.
-            limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
-            limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
-            break;
-        }
 
-        case BEHAVIOR_STOP: {
-            // vector from current position to obstacle
-            Vector3f limit_direction;
-            // find closest point with line segment
-            // also see if the vehicle will "roughly" intersect the boundary with the projected stopping point
-                const bool intersect = _proximity.closest_point_from_segment_to_obstacle(face_num, Vector3f{}, stopping_point_plus_margin, limit_direction);
-            if (intersect) {
-                // the vehicle is intersecting the plane formed by the boundary
-                // distance to the closest point from the stopping point
-                float limit_distance_cm = limit_direction.length();
+            const float dist_to_boundary = vector_to_obstacle.length();
+            if (is_zero(dist_to_boundary)) {
+                continue;
+            }
+
+            // back away if vehicle has breached margin
+            if (is_negative(dist_to_boundary - margin_cm)) {
+                const float breach_dist = margin_cm - dist_to_boundary;
+                // add a deadzone so that the vehicle doesn't backup and go forward again and again
+                const float deadzone = MAX(0.0f, _backup_deadzone) * 100.0f;
+                if (breach_dist > deadzone) {
+                    // this vector will help us decide how much we have to back away horizontally and vertically
+                    const Vector3f margin_vector = vector_to_obstacle.normalized() * breach_dist;
+                    const float xy_back_dist = margin_vector.xy().length();
+                    const float z_back_dist = margin_vector.z;
+                    calc_backup_velocity_3D(kP, accel_cmss, quad_1_back_vel, quad_2_back_vel, quad_3_back_vel, quad_4_back_vel, xy_back_dist, vector_to_obstacle, kP_z, accel_cmss_z, z_back_dist, min_back_vel_z, max_back_vel_z, dt);
+                }
+            }
+
+            if (desired_vel_cms.is_zero()) {
+                // cannot limit velocity if there is nothing to limit
+                // backing up (if needed) has already been done
+                continue;
+            }
+
+            switch (_behavior) {
+            case BEHAVIOR_SLIDE: {
+                Vector3f limit_direction{vector_to_obstacle};
+                // distance to closest point
+                const float limit_distance_cm = limit_direction.length();
                 if (is_zero(limit_distance_cm)) {
                     // We are exactly on the edge, this should ideally never be possible
                     // i.e. do not adjust velocity.
-                    return;
+                    continue;
                 }
-                if (limit_distance_cm <= margin_cm) {
-                    // we are within the margin so stop vehicle
-                    safe_vel.zero();
-                } else {
-                    // vehicle inside the given edge, adjust velocity to not violate this edge
-                    limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
-                    limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
-                }
-
+                // Adjust velocity to not violate margin.
+                limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
+                limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
                 break;
             }
-        }
+
+            case BEHAVIOR_STOP: {
+                // vector from current position to obstacle
+                Vector3f limit_direction;
+                // find closest point with line segment
+                // also see if the vehicle will "roughly" intersect the boundary with the projected stopping point
+                const bool intersect = _proximity.closest_point_from_segment_to_obstacle(face_num, Vector3f{}, stopping_point_plus_margin, limit_direction);
+                if (intersect) {
+                    // the vehicle is intersecting the plane formed by the boundary
+                    // distance to the closest point from the stopping point
+                    float limit_distance_cm = limit_direction.length();
+                    if (is_zero(limit_distance_cm)) {
+                        // We are exactly on the edge, this should ideally never be possible
+                        // i.e. do not adjust velocity.
+                        return;
+                    }
+                    if (limit_distance_cm <= margin_cm) {
+                        // we are within the margin so stop vehicle
+                        safe_vel.zero();
+                    } else {
+                        // vehicle inside the given edge, adjust velocity to not violate this edge
+                        limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
+                        limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
+                    }
+
+                    break;
+                }
+            }
             }
         }
         sector = _proximity.boundary.get_next_sector(sector);
