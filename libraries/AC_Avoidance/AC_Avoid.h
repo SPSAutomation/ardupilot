@@ -21,7 +21,7 @@
 #define AC_AVOID_ACTIVE_LIMIT_TIMEOUT_MS    500     // if limiting is active if last limit is happened in the last x ms
 #define AC_AVOID_ACCEL_TIMEOUT_MS           200     // stored velocity used to calculate acceleration will be reset if avoidance is active after this many ms
 
-#define AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE 5 //Distance away from proximity boundary at whichh point the drone is allowed to accelerate at it full limit if desired
+#define AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE_CM 500 //Distance away from proximity boundary at whichh point the drone is allowed to accelerate at it full limit if desired
 
 /*
  * This class prevents the vehicle from leaving a polygon fence or hitting proximity-based obstacles
