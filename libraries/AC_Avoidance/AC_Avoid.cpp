@@ -22,7 +22,7 @@
 #include <AP_Vehicle/AP_Vehicle_Type.h>
 #include <stdio.h>
 
-#if 1
+#if !APM_BUILD_TYPE(APM_BUILD_ArduPlane)
 
 #if APM_BUILD_TYPE(APM_BUILD_Rover)
  # define AP_AVOID_BEHAVE_DEFAULT AC_Avoid::BehaviourType::BEHAVIOR_STOP
