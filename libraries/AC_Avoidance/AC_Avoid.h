@@ -121,6 +121,8 @@ public:
     // return true if limiting is active
     bool limits_active() const {return (AP_HAL::millis() - _last_limit_time) < AC_AVOID_ACTIVE_LIMIT_TIMEOUT_MS;};
 
+    float get_limit_accel_distance_cm() const { return _accel_limit_distance*100; }
+
     static const struct AP_Param::GroupInfo var_info[];
 
 private:
@@ -233,6 +235,7 @@ private:
     AP_Float _alt_min;          // alt below which Proximity based avoidance is turned off
     AP_Float _accel_max;        // maximum acceleration while simple avoidance is active
     AP_Float _backup_deadzone;  // distance beyond AVOID_MARGIN parameter, after which vehicle will backaway from obstacles
+    AP_Float _accel_limit_distance; //Distance additional to AVOID_MARGIN parameter, after which the vehicles acceleration towards obstacle will not be limited
 
     bool _proximity_enabled = true; // true if proximity sensor based avoidance is enabled (used to allow pilot to enable/disable)
     bool _proximity_alt_enabled = true; // true if proximity sensor based avoidance is enabled based on altitude

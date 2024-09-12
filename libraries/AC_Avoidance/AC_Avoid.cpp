@@ -107,6 +107,14 @@ const AP_Param::GroupInfo AC_Avoid::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("BACKUP_DZ", 9, AC_Avoid, _backup_deadzone, 0.10f),
 
+    // @Param: ACCEL_LIMIT_DISTANCE
+    // @DisplayName: Max distance from obstacle where acceleration is limited
+    // @Description: Maximum distance away from margin where the acceleration towards the obstacle is limited. The amount by which it is limited follows a square wave from 0 at the margin to LOIT_ACCEL_MAX at margin + ACCEL_LIMIT_DISTANCE
+    // @Units: m
+    // @Range: 0 10
+    // @User: Standard
+    AP_GROUPINFO("ACCEL_DIST_LIM", 10, AC_Avoid, _accel_limit_distance, 5.0f),
+
     AP_GROUPEND
 };
 
@@ -656,7 +664,13 @@ void AC_Avoid::limit_velocity_3D(float kP, float accel_cmss, Vector3f &desired_v
 void AC_Avoid::limit_accel_2D(float max_accel_cmss, Vector2f &desired_accel_cmss, const Vector3f& obstacle_vector, float margin_cm)
 {
     float distance_to_boundary = obstacle_vector.length() - margin_cm;
-    float safe_accel = max_accel_cmss * constrain_float(sq(distance_to_boundary / AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE_CM), 0.0f, 1.0f); 
+    float limit_accel_distance = get_limit_accel_distance_cm();
+
+    if (limit_accel_distance <= 0) { //Pritect against divide by 0.
+        return;
+    }
+    
+    float safe_accel = max_accel_cmss * constrain_float(sq(distance_to_boundary / limit_accel_distance), 0.0f, 1.0f); 
 
     Vector2f unaltered_accel{desired_accel_cmss.x, desired_accel_cmss.y};
     Vector2f limit_direction_xy{obstacle_vector.x, obstacle_vector.y};
