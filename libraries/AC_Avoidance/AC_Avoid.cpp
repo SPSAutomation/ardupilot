@@ -1396,12 +1396,6 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
     }
 
     AP_Proximity &_proximity = *proximity;
-    // get total number of obstacles
-    const uint8_t obstacle_num = _proximity.get_obstacle_count();
-    if (obstacle_num == 0) {
-        // no obstacles
-        return;
-    }
  
     const AP_AHRS &_ahrs = AP::ahrs();
     
@@ -1429,10 +1423,18 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
         stopping_point_plus_margin = safe_vel * ((2.0f + margin_cm + get_stopping_distance(kP, accel_cmss, speed))/speed);
     }
 
-    for (uint8_t i = 0; i<obstacle_num; i++) {
+    //Start by checking for obstacles in the direction that the user is attempting to travel in. This helps to avoid weird behaviour when vehicle attempts to avoid obstacles in multiple faces simultaneously
+    const float desired_accel_angle = wrap_360(degrees(atan2f(desired_accel_body_cmss.y, desired_accel_body_cmss.x)));
+    const uint8_t start_sector = wrap_360(desired_accel_angle + (PROXIMITY_SECTOR_WIDTH_DEG * 0.5f)) / PROXIMITY_SECTOR_WIDTH_DEG;
+    uint8_t sector = start_sector;
+    bool all_sectors_checked = false;
+
+    while (!all_sectors_checked) {
+        for (uint8_t layer = 0; layer<PROXIMITY_NUM_LAYERS; layer++) {
+            uint8_t face_num = layer*PROXIMITY_NUM_SECTORS+sector;
         // get obstacle from proximity library
         Vector3f vector_to_obstacle;
-        if (!_proximity.get_obstacle(i, vector_to_obstacle)) {
+            if (!_proximity.get_obstacle(face_num, vector_to_obstacle)) {
             // this one is not valid
             continue;
         }
@@ -1483,7 +1485,7 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
             Vector3f limit_direction;
             // find closest point with line segment
             // also see if the vehicle will "roughly" intersect the boundary with the projected stopping point
-            const bool intersect = _proximity.closest_point_from_segment_to_obstacle(i, Vector3f{}, stopping_point_plus_margin, limit_direction);
+                const bool intersect = _proximity.closest_point_from_segment_to_obstacle(face_num, Vector3f{}, stopping_point_plus_margin, limit_direction);
             if (intersect) {
                 // the vehicle is intersecting the plane formed by the boundary
                 // distance to the closest point from the stopping point
@@ -1505,6 +1507,11 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
                 break;
             }
         }
+            }
+        }
+        sector = _proximity.boundary.get_next_sector(sector);
+        if (sector == start_sector) {
+            all_sectors_checked = true;
         }
     }
 
