@@ -161,14 +161,18 @@ void AP_Proximity_DroneCAN::handle_measurement(AP_DroneCAN *ap_dronecan, const C
                 break;
             }
 
-            // allot to correct layer and sector based on calculated pitch and yaw
-            const AP_Proximity_Boundary_3D::Face face = driver->frontend.boundary.get_face(msg.pitch, msg.yaw);
+
             
-            if (driver->frontend.get_median_filt_enabled()) {
-                driver->temp_boundary.add_unfiltered_distance(face, msg.pitch, msg.yaw, msg.distance);
-            } else {
-                driver->temp_boundary.add_distance(face, msg.pitch, msg.yaw, msg.distance);
+            if (!driver->ignore_reading(msg.pitch, msg.yaw, msg.distance, false)) {
+                // allot to correct layer and sector based on calculated pitch and yaw
+                const AP_Proximity_Boundary_3D::Face face = driver->frontend.boundary.get_face(msg.pitch, msg.yaw); 
+                if (driver->frontend.get_median_filt_enabled()) {
+                    driver->temp_boundary.add_unfiltered_distance(face, msg.pitch, msg.yaw, msg.distance);
+                } else {
+                    driver->temp_boundary.add_distance(face, msg.pitch, msg.yaw, msg.distance);
+                }
             }
+
             break;
         }
         //Additional states supported by Proximity message
