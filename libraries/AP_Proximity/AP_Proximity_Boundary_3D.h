@@ -141,16 +141,16 @@ public:
     static_assert(PROXIMITY_NUM_LAYERS == 5, "PROXIMITY_NUM_LAYERS must be 5");
     const int16_t _pitch_middle_deg[PROXIMITY_NUM_LAYERS] {-60, -30, 0, 30, 60};
 
-private:
-
-    // initialise the boundary and sector_edge_vector array used for object avoidance
-    void init();
-
     // get the next sector which is CW to the passed sector
     uint8_t get_next_sector(uint8_t sector) const {return ((sector >= PROXIMITY_NUM_SECTORS-1) ? 0 : sector+1); }
 
     // get the prev sector which is CCW to the passed sector
     uint8_t get_prev_sector(uint8_t sector) const {return ((sector <= 0) ? PROXIMITY_NUM_SECTORS-1 : sector-1); }
+
+private:
+
+    // initialise the boundary and sector_edge_vector array used for object avoidance
+    void init();
 
     // Converts obstacle_num passed from avoidance library into appropriate face of the boundary
     // Returns false if the face is invalid
