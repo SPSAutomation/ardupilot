@@ -607,66 +607,31 @@ void AC_Avoid::limit_velocity_3D(float kP, float accel_cmss, Vector3f &desired_v
         // nothing to limit
         return;
     }
-    // create a margin_cm length vector in the direction of desired_vel_cms
-    // this will create larger margin towards the direction vehicle is travelling in
-    const Vector3f margin_vector = desired_vel_cms.normalized() * margin_cm;
-    const Vector2f limit_direction_xy{obstacle_vector.x, obstacle_vector.y};
-    
-    if (!limit_direction_xy.is_zero()) {
-        const float distance_from_fence_xy = MAX((limit_direction_xy.length() - Vector2f{margin_vector.x, margin_vector.y}.length()), 0.0f);
-        Vector2f velocity_xy{desired_vel_cms.x, desired_vel_cms.y};
-        limit_velocity_2D(kP, accel_cmss, velocity_xy, limit_direction_xy.normalized(), distance_from_fence_xy, dt);
-        desired_vel_cms.x = velocity_xy.x;
-        desired_vel_cms.y = velocity_xy.y;
-    }
-    
-    if (is_zero(desired_vel_cms.z) || is_zero(obstacle_vector.z)) {
-        // nothing to limit vertically if desired_vel_cms.z is zero
-        // if obstacle_vector.z is zero then the obstacle is probably horizontally located, and we can move vertically
-        return;
-    }
 
-    if (is_positive(desired_vel_cms.z) != is_positive(obstacle_vector.z)) {
-        // why limit velocity vertically when we are going the opposite direction
-        return;
-    }
+    const Vector3f limit_direction = obstacle_vector.normalized();
+    const float limit_distance = MAX(obstacle_vector.length() - margin_cm, 0.0f);
     
-    // to check if Z velocity changes
-    const float velocity_z_original = desired_vel_cms.z;
-    const float z_speed = fabsf(desired_vel_cms.z);
-
-    // obstacle_vector.z and margin_vector.z should be in same direction as checked above
-    const float dist_z = MAX(fabsf(obstacle_vector.z) - fabsf(margin_vector.z), 0.0f); 
-    if (is_zero(dist_z)) {
-        // eliminate any vertical velocity 
-        desired_vel_cms.z = 0.0f;
-    } else {
-        const float max_z_speed = get_max_speed(kP_z, accel_cmss_z, dist_z, dt);
-        desired_vel_cms.z = MIN(max_z_speed, z_speed);
-    }
-
-    // make sure the direction of the Z velocity did not change
-    // we are only limiting speed here, not changing directions 
-    // check if original z velocity is positive or negative
-    if (is_negative(velocity_z_original)) {
-        desired_vel_cms.z = desired_vel_cms.z * -1.0f;
+    const float max_speed = get_max_speed(kP, accel_cmss, limit_distance, dt);
+    // project onto limit direction
+    const float speed = desired_vel_cms * limit_direction;
+    if (speed > max_speed) {
+        // subtract difference between desired speed and maximum acceptable speed
+        desired_vel_cms += limit_direction*(max_speed - speed);
     }
 }
 
-void AC_Avoid::limit_accel_2D(float max_accel_cmss, Vector2f &desired_accel_cmss, const Vector3f& obstacle_vector, float margin_cm)
+void AC_Avoid::limit_accel_3D(float max_accel_cmss, Vector3f &desired_accel_cmss, const Vector3f& obstacle_vector, float margin_cm)
 {
     float distance_to_boundary = obstacle_vector.length() - margin_cm;
     float safe_accel = max_accel_cmss * constrain_float(sq(distance_to_boundary / AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE_CM), 0.0f, 1.0f); 
 
-    Vector2f unaltered_accel{desired_accel_cmss.x, desired_accel_cmss.y};
-    Vector2f limit_direction_xy{obstacle_vector.x, obstacle_vector.y};
-    limit_direction_xy = limit_direction_xy.normalized();
+    Vector3f limit_direction = obstacle_vector.normalized();
 
     // project onto limit direction
-    const float desired_accel_towards_obstacle = desired_accel_cmss * limit_direction_xy;
+    const float desired_accel_towards_obstacle = desired_accel_cmss * limit_direction;
     if (desired_accel_towards_obstacle > safe_accel) {
         // subtract difference between desired accel and maximum acceptable accel
-        desired_accel_cmss += limit_direction_xy*(safe_accel - desired_accel_towards_obstacle);
+        desired_accel_cmss += limit_direction*(safe_accel - desired_accel_towards_obstacle);
     }
 }
 /*
@@ -1414,6 +1379,8 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
     Vector3f safe_vel = Vector3f{desired_vel_body_cms.x, desired_vel_body_cms.y, desired_vel_cms.z};
     const Vector3f safe_vel_orig = safe_vel;
 
+    Vector3f safe_accel = Vector3f{desired_accel_body_cmss.x, desired_accel_body_cmss.y, 0.0f};
+
     // calc margin in cm
     const float margin_cm = MAX(_margin * 100.0f, 0.0f);
     Vector3f stopping_point_plus_margin;
@@ -1476,7 +1443,7 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
                 }
                 // Adjust velocity to not violate margin.
                 limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
-                limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
+                limit_accel_3D(accel_cmss_loiter_limit, safe_accel, limit_direction, margin_cm);
                 break;
             }
 
@@ -1501,7 +1468,7 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
                     } else {
                         // vehicle inside the given edge, adjust velocity to not violate this edge
                         limit_velocity_3D(kP, accel_cmss, safe_vel, limit_direction, margin_cm, kP_z, accel_cmss_z, dt);
-                        limit_accel_2D(accel_cmss_loiter_limit, desired_accel_body_cmss, limit_direction, margin_cm);
+                        limit_accel_3D(accel_cmss_loiter_limit, safe_accel, limit_direction, margin_cm);
                     }
 
                     break;
@@ -1533,7 +1500,7 @@ void AC_Avoid::adjust_velocity_and_accel_proximity(float kP, float accel_cmss_lo
     backup_vel = Vector3f{backup_vel_xy.x, backup_vel_xy.y, desired_back_vel_cms_z};
 
     // rotate acceleration vector back to earth frame
-    desired_accel_cmss = _ahrs.body_to_earth2D(desired_accel_body_cmss);
+    desired_accel_cmss = _ahrs.body_to_earth2D(Vector2f{safe_accel.x, safe_accel.y});
 #endif // HAL_PROXIMITY_ENABLED
 }
 

@@ -105,7 +105,7 @@ public:
     // Limits the component of desired_vel_cms in the direction of the obstacle_vector based on the passed value of "margin"
     void limit_velocity_3D(float kP, float accel_cmss, Vector3f &desired_vel_cms, const Vector3f& limit_direction, float limit_distance_cm, float kP_z, float accel_cmss_z ,float dt);
     
-    void limit_accel_2D(float accel_cmss, Vector2f &desired_accel_cmss, const Vector3f& obstacle_vector, float margin_cm);
+    void limit_accel_3D(float accel_cmss, Vector3f &desired_accel_cmss, const Vector3f& obstacle_vector, float margin_cm);
 
      // compute the speed such that the stopping distance of the vehicle will
      // be exactly the input distance.
