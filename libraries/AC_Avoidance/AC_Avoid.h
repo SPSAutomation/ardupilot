@@ -23,7 +23,7 @@
 
 #define AC_AVOID_MAX_ACCEL_PROXIMITY_DISTANCE_CM 1000 //Distance away from proximity boundary at whichh point the drone is allowed to accelerate at it full limit if desired
 
-#define AC_AVOID_SPEED_CONTROLLER_P (1/3) //Relationship between distance from margin and maximum component of the vehicles velocity in the direction of the obstacle.
+#define AC_AVOID_SPEED_CONTROLLER_P (1.0f/3.0f) //Relationship between distance from margin and maximum component of the vehicles velocity in the direction of the obstacle.
 /*
  * This class prevents the vehicle from leaving a polygon fence or hitting proximity-based obstacles
  * Additionally the vehicle may back up if the margin to obstacle is breached
