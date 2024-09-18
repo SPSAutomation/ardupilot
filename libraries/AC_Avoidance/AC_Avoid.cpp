@@ -743,11 +743,12 @@ void AC_Avoid::find_max_quadrant_velocity_3D(Vector3f &desired_vel, Vector2f &qu
  */
 float AC_Avoid::get_max_speed(float kP, float accel_cmss, float distance_cm, float dt) const
 {
-    if (is_zero(kP)) {
-        return safe_sqrt(2.0f * distance_cm * accel_cmss);
-    } else {
-        return sqrt_controller(distance_cm, kP, accel_cmss, dt);
-    }
+    return AC_AVOID_SPEED_CONTROLLER_P * distance_cm;
+    // if (is_zero(kP)) {
+    //     return safe_sqrt(2.0f * distance_cm * accel_cmss);
+    // } else {
+    //     return sqrt_controller(distance_cm, kP, accel_cmss, dt);
+    // }
 }
 
 #if AP_FENCE_ENABLED
