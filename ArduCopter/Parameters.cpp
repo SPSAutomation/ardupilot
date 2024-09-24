@@ -90,8 +90,8 @@ const AP_Param::Info Copter::var_info[] = {
     // @DisplayName: Throttle stick behavior
     // @Description: Bitmask containing various throttle stick options. TX with sprung throttle can set PILOT_THR_BHV to "1" so motor feedback when landed starts from mid-stick instead of bottom of stick.
     // @User: Standard
-    // @Values: 0:None,1:Feedback from mid stick,2:High throttle cancels landing,4:Disarm on land detection
-    // @Bitmask: 0:Feedback from mid stick,1:High throttle cancels landing,2:Disarm on land detection
+    // @Values: 0:None,1:Feedback from mid stick,2:High throttle cancels landing in landing modes,4:Disarm on land detection,8:High throttle cancels landing in loiter and sport
+    // @Bitmask: 0:Feedback from mid stick,1:High throttle cancels landing,2:Disarm on land detection,3:Disarm on land detection,8:High throttle cancels landing in loiter and sport
     GSCALAR(throttle_behavior, "PILOT_THR_BHV", 0),
 
     // @Group: SERIAL

@@ -228,7 +228,7 @@ void ModeLoiter::run()
                 }
 
                 // cancel landing if landing descent has started and high throttle cancels landing is set and throttle is high
-                if (!_land_pause && (g.throttle_behavior & THR_BEHAVE_HIGH_THROTTLE_CANCELS_LAND) != 0 && copter.rc_throttle_control_in_filter.get() > LAND_CANCEL_TRIGGER_THR){
+                if (!_land_pause && (g.throttle_behavior & THR_BEHAVE_HIGH_THROTTLE_CANCELS_LAND_LOITER_SPORT) != 0 && copter.rc_throttle_control_in_filter.get() > LAND_CANCEL_TRIGGER_THR){
                     cancel_landing = true;
                 }
 
