@@ -29,6 +29,8 @@ class AP_Generator_GX_7 : public AP_Generator_Backend
 public:
     using AP_Generator_Backend::AP_Generator_Backend;
 
+    AP_BattMonitor::Failsafe update_failsafes() const override;
+
     // init should be called at vehicle startup to get the generator library ready
     void init(void) override;
     // update should be called regularly to update the generator state
@@ -170,6 +172,10 @@ private:
 
     // check if the generator requires maintenance and send a message if it does:
     void check_maintenance_required();
+
+    bool is_critical_error(const uint32_t err_in) const;
+    bool is_low_error(const uint32_t err_in) const;
+
     // if we are emitting warnings about the generator requiring
     // maintenamce, this is the last time we sent the warning:
     uint32_t last_maintenance_warning_ms;

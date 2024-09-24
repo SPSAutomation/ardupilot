@@ -205,10 +205,10 @@ void AP_Generator_GX_7::Log_Write()
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "GEN",
-        "TimeUS,rpm,throttle,fuel_level,temp,cyclinder_temp,ovolt,ocurr,runtime,error,state",
-        "s-------",
-        "F-------",
-        "QIIHHffB",
+        "TimeUS,rpm,throttle,fuel_level,temp,cyclinder_temp,volt,curr,runtime,error,state",
+        "sq%%OOvAs--",
+        "F----------",
+        "QHHBBBHHIIB",
         AP_HAL::micros64(),
         engine_speed,
         throttle_position,
@@ -217,7 +217,7 @@ void AP_Generator_GX_7::Log_Write()
         engine_cyclinder_temperature,
         output_voltage,
         output_current,
-        total_run_time,
+        total_run_time*60,
         extender_error,
         working_state
         );
@@ -278,7 +278,7 @@ void AP_Generator_GX_7::update_frontend_readings(void)
     _voltage = output_voltage;
     _current = output_current;
     _rpm = engine_speed;
-    _fuel_remaining = fuel_level;
+    _fuel_remaining = ((float)fuel_level) / 100;
     _state = (uint8_t)commanded_runstate;
 
     update_frontend();
@@ -298,6 +298,50 @@ bool AP_Generator_GX_7::healthy() const
         return false;
     }
     return true;
+}
+
+// Check for failsafes
+AP_BattMonitor::Failsafe AP_Generator_GX_7::update_failsafes() const
+{
+    // Check for error codes that lead to critical action battery monitor failsafe
+    if (is_critical_error(extender_error)) {
+        return AP_BattMonitor::Failsafe::Critical;
+    }
+
+    // Check for error codes that lead to low action battery monitor failsafe
+    if (is_low_error(extender_error)) {
+        return AP_BattMonitor::Failsafe::Low;
+    }
+
+    return AP_BattMonitor::Failsafe::None;
+}
+
+// Check for error codes that are deemed critical
+bool AP_Generator_GX_7::is_critical_error(const uint32_t err_in) const
+{
+    return false;
+}
+
+// Check for error codes that are deemed severe and would be cause to trigger a battery monitor low failsafe action
+bool AP_Generator_GX_7::is_low_error(const uint32_t err_in) const
+{
+    if (
+        err_in & (uint32_t)ExtenderError::LOCK_TIME_EXPIRE_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::LOW_OIL_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::SYSTEM_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::COMMUNICATION_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::THROTTLE_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::OVER_SPEED_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::OVER_CURRENT_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR == 0x1 
+        || err_in & (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR == 0x1 
+        )
+    {
+        return true;
+    }
+    return false;
 }
 
 
