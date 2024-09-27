@@ -580,6 +580,12 @@ const AP_Param::Info Copter::var_info[] = {
     GOBJECT(sprayer,                "SPRAY_",       AC_Sprayer),
 #endif
 
+#if HAL_SPOT_SPRAYER_ENABLED
+    // @Group: SPOT_SPRAY_
+    // @Path: ../libraries/AC_SpotSprayer/AC_SpotSprayer.cpp
+    GOBJECT(spot_sprayer, "SPOT_", AC_SpotSprayer),
+#endif
+
 #if AP_SIM_ENABLED
     // @Group: SIM_
     // @Path: ../libraries/SITL/SITL.cpp

@@ -282,8 +282,12 @@ public:
         SCRIPTING_7 =        306,
         SCRIPTING_8 =        307,
 
+        // Spot Sprayer inputs
+        SPOT_SPRAYER =              310, // Run spot sprayer
+        SPOT_SPRAYER_FLOW_RATE =    311, // Set spot sprayer desired flow rate
+
         // this must be higher than any aux function above
-        AUX_FUNCTION_MAX =   308,
+        AUX_FUNCTION_MAX =   312,
     };
     typedef enum AUX_FUNC aux_func_t;
 
@@ -359,6 +363,8 @@ protected:
     void do_aux_function_rc_override_enable(const AuxSwitchPos ch_flag);
     void do_aux_function_relay(uint8_t relay, bool val);
     void do_aux_function_sprayer(const AuxSwitchPos ch_flag);
+    void do_aux_function_spot_sprayer(const AuxSwitchPos ch_flag);
+    void do_aux_function_spot_sprayer_flowrate(const AuxSwitchPos ch_flag);
     void do_aux_function_generator(const AuxSwitchPos ch_flag);
     void do_aux_function_fft_notch_tune(const AuxSwitchPos ch_flag);
 
