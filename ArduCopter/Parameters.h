@@ -205,6 +205,7 @@ public:
         k_param_pos_control,
         k_param_circle_nav,
         k_param_loiter_nav,     // 105
+        k_param_sport_nav,
         k_param_custom_control,
 
         // 110: Telemetry control
@@ -382,7 +383,12 @@ public:
 
         // 254,255: reserved
 
+        k_param_pilot_takeoff_spd = 256,
+
         k_param_vehicle = 257, // vehicle common block of parameters
+
+        k_param_pilot_land_delay = 258,
+
         k_param_throw_altitude_min,
         k_param_throw_altitude_max,
 
@@ -401,6 +407,8 @@ public:
     AP_Float        throttle_filt;
     AP_Int16        throttle_behavior;
     AP_Float        pilot_takeoff_alt;
+    AP_Float        pilot_takeoff_spd;
+    AP_Int16        pilot_land_delay;
 
 #if MODE_RTL_ENABLED == ENABLED
     AP_Int32        rtl_altitude;

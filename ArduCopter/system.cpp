@@ -489,6 +489,14 @@ void Copter::allocate_motors(void)
     }
     AP_Param::load_object_from_eeprom(loiter_nav, loiter_nav->var_info);
 
+#if MODE_SPORT_ENABLED == ENABLED
+    sport_nav = new AC_Sport(inertial_nav, *ahrs_view, *pos_control, *attitude_control);
+    if (sport_nav == nullptr) {
+        AP_BoardConfig::allocation_error("SportNav");
+    }
+    AP_Param::load_object_from_eeprom(sport_nav, sport_nav->var_info);
+#endif
+
 #if MODE_CIRCLE_ENABLED == ENABLED
     circle_nav = new AC_Circle(inertial_nav, *ahrs_view, *pos_control);
     if (circle_nav == nullptr) {

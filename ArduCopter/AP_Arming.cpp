@@ -389,6 +389,48 @@ bool AP_Arming_Copter::gps_checks(bool display_failure)
     return true;
 }
 
+// performs pre_arm gps related checks and returns true if passed
+bool AP_Arming_Copter::rangefinder_checks(bool display_failure)
+{
+    // check if flight mode requires GPS
+    bool mode_requires_rangefinder = copter.flightmode->requires_RNGFNDR();
+
+    // call parent gps checks
+    if (mode_requires_rangefinder) {
+        if (!AP_Arming::rangefinder_checks(display_failure)) {
+            AP_Notify::flags.pre_arm_check = false;
+            return false;
+        }
+        if (!copter.rangefinder_state.enabled){
+            AP_Notify::flags.pre_arm_check = false;
+            AP_Arming::check_failed(ARMING_CHECK_RANGEFINDER, display_failure, "No Rangefinder configured");
+            return false;
+        }
+        if (!copter.rangefinder_state.alt_healthy){
+            AP_Notify::flags.pre_arm_check = false;
+            AP_Arming::check_failed(ARMING_CHECK_RANGEFINDER, display_failure, "Rangefinder not healthy");
+            return false;
+
+        }
+    }
+
+    // return true if GPS is not required
+    if (!mode_requires_rangefinder) {
+        AP_Notify::flags.pre_arm_check = true;
+        return true;
+    }
+
+    // return true immediately if rangefinder check is disabled
+    if (!check_enabled(ARMING_CHECK_RANGEFINDER)) {
+        AP_Notify::flags.pre_arm_check = true;
+        return true;
+    }
+
+    // if we got here all must be ok
+    AP_Notify::flags.pre_arm_check = true;
+    return true;
+}
+
 // check ekf attitude is acceptable
 bool AP_Arming_Copter::pre_arm_ekf_attitude_check()
 {

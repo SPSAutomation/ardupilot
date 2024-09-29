@@ -68,12 +68,30 @@ const AP_Param::Info Copter::var_info[] = {
     // @Increment: 10
     GSCALAR(pilot_takeoff_alt,  "PILOT_TKOFF_ALT",  PILOT_TKOFF_ALT_DEFAULT),
 
+    // @Param: PILOT_TKOFF_SPD
+    // @DisplayName: Pilot takeoff speed
+    // @Description: Speed that altitude control modes will climb at when a takeoff is triggered with the throttle stick.
+    // @User: Standard
+    // @Units: cm/s
+    // @Range: 0.0 1000.0
+    // @Increment: 1
+    GSCALAR(pilot_takeoff_spd,  "PILOT_TKOFF_SPD",  10),
+
+    // @Param: PILOT_LND_DELAY
+    // @DisplayName: Pilot landing delay
+    // @Description: Delay the aircraft waits before entering the pilot initiated landing sequence.
+    // @User: Standard
+    // @Units: ms
+    // @Range: 0 5000
+    // @Increment: 1
+    GSCALAR(pilot_land_delay,  "PILOT_LND_DELAY",  2000),
+
     // @Param: PILOT_THR_BHV
     // @DisplayName: Throttle stick behavior
     // @Description: Bitmask containing various throttle stick options. TX with sprung throttle can set PILOT_THR_BHV to "1" so motor feedback when landed starts from mid-stick instead of bottom of stick.
     // @User: Standard
-    // @Values: 0:None,1:Feedback from mid stick,2:High throttle cancels landing,4:Disarm on land detection
-    // @Bitmask: 0:Feedback from mid stick,1:High throttle cancels landing,2:Disarm on land detection
+    // @Values: 0:None,1:Feedback from mid stick,2:High throttle cancels landing in landing modes,4:Disarm on land detection,8:High throttle cancels landing in loiter and sport
+    // @Bitmask: 0:Feedback from mid stick,1:High throttle cancels landing,2:Disarm on land detection,3:Disarm on land detection,8:High throttle cancels landing in loiter and sport
     GSCALAR(throttle_behavior, "PILOT_THR_BHV", 0),
 
     // @Group: SERIAL
@@ -489,6 +507,12 @@ const AP_Param::Info Copter::var_info[] = {
     // @Group: LOIT_
     // @Path: ../libraries/AC_WPNav/AC_Loiter.cpp
     GOBJECTPTR(loiter_nav, "LOIT_", AC_Loiter),
+
+#if MODE_SPORT_ENABLED == ENABLED
+    // @Group: SPORT_
+    // @Path: ../libraries/AC_WPNav/AC_Sport.cpp
+    GOBJECTPTR(sport_nav, "SPORT_",  AC_Sport),
+#endif
 
 #if MODE_CIRCLE_ENABLED == ENABLED
     // @Group: CIRCLE_

@@ -54,6 +54,7 @@
 #include <AC_WPNav/AC_WPNav.h>              // ArduCopter waypoint navigation library
 #include <AC_WPNav/AC_Loiter.h>             // ArduCopter Loiter Mode Library
 #include <AC_WPNav/AC_Circle.h>             // circle navigation library
+#include <AC_WPNav/AC_Sport.h>              // Arducopter Sport Mode Library
 #include <AP_Declination/AP_Declination.h>  // ArduPilot Mega Declination Helper Library
 #include <AP_RCMapper/AP_RCMapper.h>        // RC input mapping library
 #include <AP_BattMonitor/AP_BattMonitor.h>  // Battery monitor library
@@ -494,6 +495,7 @@ private:
     AC_PosControl *pos_control;
     AC_WPNav *wp_nav;
     AC_Loiter *loiter_nav;
+    AC_Sport *sport_nav;
 
 #if AC_CUSTOMCONTROL_MULTI_ENABLED == ENABLED
     AC_CustomControl custom_control{ahrs_view, attitude_control, motors, scheduler.get_loop_period_s()};

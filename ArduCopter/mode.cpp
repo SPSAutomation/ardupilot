@@ -13,6 +13,7 @@ Mode::Mode(void) :
     g2(copter.g2),
     wp_nav(copter.wp_nav),
     loiter_nav(copter.loiter_nav),
+    sport_nav(copter.sport_nav),
     pos_control(copter.pos_control),
     inertial_nav(copter.inertial_nav),
     ahrs(copter.ahrs),
@@ -336,6 +337,13 @@ bool Copter::set_mode(Mode::Number mode, ModeReason reason)
         return false;
     }
 
+    if (!ignore_checks &&
+        new_flightmode->requires_RNGFNDR() &&
+        !copter.rangefinder_alt_ok()) {
+        mode_change_failed(new_flightmode, "requires rangefinder");
+        return false;
+    }
+
     // check for valid altitude if old mode did not require it but new one does
     // we only want to stop changing modes if it could make things worse
     if (!ignore_checks &&
@@ -532,10 +540,10 @@ bool Mode::_TakeOff::triggered(const float target_climb_rate) const
         return false;
     }
 
-    if (copter.motors->get_spool_state() != AP_Motors::SpoolState::THROTTLE_UNLIMITED) {
-        // hold aircraft on the ground until rotor speed runup has finished
-        return false;
-    }
+    // if (copter.motors->get_spool_state() != AP_Motors::SpoolState::THROTTLE_UNLIMITED) {
+    //     // hold aircraft on the ground until rotor speed runup has finished
+    //     return false;
+    // }
 
     return true;
 }
@@ -704,8 +712,10 @@ void Mode::land_run_horizontal_control()
         if ((g.throttle_behavior & THR_BEHAVE_HIGH_THROTTLE_CANCELS_LAND) != 0 && copter.rc_throttle_control_in_filter.get() > LAND_CANCEL_TRIGGER_THR){
             LOGGER_WRITE_EVENT(LogEvent::LAND_CANCELLED_BY_PILOT);
             // exit land if throttle is high
-            if (!set_mode(Mode::Number::LOITER, ModeReason::THROTTLE_LAND_ESCAPE)) {
-                set_mode(Mode::Number::ALT_HOLD, ModeReason::THROTTLE_LAND_ESCAPE);
+            if (copter.flightmode->mode_number() != copter.mode_loiter.mode_number() && copter.flightmode->mode_number() != copter.mode_sport.mode_number()) {
+                if (!set_mode(Mode::Number::LOITER, ModeReason::THROTTLE_LAND_ESCAPE)) {
+                    set_mode(Mode::Number::ALT_HOLD, ModeReason::THROTTLE_LAND_ESCAPE);
+                }
             }
         }
 
@@ -977,6 +987,7 @@ Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
         }
 
     } else if (takeoff.running() || takeoff.triggered(target_climb_rate_cms)) {
+        motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
         // the aircraft is currently landed or taking off, asking for a positive climb rate and in THROTTLE_UNLIMITED
         // the aircraft should progress through the take off procedure
         return AltHold_Takeoff;
@@ -986,20 +997,22 @@ Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
         if (target_climb_rate_cms < 0.0f && !copter.ap.using_interlock) {
             // the aircraft should move to a ground idle state
             motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::GROUND_IDLE);
-
-        } else {
-            // the aircraft should prepare for imminent take off
-            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
-        }
-
-        if (motors->get_spool_state() == AP_Motors::SpoolState::GROUND_IDLE) {
-            // the aircraft is waiting in ground idle
             return AltHold_Landed_Ground_Idle;
 
         } else {
-            // the aircraft can leave the ground at any time
+            // the aircraft should prepare for imminent take off
+            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::GROUND_IDLE);
             return AltHold_Landed_Pre_Takeoff;
         }
+
+        // if (motors->get_spool_state() == AP_Motors::SpoolState::GROUND_IDLE) {
+        //     // the aircraft is waiting in ground idle
+        //     return AltHold_Landed_Ground_Idle;
+
+        // } else {
+        //     // the aircraft can leave the ground at any time
+        //     return AltHold_Landed_Pre_Takeoff;
+        // }
 
     } else {
         // the aircraft is in a flying state

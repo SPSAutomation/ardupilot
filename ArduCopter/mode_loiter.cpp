@@ -9,6 +9,9 @@
 // loiter_init - initialise loiter controller
 bool ModeLoiter::init(bool ignore_checks)
 {
+    _cancelled_landing = false;
+    _landing = false;
+
     if (!copter.failsafe.radio) {
         float target_roll, target_pitch;
         // apply SIMPLE mode transform to pilot inputs
@@ -83,7 +86,8 @@ void ModeLoiter::precision_loiter_xy()
 // should be called at 100hz or more
 void ModeLoiter::run()
 {
-    float target_roll, target_pitch;
+    float target_roll = 0.0f;
+    float target_pitch = 0.0f;
     float target_yaw_rate = 0.0f;
     float target_climb_rate = 0.0f;
 
@@ -94,15 +98,6 @@ void ModeLoiter::run()
     if (!copter.failsafe.radio) {
         // apply SIMPLE mode transform to pilot inputs
         update_simple_mode();
-
-        // convert pilot input to lean angles
-        get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max_cd());
-
-        // process pilot's roll and pitch input
-        loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch);
-
-        // get pilot's desired yaw rate
-        target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->norm_input_dz());
 
         // get pilot desired climb rate
         target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
@@ -124,6 +119,7 @@ void ModeLoiter::run()
     switch (loiter_state) {
 
     case AltHold_MotorStopped:
+        _landing = false;
         attitude_control->reset_rate_controller_I_terms();
         attitude_control->reset_yaw_target_and_rate();
         pos_control->relax_z_controller(0.0f);   // forces throttle output to decay to zero
@@ -132,10 +128,12 @@ void ModeLoiter::run()
         break;
 
     case AltHold_Landed_Ground_Idle:
+        _landing = false;
         attitude_control->reset_yaw_target_and_rate();
         FALLTHROUGH;
 
     case AltHold_Landed_Pre_Takeoff:
+        _landing = false;
         attitude_control->reset_rate_controller_I_terms_smoothly();
         loiter_nav->init_target();
         attitude_control->input_thrust_vector_rate_heading(loiter_nav->get_thrust_vector(), target_yaw_rate, false);
@@ -143,13 +141,21 @@ void ModeLoiter::run()
         break;
 
     case AltHold_Takeoff:
+        _landing = false;
         // initiate take-off
         if (!takeoff.running()) {
             takeoff.start(constrain_float(g.pilot_takeoff_alt,0.0f,1000.0f));
         }
 
         // get avoidance adjusted climb rate
-        target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+        if (target_climb_rate >= 0) {
+            // get takeoff speed from parameter
+            target_climb_rate = g.pilot_takeoff_spd;
+            // get avoidance adjusted climb rate
+            target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+        } else {
+            target_climb_rate = 0;
+        }
 
         // set position controller targets adjusted for pilot input
         takeoff.do_pilot_takeoff(target_climb_rate);
@@ -165,37 +171,220 @@ void ModeLoiter::run()
         // set motors to full range
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
 
+        // get pilot's desired yaw rate
+        target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->norm_input_dz());
+
+
+
+            bool rng_alt_ok = copter.rangefinder_alt_ok();
+
+            if (!rng_alt_ok) {
+                copter.set_mode(Mode::Number::RTL, ModeReason::BAD_DEPTH);
+            }
+
+            Matrix3f rngRotMatrix = {
+                Vector3f{copter.ahrs.cos_pitch(),   copter.ahrs.sin_pitch() * copter.ahrs.sin_roll(),   copter.ahrs.sin_pitch() * copter.ahrs.cos_roll()}, 
+                Vector3f{0,                         copter.ahrs.cos_roll(),                             -copter.ahrs.sin_roll()},
+                Vector3f{-copter.ahrs.sin_pitch(),  copter.ahrs.cos_pitch() * copter.ahrs.sin_roll(),   copter.ahrs.cos_pitch() * copter.ahrs.cos_roll()}
+            };
+
+            int16_t fc_height_rng = copter.rangefinder_state.alt_cm_glitch_protected - (rngRotMatrix * copter.rangefinder.get_pos_offset_orient(ROTATION_PITCH_270)).z;
+
+            if (
+                !_cancelled_landing && (_landing || ( 
+                    fc_height_rng <= (g.pilot_takeoff_alt + (copter.rangefinder.ground_clearance_cm_orient(ROTATION_PITCH_270)) + 10) && 
+                    target_climb_rate <= -get_pilot_speed_dn()*0.99 && 
+                    copter.gps.ground_speed_cm() <= 50
+                ))
+            ) {
+
+                bool cancel_landing = false;
+
+                if (!_landing) {
+                    _land_start_time = millis();
+                    _land_pause = true;
+                    _landing = true;
+                    _message_sent = false;
+                }
+
+                // pause before beginning land descent
+                if (_land_pause && millis()-_land_start_time >= (uint16_t) g.pilot_land_delay) {
+                    _land_pause = false;
+                }
+
+                // cancel landing if throttle is not at minimum and the landing descent has not yet started
+                if (
+                    _land_pause && (
+                        target_climb_rate > -get_pilot_speed_dn()*0.99 || 
+                        channel_yaw->norm_input_dz() > 0.1 || 
+                        channel_yaw->norm_input_dz() < -0.1 || 
+                        channel_pitch->norm_input_dz() > 0.1 || 
+                        channel_pitch->norm_input_dz() < -0.1 || 
+                        channel_roll->norm_input_dz() > 0.1 || 
+                        channel_roll->norm_input_dz() < -0.1
+                        )
+                    ) {
+                    cancel_landing = true;
+                }
+
+                // cancel landing if landing descent has started and high throttle cancels landing is set and throttle is high
+                if (!_land_pause && (g.throttle_behavior & THR_BEHAVE_HIGH_THROTTLE_CANCELS_LAND_LOITER_SPORT) != 0 && copter.rc_throttle_control_in_filter.get() > LAND_CANCEL_TRIGGER_THR){
+                    cancel_landing = true;
+                }
+
+                if (_landing && _land_pause) {
+                    // convert pilot input to lean angles
+                    get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max_cd());
+
+                    // process pilot's roll and pitch input
+                    loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch);
+
 #if AC_PRECLAND_ENABLED
-        bool precision_loiter_old_state = _precision_loiter_active;
-        if (do_precision_loiter()) {
-            precision_loiter_xy();
-            _precision_loiter_active = true;
-        } else {
-            _precision_loiter_active = false;
-        }
-        if (precision_loiter_old_state && !_precision_loiter_active) {
-            // prec loiter was active, not any more, let's init again as user takes control
-            loiter_nav->init_target();
-        }
-        // run loiter controller if we are not doing prec loiter
-        if (!_precision_loiter_active) {
-            loiter_nav->update();
-        }
+                            bool precision_loiter_old_state = _precision_loiter_active;
+                    if (do_precision_loiter()) {
+                        precision_loiter_xy();
+                        _precision_loiter_active = true;
+                    } else {
+                        _precision_loiter_active = false;
+                    }
+                    if (precision_loiter_old_state && !_precision_loiter_active) {
+                        // prec loiter was active, not any more, let's init again as user takes control
+                        loiter_nav->init_target();
+                    }
+                    // run loiter controller if we are not doing prec loiter
+                    if (!_precision_loiter_active) {
+                        loiter_nav->update();
+                    }
 #else
         loiter_nav->update();
 #endif
+                }
 
-        // call attitude controller
-        attitude_control->input_thrust_vector_rate_heading(loiter_nav->get_thrust_vector(), target_yaw_rate, false);
+                if (_landing) {
+                    if (!_land_pause && !_message_sent && !cancel_landing){
+                        gcs().send_text(MAV_SEVERITY_ALERT,"Landing Initiated");
+                        _message_sent = true;
+                    }
+                    auto_yaw.set_mode(AutoYaw::Mode::HOLD);
+                    land_run_horizontal_control();
+                    land_run_vertical_control(_land_pause);
+                    if (cancel_landing) {
+                        _landing = false;
+                        if (!_land_pause) {
+                            _cancelled_landing = true;
+                            if (_message_sent){
+                                gcs().send_text(MAV_SEVERITY_ALERT,"Landing Cancelled");
+                            }
+                        }
+                    }
+                }
 
-        // get avoidance adjusted climb rate
-        target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+            }
+            else 
+            {
+                if (_cancelled_landing){
+                    if (fc_height_rng < (g.pilot_takeoff_alt + (copter.rangefinder.ground_clearance_cm_orient(ROTATION_PITCH_270))) + 10) {
+                        loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch);
+#if AC_PRECLAND_ENABLED
+                        bool precision_loiter_old_state = _precision_loiter_active;
+                        if (do_precision_loiter()) {
+                            precision_loiter_xy();
+                            _precision_loiter_active = true;
+                        } else {
+                            _precision_loiter_active = false;
+                        }
+                        if (precision_loiter_old_state && !_precision_loiter_active) {
+                            // prec loiter was active, not any more, let's init again as user takes control
+                            loiter_nav->init_target();
+                        }
+                        // run loiter controller if we are not doing prec loiter
+                        if (!_precision_loiter_active) {
+                            loiter_nav->update();
+                        }
+#else
+                        loiter_nav->update();
+#endif
 
-        // update the vertical offset based on the surface measurement
-        copter.surface_tracking.update_surface_offset();
+                        attitude_control->input_thrust_vector_rate_heading(loiter_nav->get_thrust_vector(), 0.0f);
 
-        // Send the commanded climb rate to the position controller
-        pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate);
+                        target_climb_rate = MAX(target_climb_rate, MIN(50, g.pilot_speed_up));
+
+                        // get avoidance adjusted climb rate
+                        target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+
+                        // update the vertical offset based on the surface measurement
+                        copter.surface_tracking.update_surface_offset();
+
+                        // Send the commanded climb rate to the position controller
+                        pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate);
+                        break;
+                    }
+                    else
+                    {
+                        _cancelled_landing = false;
+                    }
+                }
+
+                if (copter.rangefinder_state.alt_cm_glitch_protected < copter.rangefinder.ground_clearance_cm_orient(ROTATION_PITCH_270))
+                {
+                    copter.set_mode(Mode::Number::RTL, ModeReason::BAD_DEPTH);
+                    gcs().send_text(MAV_SEVERITY_ALERT,"Rangefinder Occluded: Returning to Home");
+                }
+
+                // convert pilot input to lean angles
+                get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max_cd());
+
+                // process pilot's roll and pitch input
+                loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch);
+
+#if AC_PRECLAND_ENABLED
+                bool precision_loiter_old_state = _precision_loiter_active;
+                if (do_precision_loiter()) {
+                    precision_loiter_xy();
+                    _precision_loiter_active = true;
+                } else {
+                    _precision_loiter_active = false;
+                }
+                if (precision_loiter_old_state && !_precision_loiter_active) {
+                    // prec loiter was active, not any more, let's init again as user takes control
+                    loiter_nav->init_target();
+                }
+                // run loiter controller if we are not doing prec loiter
+                if (!_precision_loiter_active) {
+                    loiter_nav->update();
+                }
+#else
+                loiter_nav->update();
+#endif
+
+                // call attitude controller
+                attitude_control->input_thrust_vector_rate_heading(loiter_nav->get_thrust_vector(), target_yaw_rate);
+
+                if (fc_height_rng < (g.pilot_takeoff_alt + (copter.rangefinder.ground_clearance_cm_orient(ROTATION_PITCH_270))) - 10) {
+                    target_climb_rate = MAX(target_climb_rate, MIN(powF(fc_height_rng - g.pilot_takeoff_alt, 2) / (powF(g.pilot_takeoff_alt, 2)), 1) * g.pilot_speed_up);
+                    // target_climb_rate = MAX(target_climb_rate, MIN((g.pilot_takeoff_alt - fc_height_rng) / (g.pilot_takeoff_alt), 1) * g.pilot_speed_up);
+
+                }
+                else if (target_climb_rate < 0) {
+                    if (g.pilot_takeoff_alt > 0.0f){
+                        target_climb_rate = MAX(target_climb_rate, MIN(powF((fc_height_rng - (g.pilot_takeoff_alt - 10)) / (2 * get_pilot_speed_dn()), 2) + 0.05, 1) * -get_pilot_speed_dn());
+                        // target_climb_rate_mmps = MAX(target_climb_rate_mmps, MIN((alt_above_ground_mm - takeoff_landing_alt_mm) / (takeoff_landing_alt_mm / 1000), 1000) * -get_pilot_speed_dn());
+
+                        if (fc_height_rng <= g.pilot_takeoff_alt + (copter.rangefinder.ground_clearance_cm_orient(ROTATION_PITCH_270))) {
+                            target_climb_rate = 0;
+                        }
+                    }
+                }
+
+                // get avoidance adjusted climb rate
+                target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
+
+                // update the vertical offset based on the surface measurement
+                copter.surface_tracking.update_surface_offset();
+
+                // Send the commanded climb rate to the position controller
+                pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate);
+            }
         break;
     }
 
@@ -211,6 +400,16 @@ uint32_t ModeLoiter::wp_distance() const
 int32_t ModeLoiter::wp_bearing() const
 {
     return loiter_nav->get_bearing_to_target();
+}
+
+bool ModeLoiter::is_landing() const
+{
+    return _landing;
+}
+
+void ModeLoiter::exit()
+{
+    _landing = false;
 }
 
 #endif

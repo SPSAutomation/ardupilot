@@ -884,6 +884,11 @@ bool RangeFinder::prearm_healthy(char *failure_msg, const uint8_t failure_msg_le
             break;
         }
 
+        if (drivers[i]->range_valid_count() <= 3) {
+            hal.util->snprintf(failure_msg, failure_msg_len, "Rangefinder %X: Bad Data", i + 1);
+            return false;
+        }
+
         switch (drivers[i]->status()) {
         case Status::NoData:
             hal.util->snprintf(failure_msg, failure_msg_len, "Rangefinder %X: No Data", i + 1);

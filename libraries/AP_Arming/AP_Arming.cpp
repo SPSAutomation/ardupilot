@@ -928,7 +928,8 @@ bool AP_Arming::rangefinder_checks(bool report)
     if (check_enabled(ARMING_CHECK_RANGEFINDER)) {
         RangeFinder *range = RangeFinder::get_singleton();
         if (range == nullptr) {
-            return true;
+            check_failed(ARMING_CHECK_RANGEFINDER, report, "No Rangefinder configured");
+            return false;
         }
 
         char buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1];

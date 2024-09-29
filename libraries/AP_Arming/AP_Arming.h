@@ -204,7 +204,7 @@ protected:
     // all data loaded
     virtual bool terrain_database_required() const;
 
-    bool rangefinder_checks(bool report);
+    virtual bool rangefinder_checks(bool report);
 
     bool fence_checks(bool report);
 
