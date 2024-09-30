@@ -319,6 +319,10 @@ AP_BattMonitor::Failsafe AP_Generator_GX_7::update_failsafes() const
 // Check for error codes that are deemed critical
 bool AP_Generator_GX_7::is_critical_error(const uint32_t err_in) const
 {
+    if (working_state != WorkingState::RUN) {
+        gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Stopped");
+        return true;
+    }
     return false;
 }
 
