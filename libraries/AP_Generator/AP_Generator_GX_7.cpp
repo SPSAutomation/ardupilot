@@ -326,18 +326,21 @@ bool AP_Generator_GX_7::is_critical_error(const uint32_t err_in) const
 bool AP_Generator_GX_7::is_low_error(const uint32_t err_in) const
 {
     if (
-        err_in & (uint32_t)ExtenderError::LOCK_TIME_EXPIRE_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::LOW_OIL_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::SYSTEM_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::COMMUNICATION_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::THROTTLE_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::OVER_SPEED_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::OVER_CURRENT_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR == 0x1 
-        || err_in & (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR == 0x1 
+        err_in & 
+        (
+            (uint32_t)ExtenderError::LOCK_TIME_EXPIRE_ERROR == 0x1
+            || (uint32_t)ExtenderError::LOW_OIL_ERROR == 0x1 
+            || (uint32_t)ExtenderError::SYSTEM_ERROR == 0x1 
+            || (uint32_t)ExtenderError::COMMUNICATION_ERROR == 0x1 
+            || (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR == 0x1 
+            || (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR == 0x1 
+            || (uint32_t)ExtenderError::THROTTLE_ERROR == 0x1 
+            || (uint32_t)ExtenderError::OVER_SPEED_ERROR == 0x1 
+            || (uint32_t)ExtenderError::OVER_CURRENT_ERROR == 0x1 
+            || (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR == 0x1 
+            || (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR == 0x1
         )
+    )
     {
         return true;
     }
