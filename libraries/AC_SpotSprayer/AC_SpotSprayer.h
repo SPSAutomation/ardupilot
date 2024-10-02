@@ -29,9 +29,6 @@
 #define AC_SPRAYER_DEFAULT_PRESSURE         900
 #define AC_SPRAYER_DEFAULT_USEFUL_LOAD      15.0
 
-#define AC_SPRAYER_DEFAULT_TURN_ON_DELAY    100     ///< delay between when we reach the minimum speed and we begin spraying.  This reduces the likelihood of constantly turning on/off the pump
-#define AC_SPRAYER_DEFAULT_SHUT_OFF_DELAY   1000    ///< shut-off delay in milli seconds.  This reduces the likelihood of constantly turning on/off the pump
-
 #define MSG_TIMEOUT                         3000
 
 #define ERROR_MSG_TIMEOUT                   10000
