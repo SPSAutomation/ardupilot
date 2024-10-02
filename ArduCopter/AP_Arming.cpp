@@ -564,7 +564,7 @@ bool AP_Arming_Copter::useful_load_checks(bool display_failure) const
         return true;
     }
     char failure_msg[50] = {};
-    if (!sprayer->pre_arm_check(failure_msg, sizeof(failure_msg), (float) copter.g.useful_load)) {
+    if (!sprayer->pre_arm_check(failure_msg, sizeof(failure_msg))) {
         check_failed(display_failure, "%s", failure_msg);
         return false;
     }

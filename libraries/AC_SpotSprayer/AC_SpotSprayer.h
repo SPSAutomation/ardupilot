@@ -27,6 +27,7 @@
 #define AC_SPRAYER_DEFAULT_FLOW_RATE_MID    1000
 #define AC_SPRAYER_DEFAULT_FLOW_RATE_HIGH   1500
 #define AC_SPRAYER_DEFAULT_PRESSURE         900
+#define AC_SPRAYER_DEFAULT_USEFUL_LOAD      15.0
 
 #define AC_SPRAYER_DEFAULT_TURN_ON_DELAY    100     ///< delay between when we reach the minimum speed and we begin spraying.  This reduces the likelihood of constantly turning on/off the pump
 #define AC_SPRAYER_DEFAULT_SHUT_OFF_DELAY   1000    ///< shut-off delay in milli seconds.  This reduces the likelihood of constantly turning on/off the pump
@@ -74,7 +75,7 @@ public:
     bool spraying() const { return _spraying; }
     bool enabled() const { return (bool) _enabled; }
 
-    bool pre_arm_check(char *failmsg, uint8_t failmsg_len, float useful_load) const;
+    bool pre_arm_check(char *failmsg, uint8_t failmsg_len) const;
 
     /// update - adjusts servo positions based on speed and requested quantity
     void update();
@@ -84,11 +85,12 @@ public:
 protected:
 
     // parameters
-    AP_Int8         _enabled;               ///< top level enable/disable control
+    AP_Int8         _enabled;               ///< Top level enable/disable control
     AP_Int16        _flow_rate_low;         ///< Desired low flow rate
     AP_Int16        _flow_rate_mid;         ///< Desired middle flow rate
     AP_Int16        _flow_rate_high;        ///< Desired high flow rate
     AP_Int16        _pressure;              ///< Desired pump pressure
+    AP_Float        _useful_load;           ///< Maximum useful load
 
 private:
 

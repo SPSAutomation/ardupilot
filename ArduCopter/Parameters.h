@@ -198,9 +198,6 @@ public:
 
         // 98: 
         k_param_spot_sprayer = 98,
-
-        // 99: Useful Load
-        k_param_useful_load = 99,
                 
         //
         // 100: Inertial Nav
@@ -468,8 +465,6 @@ public:
     AP_Int8         fs_crash_check;
     AP_Float        fs_ekf_thresh;
     AP_Int16        gcs_pid_mask;
-
-    AP_Float        useful_load;
 
 #if MODE_THROW_ENABLED == ENABLED
     AP_Enum<ModeThrow::PreThrowMotorState>         throw_motor_start;

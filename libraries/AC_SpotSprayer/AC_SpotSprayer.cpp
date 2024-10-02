@@ -44,13 +44,21 @@ const AP_Param::GroupInfo AC_SpotSprayer::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("RATE_HIGH",   3, AC_SpotSprayer, _flow_rate_high, AC_SPRAYER_DEFAULT_FLOW_RATE_HIGH),
 
-    // @Param: PRESSURE
+    // @Param: PRES
     // @DisplayName: Pump pressure
     // @Description: Pump Pressure target
     // @Units: kpa
     // @Range: 0 1000
     // @User: Standard
     AP_GROUPINFO("PRES",   4, AC_SpotSprayer, _pressure, AC_SPRAYER_DEFAULT_PRESSURE),
+
+    // @Param: USEFULLOAD
+    // @DisplayName: Useful Load
+    // @Description: Maximum useful load
+    // @Units: kg
+    // @Range: 0 127
+    // @User: Advanced
+    AP_GROUPINFO("MAX_LOAD",   5, AC_SpotSprayer, _useful_load, AC_SPRAYER_DEFAULT_USEFUL_LOAD),
 
     AP_GROUPEND
 };
@@ -220,10 +228,10 @@ void AC_SpotSprayer::update()
 #endif
 }
 
-bool AC_SpotSprayer::pre_arm_check(char *failmsg, uint8_t failmsg_len, float useful_load) const
+bool AC_SpotSprayer::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
 {
-    if (_reported_weight > useful_load) {
-        hal.util->snprintf(failmsg, failmsg_len, "Overweight by %fkg", _reported_weight - useful_load);
+    if (_reported_weight > (float) _useful_load) {
+        hal.util->snprintf(failmsg, failmsg_len, "Overweight by %fkg", _reported_weight - (float) _useful_load);
         return false;
     }
     return true;
