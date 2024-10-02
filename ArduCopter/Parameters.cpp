@@ -357,6 +357,14 @@ const AP_Param::Info Copter::var_info[] = {
     // @User: Advanced
     ASCALAR(angle_max, "ANGLE_MAX",                 DEFAULT_ANGLE_MAX),
 
+    // @Param: USEFUL_LOAD
+    // @DisplayName: Useful Load
+    // @Description: Maximum useful load (payload weight).
+    // @Units: kg
+    // @Range: 0 127
+    // @User: Advanced
+    GSCALAR(useful_load, "USEFUL_LOAD",             DEFAULT_USEFUL_LOAD),
+
 #if MODE_POSHOLD_ENABLED == ENABLED
     // @Param: PHLD_BRAKE_RATE
     // @DisplayName: PosHold braking rate

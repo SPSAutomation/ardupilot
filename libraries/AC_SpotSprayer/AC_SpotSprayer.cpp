@@ -127,6 +127,7 @@ void AC_SpotSprayer::handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRx
     driver->measured_pressure = msg.pressure;
     driver->spray_level = msg.spray_remaining;
     driver->error_flags = msg.error_flags;
+    driver->_reported_weight = msg.tank_weight;
 }
 
 void AC_SpotSprayer::run(const bool activate)
@@ -217,8 +218,15 @@ void AC_SpotSprayer::update()
 #if HAL_LOGGING_ENABLED
     log_write();
 #endif
+}
 
-    
+bool AC_SpotSprayer::pre_arm_check(char *failmsg, uint8_t failmsg_len, float useful_load) const
+{
+    if (_reported_weight > useful_load) {
+        hal.util->snprintf(failmsg, failmsg_len, "Overweight by %fkg", _reported_weight - useful_load);
+        return false;
+    }
+    return true;
 }
 
 #if HAL_LOGGING_ENABLED

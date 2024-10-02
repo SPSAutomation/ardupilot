@@ -521,6 +521,15 @@
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
+// Useful load
+//
+
+#ifndef DEFAULT_USEFUL_LOAD
+  #define DEFAULT_USEFUL_LOAD         15.0             // the deadzone above and below mid throttle while in althold or loiter
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////////
 // Throw mode configuration
 //
 #ifndef THROW_HIGH_SPEED

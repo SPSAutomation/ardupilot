@@ -74,6 +74,8 @@ public:
     bool spraying() const { return _spraying; }
     bool enabled() const { return (bool) _enabled; }
 
+    bool pre_arm_check(char *failmsg, uint8_t failmsg_len, float useful_load) const;
+
     /// update - adjusts servo positions based on speed and requested quantity
     void update();
 
@@ -102,6 +104,8 @@ private:
     uint16_t    measured_pressure;
     float       spray_level;
     uint8_t     error_flags;
+
+    float       _reported_weight;
 
     HAL_Semaphore _sem;
 
