@@ -15,6 +15,9 @@
 #include <stdio.h>
 
 
+#define EXTENDER_PREARM_TEMP 55
+#define EXTENDER_MAINTAINANCE_SCHEDULE 720000 // 200 Hours in seconds
+
 /*
  *  Example setup:
  *  param set SERIAL2_PROTOCOL 30  # Generator protocol
@@ -139,17 +142,6 @@ private:
     // returns true if the generator should be allowed to move into
     // the "run" (high-RPM) state:
     bool generator_ok_to_run() const;
-    // returns an amount of synthetic heat required for the generator
-    // to move into the "run" state:
-
-    // approximate run and idle speeds for the generator:
-    static const uint16_t RUN_RPM = 15000;
-    static const uint16_t IDLE_RPM = 6000;
-
-    // Temperature 
-    static const uint8_t start_temp = 80;
-
-    static const int32_t MAINTAINANCE_SCHEDULE = 720000; // 200 Hours in seconds
 
     // boolean so we can announce we've stopped the generator due to a
     // crash just once:

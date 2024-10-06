@@ -96,14 +96,6 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
     driver->total_run_time = msg.total_run_minutes;
     driver->extender_error = msg.ExtenderAlarm;
     driver->working_state = (WorkingState)msg.WorkingState;
-
-    if (
-        driver->commanded_runstate == RunState::RUN &&
-        !(driver->working_state == WorkingState::CRANK || driver->working_state == WorkingState::RUN)
-    )
-    {
-        driver->pilot_desired_runstate = RunState::STOP;
-    }
 }
 
 
@@ -111,7 +103,7 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
 // the "run" (high-RPM) state:
 bool AP_Generator_GX_7::generator_ok_to_run() const
 {
-    return motor_temperature >= start_temp;
+    return engine_cyclinder_temperature >= EXTENDER_PREARM_TEMP;
 }
 
 void AP_Generator_GX_7::check_maintenance_required()
@@ -433,7 +425,7 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         std::numeric_limits<double>::quiet_NaN(), // bat_current_setpoint; The target battery current
         motor_temperature, // generator temperature
         total_run_time * 60,
-        MAINTAINANCE_SCHEDULE - (total_run_time * 60)
+        EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60)
         );
 }
 
