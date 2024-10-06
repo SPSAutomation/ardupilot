@@ -52,8 +52,8 @@ const AP_Param::GroupInfo AC_SpotSprayer::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("PRES",   4, AC_SpotSprayer, _pressure, AC_SPRAYER_DEFAULT_PRESSURE),
 
-    // @Param: USEFULLOAD
-    // @DisplayName: Useful Load
+    // @Param: MAX_LOAD
+    // @DisplayName: Max Useful Load
     // @Description: Maximum useful load
     // @Units: kg
     // @Range: 0 127
