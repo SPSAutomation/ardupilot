@@ -175,9 +175,10 @@ void ModeSport::run()
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->norm_input_dz());
 
-        bool rng_alt_ok = copter.rangefinder_alt_ok();
+        RangeFinder::Status rng_status = copter.rangefinder.status_orient(ROTATION_PITCH_270);
 
-        if (!rng_alt_ok) {
+        if (rng_status != RangeFinder::Status::Good && rng_status != RangeFinder::Status::OutOfRangeHigh) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Rangefinder Failure");
             copter.set_mode(Mode::Number::RTL, ModeReason::BAD_DEPTH);
         }
 
