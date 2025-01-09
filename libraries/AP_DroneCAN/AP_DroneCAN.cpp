@@ -523,6 +523,7 @@ void AP_DroneCAN::loop(void)
             gnss_send_yaw();
         }
 #endif
+        ahrs_send_attitude();
         logging();
 #if AP_DRONECAN_HOBBYWING_ESC_SUPPORT
         hobbywing_ESC_update();
@@ -1444,6 +1445,37 @@ bool AP_DroneCAN::is_esc_data_index_valid(const uint8_t index) {
         return false;
     }
     return true;
+}
+
+void AP_DroneCAN::ahrs_send_attitude()
+{
+    uint32_t now = AP_HAL::millis();
+    if (now - _last_attitude_ms < 100) {
+        // update at 10Hz
+        return;
+    }
+    _last_attitude_ms = now;
+
+    const AP_AHRS &ahrs = AP::ahrs();
+    Quaternion quat;
+    bool status_ok;
+    
+    status_ok = ahrs.get_quaternion(quat);
+    if (!status_ok) {
+        return;
+    }
+
+    
+
+    uavcan_equipment_ahrs_Solution pkt;
+    pkt.timestamp.usec = AP_HAL::micros64();
+
+    pkt.orientation_xyzw[0] = quat.q1;
+    pkt.orientation_xyzw[1] = quat.q2;
+    pkt.orientation_xyzw[2] = quat.q3;
+    pkt.orientation_xyzw[3] = quat.q4;
+
+    ahrs_solution.broadcast(pkt);
 }
 
 /*
