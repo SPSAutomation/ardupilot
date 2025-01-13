@@ -1475,6 +1475,20 @@ void AP_DroneCAN::ahrs_send_attitude()
     pkt.orientation_xyzw[2] = quat.q3;
     pkt.orientation_xyzw[3] = quat.q4;
 
+    pkt.orientation_covariance.len = 0;
+
+    pkt.angular_velocity[0] = 0;
+    pkt.angular_velocity[1] = 0;
+    pkt.angular_velocity[2] = 0;
+
+    pkt.angular_velocity_covariance.len = 0;
+
+    pkt.linear_acceleration[0] = 0;
+    pkt.linear_acceleration[1] = 0;
+    pkt.linear_acceleration[2] = 0;
+
+    pkt.linear_acceleration_covariance.len = 0;
+
     ahrs_solution.broadcast(pkt);
 }
 
