@@ -93,6 +93,8 @@ public:
 
     uint8_t get_state(void) {return _state;}
 
+    uint8_t get_options(void) {return _options;}
+
 private:
 
     // Pointer to chosen driver

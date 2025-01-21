@@ -231,6 +231,7 @@ private:
     AP_Int16 _notify_state_hz;
     AP_Int16 _pool_size;
     AP_Int32 _esc_rv;
+    AP_Int8 _check_booms;
 
     uint32_t *mem_pool;
 
@@ -246,6 +247,16 @@ private:
         bool esc_pending;
         bool servo_pending;
     } _SRV_conf[DRONECAN_SRV_NUMBER];
+
+    struct {
+        uint16_t pulse;
+        bool esc_pending;
+        bool servo_pending;
+    } _ESC_conf[DRONECAN_SRV_NUMBER];
+
+    uint32_t _last_boom_connection[4];
+
+    bool are_booms_connected(char* fail_msg, uint8_t fail_msg_len) const;
 
     uint32_t _esc_send_count;
     uint32_t _srv_send_count;
@@ -335,6 +346,10 @@ private:
     Canard::ObjCallback<AP_DroneCAN, uavcan_protocol_debug_LogMessage> debug_cb{this, &AP_DroneCAN::handle_debug};
     Canard::Subscriber<uavcan_protocol_debug_LogMessage> debug_listener{debug_cb, _driver_index};
 
+    Canard::ObjCallback<AP_DroneCAN, com_aeronavics_BoomStatus> boom_lock_cb{this, &AP_DroneCAN::handle_boom_lock};
+    Canard::Subscriber<com_aeronavics_BoomStatus> boom_lock_listener{boom_lock_cb, _driver_index};
+
+
     // param client
     Canard::ObjCallback<AP_DroneCAN, uavcan_protocol_param_GetSetResponse> param_get_set_res_cb{this, &AP_DroneCAN::handle_param_get_set_response};
     Canard::Client<uavcan_protocol_param_GetSetResponse> param_get_set_client{canard_iface, param_get_set_res_cb};
@@ -398,6 +413,7 @@ private:
     void handle_param_get_set_response(const CanardRxTransfer& transfer, const uavcan_protocol_param_GetSetResponse& rsp);
     void handle_param_save_response(const CanardRxTransfer& transfer, const uavcan_protocol_param_ExecuteOpcodeResponse& rsp);
     void handle_node_info_request(const CanardRxTransfer& transfer, const uavcan_protocol_GetNodeInfoRequest& req);
+    void handle_boom_lock(const CanardRxTransfer& transfer, const com_aeronavics_BoomStatus& msg);
 };
 
 #endif // #if HAL_ENABLE_DRONECAN_DRIVERS
