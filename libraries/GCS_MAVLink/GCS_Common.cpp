@@ -38,6 +38,7 @@
 #include <AP_Camera/AP_Camera.h>
 #include <AP_Gripper/AP_Gripper.h>
 #include <AC_Sprayer/AC_Sprayer.h>
+#include <AC_SpotSprayer/AC_SpotSprayer.h>
 #include <AP_BLHeli/AP_BLHeli.h>
 #include <AP_Relay/AP_Relay.h>
 #include <AP_RSSI/AP_RSSI.h>
@@ -4704,9 +4705,10 @@ MAV_RESULT GCS_MAVLINK::handle_command_do_gripper(const mavlink_command_int_t &p
 }
 #endif  // AP_GRIPPER_ENABLED
 
-#if HAL_SPRAYER_ENABLED
+#if HAL_SPRAYER_ENABLED || HAL_SPOT_SPRAYER_ENABLED
 MAV_RESULT GCS_MAVLINK::handle_command_do_sprayer(const mavlink_command_int_t &packet)
 {
+#if HAL_SPRAYER_ENABLED
     AC_Sprayer *sprayer = AP::sprayer();
     if (sprayer == nullptr) {
         return MAV_RESULT_FAILED;
@@ -4719,6 +4721,20 @@ MAV_RESULT GCS_MAVLINK::handle_command_do_sprayer(const mavlink_command_int_t &p
     }
 
     return MAV_RESULT_ACCEPTED;
+#elif HAL_SPOT_SPRAYER_ENABLED
+    AC_SpotSprayer *sprayer = AP::spot_sprayer();
+    if (sprayer == nullptr) {
+        return MAV_RESULT_FAILED;
+    }
+
+    if (is_equal(packet.param1, 1.0f)) {
+        sprayer->run(true);
+    } else if (is_zero(packet.param1)) {
+        sprayer->run(false);
+    }
+
+    return MAV_RESULT_ACCEPTED;
+#endif
 }
 #endif
 

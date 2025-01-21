@@ -10,6 +10,7 @@
 #include <AP_Parachute/AP_Parachute.h>
 #include <AP_ServoRelayEvents/AP_ServoRelayEvents.h>
 #include <AC_Sprayer/AC_Sprayer.h>
+#include <AC_SpotSprayer/AC_SpotSprayer.h>
 #include <AP_Scripting/AP_Scripting.h>
 #include <RC_Channel/RC_Channel.h>
 #include <AP_Mount/AP_Mount.h>
@@ -261,6 +262,19 @@ bool AP_Mission::start_command_do_sprayer(const AP_Mission::Mission_Command& cmd
 {
 #if HAL_SPRAYER_ENABLED
     AC_Sprayer *sprayer = AP::sprayer();
+    if (sprayer == nullptr) {
+        return false;
+    }
+
+    if (cmd.p1 == 1) {
+        sprayer->run(true);
+    } else {
+        sprayer->run(false);
+    }
+
+    return true;
+#elif HAL_SPOT_SPRAYER_ENABLED
+    AC_SpotSprayer * sprayer = AP::spot_sprayer();
     if (sprayer == nullptr) {
         return false;
     }

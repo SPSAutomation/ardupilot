@@ -166,6 +166,7 @@ class ExtractFeatures(object):
 
             ('AP_GRIPPER_ENABLED', r'AP_Gripper::init\b',),
             ('HAL_SPRAYER_ENABLED', 'AC_Sprayer::AC_Sprayer',),
+            ('HAL_SPOT_SPRAYER_ENABLED', 'AC_SpotSprayer::AC_SpotSprayer',),
             ('AP_LANDINGGEAR_ENABLED', r'AP_LandingGear::init\b',),
             ('AP_WINCH_ENABLED', 'AP_Winch::AP_Winch',),
             ('AP_RELAY_ENABLED', 'AP_Relay::init',),

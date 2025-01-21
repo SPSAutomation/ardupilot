@@ -36,6 +36,7 @@
 #include <AP_RangeFinder/AP_RangeFinder_DroneCAN.h>
 #include <AP_RCProtocol/AP_RCProtocol_DroneCAN.h>
 #include <AP_EFI/AP_EFI_DroneCAN.h>
+#include <AC_SpotSprayer/AC_SpotSprayer.h>
 #include <AP_Generator/AP_Generator_GX_7.h>
 #include <AP_GPS/AP_GPS_DroneCAN.h>
 #include <AP_GPS/AP_GPS.h>
@@ -399,6 +400,9 @@ void AP_DroneCAN::init(uint8_t driver_index, bool enable_filters)
 #if HAL_MOUNT_XACTI_ENABLED
     AP_Mount_Xacti::subscribe_msgs(this);
 #endif
+#if HAL_SPOT_SPRAYER_ENABLED
+    AC_SpotSprayer::subscribe_msgs(this);
+#endif
 #if AP_GENERATOR_GX_7_ENABLED
     AP_Generator_GX_7::subscribe_msgs(this);
 #endif
@@ -527,10 +531,18 @@ void AP_DroneCAN::loop(void)
         send_node_status();
         _dna_server.verify_nodes();
 
+
+#if HAL_SPOT_SPRAYER_ENABLED
+        if (AP::spot_sprayer()->enabled()) {
+            send_spot_spray_control();
+        }
+#endif
+
         if ((uint8_t)AP::generator()->get_type() == 4)
         {
             send_gx_7_control();
         }
+
 
 #if AP_DRONECAN_SEND_GPS && AP_GPS_DRONECAN_ENABLED
         if (option_is_set(AP_DroneCAN::Options::SEND_GNSS) && !AP_GPS_DroneCAN::instance_exists(this)) {
@@ -914,6 +926,33 @@ void AP_DroneCAN::SRV_send_esc_hobbywing(void)
 }
 #endif // AP_DRONECAN_HOBBYWING_ESC_SUPPORT
 
+
+void AP_DroneCAN::send_spot_spray_control()
+{
+    uint32_t now = AP_HAL::millis();
+    if (now - _last_spray_ctrl_ms < 100) {
+        // update at 10Hz
+        return;
+    }
+    _last_spray_ctrl_ms = now;
+
+    com_aeronavics_SprayCtrl spray_ctrl_msg;
+
+    if (AP::spot_sprayer()->spraying()) {
+        spray_ctrl_msg.flow_rate = AP::spot_sprayer()->get_flow_rate();
+    }
+    else {
+        spray_ctrl_msg.flow_rate = 0;
+    }
+
+    spray_ctrl_msg.pressure = AP::spot_sprayer()->get_pressure();
+
+    sprayer_control.broadcast(spray_ctrl_msg);
+}
+
+
+
+
 void AP_DroneCAN::send_gx_7_control()
 {
     uint32_t now = AP_HAL::millis();
@@ -952,6 +991,7 @@ void AP_DroneCAN::send_gx_7_control()
 
     extender_control.broadcast(extender_msg);
 }
+
 
 void AP_DroneCAN::SRV_push_servos()
 {

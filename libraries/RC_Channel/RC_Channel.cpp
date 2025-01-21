@@ -34,6 +34,7 @@ extern const AP_HAL::HAL& hal;
 
 #include <AC_Avoidance/AC_Avoid.h>
 #include <AC_Sprayer/AC_Sprayer.h>
+#include <AC_SpotSprayer/AC_SpotSprayer.h>
 #include <AP_Camera/AP_Camera.h>
 #include <AP_Camera/AP_RunCam.h>
 #include <AP_Compass/AP_Compass.h>
@@ -1146,6 +1147,49 @@ void RC_Channel::do_aux_function_sprayer(const AuxSwitchPos ch_flag)
 }
 #endif // HAL_SPRAYER_ENABLED
 
+
+#if HAL_SPOT_SPRAYER_ENABLED
+void RC_Channel::do_aux_function_spot_sprayer(const AuxSwitchPos ch_flag)
+{
+    AC_SpotSprayer *sprayer = AP::spot_sprayer();
+    if (sprayer == nullptr) {
+        return;
+    }
+    switch (ch_flag) {
+        case AuxSwitchPos::LOW:
+            sprayer->run(false);
+            break;
+        case AuxSwitchPos::MIDDLE:
+            // nothing
+            break;
+        case AuxSwitchPos::HIGH:
+            sprayer->run(true);
+            break;
+    }
+}
+
+void RC_Channel::do_aux_function_spot_sprayer_flowrate(const AuxSwitchPos ch_flag)
+{
+    AC_SpotSprayer *sprayer = AP::spot_sprayer();
+    if (sprayer == nullptr) {
+        return;
+    }
+    
+    switch (ch_flag) {
+        case AuxSwitchPos::LOW:
+            sprayer->set_flow_rate(AC_SpotSprayer::FlowRate::LOW);
+            break;
+        case AuxSwitchPos::MIDDLE:
+            sprayer->set_flow_rate(AC_SpotSprayer::FlowRate::MIDDLE);
+            break;
+        case AuxSwitchPos::HIGH:
+            sprayer->set_flow_rate(AC_SpotSprayer::FlowRate::HIGH);
+            break;
+    }
+    
+}
+#endif // HAL_SPOT_SPRAYER_ENABLED
+
 #if AP_GRIPPER_ENABLED
 void RC_Channel::do_aux_function_gripper(const AuxSwitchPos ch_flag)
 {
@@ -1350,6 +1394,16 @@ bool RC_Channel::do_aux_function(const aux_func_t ch_option, const AuxSwitchPos 
 #if HAL_SPRAYER_ENABLED
     case AUX_FUNC::SPRAYER:
         do_aux_function_sprayer(ch_flag);
+        break;
+#endif
+
+#if HAL_SPOT_SPRAYER_ENABLED
+    case AUX_FUNC::SPOT_SPRAYER:
+        do_aux_function_spot_sprayer(ch_flag);
+        break;
+
+    case AUX_FUNC::SPOT_SPRAYER_FLOW_RATE:
+        do_aux_function_spot_sprayer_flowrate(ch_flag);
         break;
 #endif
 

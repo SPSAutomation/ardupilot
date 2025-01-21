@@ -65,6 +65,7 @@ bool AP_Arming_Copter::run_pre_arm_checks(bool display_failure)
         & oa_checks(display_failure)
         & gcs_failsafe_check(display_failure)
         & winch_checks(display_failure)
+        & useful_load_checks(display_failure)
         & rc_throttle_failsafe_checks(display_failure)
         & alt_checks(display_failure)
 #if AP_AIRSPEED_ENABLED
@@ -542,6 +543,28 @@ bool AP_Arming_Copter::winch_checks(bool display_failure) const
     }
     char failure_msg[50] = {};
     if (!winch->pre_arm_check(failure_msg, sizeof(failure_msg))) {
+        check_failed(display_failure, "%s", failure_msg);
+        return false;
+    }
+#endif
+    return true;
+}
+
+// check uselful load
+bool AP_Arming_Copter::useful_load_checks(bool display_failure) const
+{
+#if HAL_SPOT_SPRAYER_ENABLED
+    // pass if parameter or all arming checks disabled
+    if (!check_enabled(ARMING_CHECK_PARAMETERS)) {
+        return true;
+    }
+
+    const AC_SpotSprayer *sprayer = AP::spot_sprayer();
+    if (sprayer == nullptr) {
+        return true;
+    }
+    char failure_msg[50] = {};
+    if (!sprayer->pre_arm_check(failure_msg, sizeof(failure_msg))) {
         check_failed(display_failure, "%s", failure_msg);
         return false;
     }

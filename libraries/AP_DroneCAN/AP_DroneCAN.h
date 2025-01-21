@@ -172,6 +172,9 @@ public:
     Canard::Publisher<uavcan_equipment_hardpoint_Command> relay_hardpoint{canard_iface};
 #endif
 
+    void send_spot_spray_control();
+    Canard::Publisher<com_aeronavics_SprayCtrl> sprayer_control{canard_iface};
+
     void send_gx_7_control();
     Canard::Publisher<com_aeronavics_ExtenderCtrl> extender_control{canard_iface};
 
@@ -293,6 +296,9 @@ private:
     uint32_t _last_notify_state_ms;
     uavcan_protocol_NodeStatus node_status_msg;
 
+    // last time a spray control msg was sent
+    uint32_t _last_spray_ctrl_ms;
+    
     // last time extender ctrl msg
     uint32_t _last_extender_ctrl_ms;
 

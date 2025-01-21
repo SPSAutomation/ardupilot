@@ -195,6 +195,9 @@ public:
 
         // 97: RSSI
         k_param_rssi = 97,
+
+        // 98: 
+        k_param_spot_sprayer = 98,
                 
         //
         // 100: Inertial Nav

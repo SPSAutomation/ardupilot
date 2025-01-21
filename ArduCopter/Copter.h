@@ -67,6 +67,7 @@
 #include <AC_AutoTune/AC_AutoTune_Heli.h>   // ArduCopter autotune library. support for autotune of helicopters.
 #include <AP_Parachute/AP_Parachute.h>      // ArduPilot parachute release library
 #include <AC_Sprayer/AC_Sprayer.h>          // Crop sprayer library
+#include <AC_SpotSprayer/AC_SpotSprayer.h>  // Spot sprayer library
 #include <AP_ADSB/AP_ADSB.h>                // ADS-B RF based collision avoidance module library
 #include <AP_Proximity/AP_Proximity.h>      // ArduPilot proximity sensor library
 #include <AC_PrecLand/AC_PrecLand_config.h>
@@ -534,6 +535,11 @@ private:
     // Crop Sprayer
 #if HAL_SPRAYER_ENABLED
     AC_Sprayer sprayer;
+#endif
+
+    // Spot sprayer
+#if HAL_SPOT_SPRAYER_ENABLED
+    AC_SpotSprayer spot_sprayer;
 #endif
 
     // Parachute release
