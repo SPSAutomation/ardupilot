@@ -11,6 +11,7 @@ class AP_Generator_Backend;
 class AP_Generator_IE_650_800;
 class AP_Generator_IE_2400;
 class AP_Generator_RichenPower;
+class AP_Generator_GX_7;
 
 class AP_Generator
 {
@@ -18,6 +19,7 @@ class AP_Generator
     friend class AP_Generator_IE_650_800;
     friend class AP_Generator_IE_2400;
     friend class AP_Generator_RichenPower;
+    friend class AP_Generator_GX_7;
 
 public:
     // Constructor
@@ -70,16 +72,6 @@ public:
     bool option_set(Option opt) const {
         return (_options & 1U<<uint32_t(opt)) != 0;
     }
-
-private:
-
-    // Pointer to chosen driver
-    AP_Generator_Backend* _driver_ptr;
-
-    // Parameters
-    AP_Int8 _type; // Select which generator to use
-    AP_Int32 _options; // Select which generator to use
-
     enum class Type {
         GEN_DISABLED = 0,
 #if AP_GENERATOR_IE_650_800_ENABLED
@@ -91,8 +83,28 @@ private:
 #if AP_GENERATOR_RICHENPOWER_ENABLED
         RICHENPOWER = 3,
 #endif
-        // LOWEHEISER = 4,
+#if AP_GENERATOR_GX_7_ENABLED
+        GX_7 = 4,
+#endif
     };
+
+
+    Type get_type(void) {return (Type)(uint8_t)_type;}
+
+    uint8_t get_state(void) {return _state;}
+
+    uint8_t get_options(void) {return _options;}
+
+private:
+
+    // Pointer to chosen driver
+    AP_Generator_Backend* _driver_ptr;
+
+    // Parameters
+    AP_Int8 _type; // Select which generator to use
+    AP_Int32 _options; // Select which generator to use
+
+    
 
     // Helper to get param and cast to GenType
     Type type(void) const;
@@ -107,6 +119,7 @@ private:
     bool _healthy;
     bool _has_current;
     bool _has_consumed_energy;
+    uint8_t _state;
 
     static AP_Generator *_singleton;
 

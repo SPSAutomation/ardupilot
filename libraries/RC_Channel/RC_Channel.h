@@ -395,6 +395,8 @@ private:
     // the input channel this corresponds to
     uint8_t     ch_in;
 
+    bool _channel_reset = true;
+
     // overrides
     uint16_t override_value;
     uint32_t last_override_time;

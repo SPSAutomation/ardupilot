@@ -37,6 +37,7 @@
 #include <AP_RCProtocol/AP_RCProtocol_DroneCAN.h>
 #include <AP_EFI/AP_EFI_DroneCAN.h>
 #include <AC_SpotSprayer/AC_SpotSprayer.h>
+#include <AP_Generator/AP_Generator_GX_7.h>
 #include <AP_GPS/AP_GPS_DroneCAN.h>
 #include <AP_GPS/AP_GPS.h>
 #include <AP_BattMonitor/AP_BattMonitor_DroneCAN.h>
@@ -157,6 +158,13 @@ const AP_Param::GroupInfo AP_DroneCAN::var_info[] = {
     // @Bitmask: 0: ESC 1, 1: ESC 2, 2: ESC 3, 3: ESC 4, 4: ESC 5, 5: ESC 6, 6: ESC 7, 7: ESC 8, 8: ESC 9, 9: ESC 10, 10: ESC 11, 11: ESC 12, 12: ESC 13, 13: ESC 14, 14: ESC 15, 15: ESC 16, 16: ESC 17, 17: ESC 18, 18: ESC 19, 19: ESC 20, 20: ESC 21, 21: ESC 22, 22: ESC 23, 23: ESC 24, 24: ESC 25, 25: ESC 26, 26: ESC 27, 27: ESC 28, 28: ESC 29, 29: ESC 30, 30: ESC 31, 31: ESC 32
     // @User: Advanced
     AP_GROUPINFO("ESC_RV", 9, AP_DroneCAN, _esc_rv, 0),
+
+    // @Param: BOOMS
+    // @DisplayName: Boom locks enabled
+    // @Description: Are boom locks enabled on this interface.
+    // @Range: 0 1
+    // @User: Advanced
+    AP_GROUPINFO("BOOMS", 24, AP_DroneCAN, _check_booms, 0),
 
 #if AP_RELAY_DRONECAN_ENABLED
     // @Param: RLY_RT
@@ -395,6 +403,9 @@ void AP_DroneCAN::init(uint8_t driver_index, bool enable_filters)
 #if HAL_SPOT_SPRAYER_ENABLED
     AC_SpotSprayer::subscribe_msgs(this);
 #endif
+#if AP_GENERATOR_GX_7_ENABLED
+    AP_Generator_GX_7::subscribe_msgs(this);
+#endif
 
     act_out_array.set_timeout_ms(5);
     act_out_array.set_priority(CANARD_TRANSFER_PRIORITY_HIGH);
@@ -520,11 +531,18 @@ void AP_DroneCAN::loop(void)
         send_node_status();
         _dna_server.verify_nodes();
 
+
 #if HAL_SPOT_SPRAYER_ENABLED
         if (AP::spot_sprayer()->enabled()) {
             send_spot_spray_control();
         }
 #endif
+
+        if ((uint8_t)AP::generator()->get_type() == 4)
+        {
+            send_gx_7_control();
+        }
+
 
 #if AP_DRONECAN_SEND_GPS && AP_GPS_DRONECAN_ENABLED
         if (option_is_set(AP_DroneCAN::Options::SEND_GNSS) && !AP_GPS_DroneCAN::instance_exists(this)) {
@@ -708,9 +726,9 @@ int16_t AP_DroneCAN::scale_esc_output(uint8_t idx){
 
     //Check if this channel has a reversible ESC. If it does, we can send negative commands.
     if ((((uint32_t) 1) << idx) & _esc_rv) {
-        scaled = cmd_max * (hal.rcout->scale_esc_to_unity(_SRV_conf[idx].pulse));
+        scaled = cmd_max * (hal.rcout->scale_esc_to_unity(_ESC_conf[idx].pulse));
     } else {
-        scaled = cmd_max * (hal.rcout->scale_esc_to_unity(_SRV_conf[idx].pulse) + 1.0) / 2.0;
+        scaled = cmd_max * (hal.rcout->scale_esc_to_unity(_ESC_conf[idx].pulse) + 1.0) / 2.0;
         scaled = constrain_float(scaled, 0, cmd_max);
     }
 
@@ -823,7 +841,7 @@ void AP_DroneCAN::SRV_send_esc(void)
     for (uint8_t i = esc_offset; i < DRONECAN_SRV_NUMBER; i++) {
         if ((((uint32_t) 1) << i) & _ESC_armed_mask) {
             max_esc_num = i + 1;
-            if (_SRV_conf[i].esc_pending) {
+            if (_ESC_conf[i].esc_pending) {
                 active_esc_num++;
             }
         }
@@ -854,7 +872,7 @@ void AP_DroneCAN::SRV_send_esc(void)
     }
 
     for (uint8_t i = 0; i < DRONECAN_SRV_NUMBER; i++) {
-        _SRV_conf[i].esc_pending = false;
+        _ESC_conf[i].esc_pending = false;
     }
 }
 
@@ -876,7 +894,7 @@ void AP_DroneCAN::SRV_send_esc_hobbywing(void)
     for (uint8_t i = esc_offset; i < DRONECAN_SRV_NUMBER; i++) {
         if ((((uint32_t) 1) << i) & _ESC_armed_mask) {
             max_esc_num = i + 1;
-            if (_SRV_conf[i].esc_pending) {
+            if (_ESC_conf[i].esc_pending) {
                 active_esc_num++;
             }
         }
@@ -908,6 +926,7 @@ void AP_DroneCAN::SRV_send_esc_hobbywing(void)
 }
 #endif // AP_DRONECAN_HOBBYWING_ESC_SUPPORT
 
+
 void AP_DroneCAN::send_spot_spray_control()
 {
     uint32_t now = AP_HAL::millis();
@@ -933,6 +952,47 @@ void AP_DroneCAN::send_spot_spray_control()
 
 
 
+
+void AP_DroneCAN::send_gx_7_control()
+{
+    uint32_t now = AP_HAL::millis();
+    if (now - _last_extender_ctrl_ms < 100) {
+        // update at 10Hz
+        return;
+    }
+    _last_extender_ctrl_ms = now;
+
+    com_aeronavics_ExtenderCtrl extender_msg;
+    if (AP::generator()->get_state() == 17 || AP::generator()->get_state() == 0)
+    {
+        extender_msg.ExtenderControlCmd = 0;
+        extender_msg.DroneStatus = 0;
+    }
+    else 
+    {
+        extender_msg.ExtenderControlCmd = 1;
+        if (((AP::generator()->get_options() >> 1) & 0x1) == 1)
+        {
+            extender_msg.DroneStatus = 1;
+        }
+        else
+        {
+            if (AP::arming().is_armed())
+            {
+                extender_msg.DroneStatus = 1;
+            }
+            else
+            {
+                extender_msg.DroneStatus = 0;
+            }
+        }
+
+    }
+
+    extender_control.broadcast(extender_msg);
+}
+
+
 void AP_DroneCAN::SRV_push_servos()
 {
     WITH_SEMAPHORE(SRV_sem);
@@ -943,6 +1003,70 @@ void AP_DroneCAN::SRV_push_servos()
             _SRV_conf[i].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
             _SRV_conf[i].esc_pending = true;
             _SRV_conf[i].servo_pending = true;
+        }
+    }
+
+    for (uint8_t i = 0; i < DRONECAN_SRV_NUMBER; i++) {
+        // Check if this channels has any function assigned
+        if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor1) {
+            _ESC_conf[0].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[0].esc_pending = true;
+            _ESC_conf[0].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor2) {
+            _ESC_conf[1].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[1].esc_pending = true;
+            _ESC_conf[1].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor3) {
+            _ESC_conf[2].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[2].esc_pending = true;
+            _ESC_conf[2].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor4) {
+            _ESC_conf[3].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[3].esc_pending = true;
+            _ESC_conf[3].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor5) {
+            _ESC_conf[4].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[4].esc_pending = true;
+            _ESC_conf[4].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor6) {
+            _ESC_conf[5].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[5].esc_pending = true;
+            _ESC_conf[5].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor7) {
+            _ESC_conf[6].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[6].esc_pending = true;
+            _ESC_conf[6].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor8) {
+            _ESC_conf[7].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[7].esc_pending = true;
+            _ESC_conf[7].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor9) {
+            _ESC_conf[8].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[8].esc_pending = true;
+            _ESC_conf[8].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor10) {
+            _ESC_conf[9].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[9].esc_pending = true;
+            _ESC_conf[9].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor11) {
+            _ESC_conf[10].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[10].esc_pending = true;
+            _ESC_conf[10].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor12) {
+            _ESC_conf[11].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[11].esc_pending = true;
+            _ESC_conf[11].servo_pending = true;
         }
     }
 
@@ -1498,6 +1622,48 @@ void AP_DroneCAN::handle_debug(const CanardRxTransfer& transfer, const uavcan_pr
 }
 
 /*
+  handle BoomStatus message
+ */
+void AP_DroneCAN::handle_boom_lock(const CanardRxTransfer& transfer, const com_aeronavics_BoomStatus& msg)
+{
+    if (_check_booms == 1)
+    {
+        if (msg.connection_status == 0)
+        {
+            GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "Boom %u not Connected", msg.boom_id);
+            _last_boom_connection[msg.boom_id] = 0;
+        }
+        else
+        {
+            _last_boom_connection[msg.boom_id] = AP_HAL::millis();
+        }
+    }
+}
+
+/*
+  Check all booms are connected
+*/
+bool AP_DroneCAN::are_booms_connected(char* fail_msg, uint8_t fail_msg_len) const
+{
+    if (_check_booms == 0)
+    {
+        return true;
+    }
+    bool connected = true;
+    for(uint8_t i = 0; i < 4; i++)
+    {
+        if (_last_boom_connection[i] + 500 < AP_HAL::millis())
+        {
+            connected = false;
+            snprintf(fail_msg, fail_msg_len, "Booms are not Connected!");
+            break;
+        }
+    }
+    return connected;
+}
+
+
+/*
  check for parameter get/set response timeout
 */
 void AP_DroneCAN::check_parameter_callback_timeout()
@@ -1789,8 +1955,10 @@ bool AP_DroneCAN::check_and_reset_option(Options option)
 // handle prearm check
 bool AP_DroneCAN::prearm_check(char* fail_msg, uint8_t fail_msg_len) const
 {
-    // forward this to DNA_Server
-    return _dna_server.prearm_check(fail_msg, fail_msg_len);
+    bool boom_status = are_booms_connected(fail_msg, fail_msg_len);
+    bool dna_status =_dna_server.prearm_check(fail_msg, fail_msg_len);
+
+    return (boom_status && dna_status);
 }
 
 /*
