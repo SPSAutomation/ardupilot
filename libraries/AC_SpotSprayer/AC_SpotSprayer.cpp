@@ -179,6 +179,10 @@ uint16_t AC_SpotSprayer::get_pressure()
 /// update - adjust pwm of servo controlling pump speed according to the desired quantity and our horizontal speed
 void AC_SpotSprayer::update()
 {
+    if (!_enabled)
+    {
+        return;
+    }
     // get the current time
     const uint32_t now = AP_HAL::millis();
 
@@ -230,6 +234,10 @@ void AC_SpotSprayer::update()
 
 bool AC_SpotSprayer::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
 {
+    if (!_enabled)
+    {
+        return true;
+    }
     if (_reported_weight > (float) _useful_load) {
         hal.util->snprintf(failmsg, failmsg_len, "Overweight by %fkg", _reported_weight - (float) _useful_load);
         return false;
