@@ -586,6 +586,10 @@ const AP_Param::Info Copter::var_info[] = {
     GOBJECT(spot_sprayer, "SPOT_", AC_SpotSprayer),
 #endif
 
+    // @Group: SPOT_SPRAY_
+    // @Path: ../libraries/AC_BoomLock/AC_BoomLock.cpp
+    GOBJECT(boom_lock, "BOOM_", AC_BoomLock),
+
 #if AP_SIM_ENABLED
     // @Group: SIM_
     // @Path: ../libraries/SITL/SITL.cpp

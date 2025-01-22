@@ -198,6 +198,8 @@ public:
 
         // 98: 
         k_param_spot_sprayer = 98,
+
+        k_param_boom_lock = 99,
                 
         //
         // 100: Inertial Nav

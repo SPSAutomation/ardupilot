@@ -185,6 +185,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #if HAL_SPOT_SPRAYER_ENABLED
     SCHED_TASK_CLASS(AC_SpotSprayer,       &copter.spot_sprayer,          update,         10,  90,  54),
 #endif
+    SCHED_TASK_CLASS(AC_BoomLock,       &copter.boom_lock,          update,         10,  90,  54),
     SCHED_TASK(three_hz_loop,          3,     75, 57),
 #if AP_SERVORELAYEVENTS_ENABLED
     SCHED_TASK_CLASS(AP_ServoRelayEvents,  &copter.ServoRelayEvents,      update_events, 50,  75,  60),

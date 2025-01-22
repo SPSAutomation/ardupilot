@@ -48,6 +48,7 @@ protected:
     bool gcs_failsafe_check(bool display_failure);
     bool winch_checks(bool display_failure) const;
     bool useful_load_checks(bool display_failure)const;
+    bool boom_lock_checks(bool display_failure)const;
     bool alt_checks(bool display_failure);
     bool rc_throttle_failsafe_checks(bool display_failure) const;
 

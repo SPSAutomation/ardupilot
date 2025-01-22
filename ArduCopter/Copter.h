@@ -68,6 +68,7 @@
 #include <AP_Parachute/AP_Parachute.h>      // ArduPilot parachute release library
 #include <AC_Sprayer/AC_Sprayer.h>          // Crop sprayer library
 #include <AC_SpotSprayer/AC_SpotSprayer.h>  // Spot sprayer library
+#include <AC_BoomLock/AC_BoomLock.h>        // Boom lock library
 #include <AP_ADSB/AP_ADSB.h>                // ADS-B RF based collision avoidance module library
 #include <AP_Proximity/AP_Proximity.h>      // ArduPilot proximity sensor library
 #include <AC_PrecLand/AC_PrecLand_config.h>
@@ -541,6 +542,8 @@ private:
 #if HAL_SPOT_SPRAYER_ENABLED
     AC_SpotSprayer spot_sprayer;
 #endif
+
+    AC_BoomLock boom_lock;
 
     // Parachute release
 #if PARACHUTE == ENABLED

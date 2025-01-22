@@ -66,6 +66,7 @@ bool AP_Arming_Copter::run_pre_arm_checks(bool display_failure)
         & gcs_failsafe_check(display_failure)
         & winch_checks(display_failure)
         & useful_load_checks(display_failure)
+        & boom_lock_checks(display_failure)
         & rc_throttle_failsafe_checks(display_failure)
         & alt_checks(display_failure)
 #if AP_AIRSPEED_ENABLED
@@ -571,6 +572,27 @@ bool AP_Arming_Copter::useful_load_checks(bool display_failure) const
 #endif
     return true;
 }
+
+// check uselful load
+bool AP_Arming_Copter::boom_lock_checks(bool display_failure) const
+{
+    // pass if parameter or all arming checks disabled
+    if (!check_enabled(ARMING_CHECK_PARAMETERS)) {
+        return true;
+    }
+
+    const AC_BoomLock *boom_lock = AP::boom_lock();
+    if (boom_lock == nullptr) {
+        return true;
+    }
+    char failure_msg[50] = {};
+    if (!boom_lock->pre_arm_check(failure_msg, sizeof(failure_msg))) {
+        check_failed(display_failure, "%s", failure_msg);
+        return false;
+    }
+    return true;
+}
+
 
 // performs altitude checks.  returns true if passed
 bool AP_Arming_Copter::alt_checks(bool display_failure)

@@ -37,6 +37,7 @@
 #include <AP_RCProtocol/AP_RCProtocol_DroneCAN.h>
 #include <AP_EFI/AP_EFI_DroneCAN.h>
 #include <AC_SpotSprayer/AC_SpotSprayer.h>
+#include <AC_BoomLock/AC_BoomLock.h>
 #include <AP_Generator/AP_Generator_GX_7.h>
 #include <AP_GPS/AP_GPS_DroneCAN.h>
 #include <AP_GPS/AP_GPS.h>
@@ -159,12 +160,6 @@ const AP_Param::GroupInfo AP_DroneCAN::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("ESC_RV", 9, AP_DroneCAN, _esc_rv, 0),
 
-    // @Param: BOOMS
-    // @DisplayName: Boom locks enabled
-    // @Description: Are boom locks enabled on this interface.
-    // @Range: 0 1
-    // @User: Advanced
-    AP_GROUPINFO("BOOMS", 24, AP_DroneCAN, _check_booms, 0),
 
 #if AP_RELAY_DRONECAN_ENABLED
     // @Param: RLY_RT
@@ -403,6 +398,7 @@ void AP_DroneCAN::init(uint8_t driver_index, bool enable_filters)
 #if HAL_SPOT_SPRAYER_ENABLED
     AC_SpotSprayer::subscribe_msgs(this);
 #endif
+    AC_BoomLock::subscribe_msgs(this);
 #if AP_GENERATOR_GX_7_ENABLED
     AP_Generator_GX_7::subscribe_msgs(this);
 #endif
@@ -1622,48 +1618,6 @@ void AP_DroneCAN::handle_debug(const CanardRxTransfer& transfer, const uavcan_pr
 }
 
 /*
-  handle BoomStatus message
- */
-void AP_DroneCAN::handle_boom_lock(const CanardRxTransfer& transfer, const com_aeronavics_BoomStatus& msg)
-{
-    if (_check_booms == 1)
-    {
-        if (msg.connection_status == 0)
-        {
-            GCS_SEND_TEXT(MAV_SEVERITY_ERROR, "Boom %u not Connected", msg.boom_id);
-            _last_boom_connection[msg.boom_id] = 0;
-        }
-        else
-        {
-            _last_boom_connection[msg.boom_id] = AP_HAL::millis();
-        }
-    }
-}
-
-/*
-  Check all booms are connected
-*/
-bool AP_DroneCAN::are_booms_connected(char* fail_msg, uint8_t fail_msg_len) const
-{
-    if (_check_booms == 0)
-    {
-        return true;
-    }
-    bool connected = true;
-    for(uint8_t i = 0; i < 4; i++)
-    {
-        if (_last_boom_connection[i] + 500 < AP_HAL::millis())
-        {
-            connected = false;
-            snprintf(fail_msg, fail_msg_len, "Booms are not Connected!");
-            break;
-        }
-    }
-    return connected;
-}
-
-
-/*
  check for parameter get/set response timeout
 */
 void AP_DroneCAN::check_parameter_callback_timeout()
@@ -1955,10 +1909,7 @@ bool AP_DroneCAN::check_and_reset_option(Options option)
 // handle prearm check
 bool AP_DroneCAN::prearm_check(char* fail_msg, uint8_t fail_msg_len) const
 {
-    bool boom_status = are_booms_connected(fail_msg, fail_msg_len);
-    bool dna_status =_dna_server.prearm_check(fail_msg, fail_msg_len);
-
-    return (boom_status && dna_status);
+    return _dna_server.prearm_check(fail_msg, fail_msg_len);
 }
 
 /*

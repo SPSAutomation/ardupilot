@@ -87,6 +87,7 @@ COMMON_VEHICLE_DEPENDENT_LIBRARIES = [
     'AP_RTC',
     'AC_Sprayer',
     'AC_SpotSprayer',
+    'AC_BoomLock',
     'AC_Fence',
     'AC_Avoidance',
     'AP_LandingGear',
