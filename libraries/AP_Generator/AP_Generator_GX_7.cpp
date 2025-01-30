@@ -254,9 +254,9 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return false;
     }
 
-    if (!generator_ok_to_run())
+    if (engine_cyclinder_temperature < EXTENDER_PREARM_TEMP)
     {
-        hal.util->snprintf(failmsg, failmsg_len, "warming up");
+        hal.util->snprintf(failmsg, failmsg_len, "Warming up: %u Needs %u", engine_cyclinder_temperature, EXTENDER_PREARM_TEMP);
         return false;
     }
 
