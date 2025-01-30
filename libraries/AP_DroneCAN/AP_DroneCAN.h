@@ -281,11 +281,16 @@ private:
     } _gnss;
 #endif
 
+    void ahrs_send_attitude();
+
     // node status send
     uint32_t _node_status_last_send_ms;
 
     // safety status send state
     uint32_t _last_safety_state_ms;
+
+    // attitude send
+    uint32_t _last_attitude_ms;
 
     // notify vehicle state
     uint32_t _last_notify_state_ms;
@@ -331,6 +336,8 @@ private:
     Canard::Publisher<ardupilot_gnss_Heading> gnss_heading{canard_iface};
     Canard::Publisher<ardupilot_gnss_Status> gnss_status{canard_iface};
 #endif
+    Canard::Publisher<uavcan_equipment_ahrs_Solution> ahrs_solution{canard_iface};
+    
     // incoming messages
     Canard::ObjCallback<AP_DroneCAN, ardupilot_indication_Button> safety_button_cb{this, &AP_DroneCAN::handle_button};
     Canard::Subscriber<ardupilot_indication_Button> safety_button_listener{safety_button_cb, _driver_index};
