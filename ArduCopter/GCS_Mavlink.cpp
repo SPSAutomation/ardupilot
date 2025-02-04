@@ -381,6 +381,14 @@ bool GCS_MAVLINK_Copter::try_send_message(enum ap_message id)
 #endif
         break;
     }
+    case MSG_SPOT_SPRAY:
+    {
+        if (copter.spot_sprayer.enabled())
+        {
+            copter.spot_sprayer.send_spray_status(chan);
+        }
+        break;
+    }
 
     default:
         return GCS_MAVLINK::try_send_message(id);
@@ -574,6 +582,9 @@ static const ap_message STREAM_EXTRA3_msgs[] = {
 #endif
 #if HAL_GENERATOR_ENABLED
     MSG_GENERATOR_STATUS,
+#endif
+#if HAL_SPOT_SPRAYER_ENABLED
+    MSG_SPOT_SPRAY,
 #endif
 #if AP_WINCH_ENABLED
     MSG_WINCH_STATUS,

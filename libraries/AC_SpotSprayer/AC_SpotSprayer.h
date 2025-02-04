@@ -79,6 +79,8 @@ public:
 
     static const struct AP_Param::GroupInfo var_info[];
 
+    void send_spray_status(const mavlink_channel_t channel);
+
 protected:
 
     // parameters
@@ -103,6 +105,7 @@ private:
     uint16_t    measured_pressure;
     float       spray_level;
     uint8_t     error_flags;
+    float       sprayed_volume;
 
     float       _reported_weight;
 

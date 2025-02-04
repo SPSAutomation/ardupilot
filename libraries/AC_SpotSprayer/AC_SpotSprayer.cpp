@@ -134,6 +134,7 @@ void AC_SpotSprayer::handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRx
     driver->measured_flow_rate = msg.flow_rate;
     driver->measured_pressure = msg.pressure;
     driver->spray_level = msg.spray_remaining;
+    driver->sprayed_volume = msg.sprayed_volume;
     driver->error_flags = msg.error_flags;
     driver->_reported_weight = msg.tank_weight;
 }
@@ -275,6 +276,37 @@ void AC_SpotSprayer::log_write()
     );
 }
 #endif
+
+void AC_SpotSprayer::send_spray_status(const mavlink_channel_t channel)
+{
+    if (last_reading_ms == 0)
+    {
+        // nothing to report
+        return;
+    }
+
+    uint16_t flow_rate;
+    if (_spraying)
+    {
+        flow_rate = get_flow_rate();
+    }
+    else
+    {
+        flow_rate = 0;
+    }
+
+    mavlink_msg_anv_msg_spray_status_send(
+        channel,
+        measured_flow_rate,
+        flow_rate,
+        sprayed_volume,
+        spray_level,
+        measured_pressure,
+        error_flags
+    );
+
+}
+
 
 namespace AP {
 

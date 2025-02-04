@@ -42,3 +42,5 @@
 [submodule "modules/lwip"]
 	path = modules/lwip
 	url = https://github.com/ArduPilot/lwip.git
+[submodule "modules/mavlink"]
+	url = git@github.com:Aeronavics/ardupilot_mavlink.git
