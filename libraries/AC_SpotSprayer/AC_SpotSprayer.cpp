@@ -285,26 +285,25 @@ void AC_SpotSprayer::send_spray_status(const mavlink_channel_t channel)
         return;
     }
 
-    uint16_t flow_rate;
+    uint16_t desired_flow_rate;
     if (_spraying)
     {
-        flow_rate = get_flow_rate();
+        desired_flow_rate = get_flow_rate();
     }
     else
     {
-        flow_rate = 0;
+        desired_flow_rate = 0;
     }
 
     mavlink_msg_anv_msg_spray_status_send(
         channel,
         measured_flow_rate,
-        flow_rate,
+        desired_flow_rate,
         sprayed_volume,
         spray_level,
         measured_pressure,
         error_flags
     );
-
 }
 
 
