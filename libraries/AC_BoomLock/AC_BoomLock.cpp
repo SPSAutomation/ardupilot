@@ -131,7 +131,7 @@ void AC_BoomLock::update()
         {
             if (_boom_connection_status[i - 1] + BOOM_MSG_TIMEOUT < now)
             {
-                gcs().send_text(MAV_SEVERITY_ERROR, "Boom %u not connected", i+1);
+                gcs().send_text(MAV_SEVERITY_ERROR, "Boom %u not connected", i);
                 _last_fault_msg_ms = now;
                 all_connected = false;
             }
