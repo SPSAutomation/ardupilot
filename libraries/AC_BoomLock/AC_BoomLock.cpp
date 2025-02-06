@@ -104,11 +104,11 @@ void AC_BoomLock::handle_boom_status(AP_DroneCAN *ap_dronecan, const CanardRxTra
     uint32_t now = AP_HAL::millis();
     if (msg.connection_status)
     {
-        driver->_boom_connection_status[msg.boom_id] = now;
+        driver->_boom_connection_status[msg.boom_id - 1] = now;
     }
     else
     {
-        driver->_boom_connection_status[msg.boom_id] = 0;
+        driver->_boom_connection_status[msg.boom_id - 1] = 0;
     }
 }
 
@@ -127,9 +127,9 @@ void AC_BoomLock::update()
 
     if (_last_fault_msg_ms + BOOM_ERROR_MSG_TIMEOUT < now) 
     {
-        for (uint8_t i = 0; i < _num_booms; i++)
+        for (uint8_t i = 1; i <= _num_booms; i++)
         {
-            if (_boom_connection_status[i] + BOOM_MSG_TIMEOUT < now)
+            if (_boom_connection_status[i - 1] + BOOM_MSG_TIMEOUT < now)
             {
                 gcs().send_text(MAV_SEVERITY_ERROR, "Boom %u not connected", i+1);
                 _last_fault_msg_ms = now;
