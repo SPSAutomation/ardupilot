@@ -197,7 +197,7 @@ void AC_SpotSprayer::update()
         if (error_flags > 0) {
             if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_1)
             {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Nozzle 1 possible blockage");
+                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Possible blockage");
             }
             if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_2)
             {

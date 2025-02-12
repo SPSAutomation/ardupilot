@@ -405,10 +405,6 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         status |= MAV_GENERATOR_STATUS_FLAG_OVERTEMP_WARNING;
     }
 
-    if (extender_error & (uint8_t)ExtenderError::LOW_VOLTAGE_ERROR) {
-        status |= MAV_GENERATOR_STATUS_FLAG_BATTERY_UNDERVOLT_FAULT;
-    }
-
     if (extender_error & (uint8_t)ExtenderError::OVER_VOLTAGE_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_OVERVOLTAGE_FAULT;
     }
@@ -427,6 +423,18 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         total_run_time * 60,
         EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60)
         );
+
+    mavlink_msg_fuel_status_send(
+        channel.get_chan(),
+        0,  // Fuel ID.
+        _frontend.get_fuel_capacity() * 1000, // total fuel capacity
+        std::numeric_limits<float>::quiet_NaN(),  // Consumed fuel (measured). 
+        std::numeric_limits<float>::quiet_NaN(),  // Remaining fuel until empty (measured).
+        fuel_level,  // Percentage of remaining fuel, relative to full.
+        std::numeric_limits<float>::quiet_NaN(),  // Flow rate. Positive value when emptying/using, and negative if filling/replacing.
+        std::numeric_limits<float>::quiet_NaN(),  // Fuel temperature. 
+        MAV_FUEL_TYPE_LIQUID  // Fuel type. 
+    );
 }
 
 // methods to control the generator state:

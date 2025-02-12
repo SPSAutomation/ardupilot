@@ -41,6 +41,12 @@ const AP_Param::GroupInfo AP_Generator::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("OPTIONS", 2, AP_Generator, _options, 0),
 
+    // @Param: FUEL_CAPACITY
+    // @DisplayName: Generator fuel capacity
+    // @Description: Total fuel capacity of generator system
+    // @User: Standard
+    AP_GROUPINFO("FUEL_CAPACITY", 3, AP_Generator, _fuel_capacity, 0),
+
     AP_GROUPEND
 };
 

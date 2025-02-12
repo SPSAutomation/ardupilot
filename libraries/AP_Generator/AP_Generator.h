@@ -95,6 +95,8 @@ public:
 
     uint8_t get_options(void) {return _options;}
 
+    float get_fuel_capacity(void) {return _fuel_capacity;}
+
 private:
 
     // Pointer to chosen driver
@@ -103,6 +105,7 @@ private:
     // Parameters
     AP_Int8 _type; // Select which generator to use
     AP_Int32 _options; // Select which generator to use
+    AP_Float _fuel_capacity; //total fuel capacity of the generator
 
     
 
