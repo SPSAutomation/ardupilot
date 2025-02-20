@@ -18,14 +18,6 @@
 #define EXTENDER_PREARM_TEMP 55
 #define EXTENDER_MAINTAINANCE_SCHEDULE 720000 // 200 Hours in seconds
 
-/*
- *  Example setup:
- *  param set SERIAL2_PROTOCOL 30  # Generator protocol
- *  param set SERIAL2_BAUD 9600
- *  param set RC9_OPTION 85        # pilot directive for generator
- *  param set SERVO8_FUNCTION 42   # autopilot directive to generator
- */
-
 class AP_Generator_GX_7 : public AP_Generator_Backend
 {
 
@@ -63,6 +55,15 @@ public:
     // present, providing telemetry and not indicating an errors.
     bool healthy() const override;
 
+    // reported mode from the generator:
+    enum class WorkingState {
+        STOP = 0,
+        CRANK = 1,
+        RUN = 2,
+        LOCK = 3,
+        INHIBIT = 4,
+    };
+
 private:
 
     // methods and state to record pilot desired runstate and actual runstate:
@@ -77,15 +78,6 @@ private:
         pilot_desired_runstate = newstate;
     }
     void update_runstate();
-
-    // reported mode from the generator:
-    enum class WorkingState {
-        STOP = 0,
-        CRANK = 1,
-        RUN = 2,
-        LOCK = 3,
-        INHIBIT = 4,
-    };
 
     enum class ExtenderError : uint32_t {             // HEX      DECIMAL
         LOCK_TIME_EXPIRE_ERROR  = (1U <<  0),   // 0x00001  1

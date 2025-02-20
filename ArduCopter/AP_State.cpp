@@ -79,6 +79,15 @@ void Copter::set_failsafe_gcs(bool b)
 }
 
 // ---------------------------------------------
+void Copter::set_failsafe_generator(bool b)
+{
+    failsafe.generator = b;
+
+    // update AP_Notify
+    AP_Notify::flags.failsafe_generator = b;
+}
+
+// ---------------------------------------------
 
 void Copter::update_using_interlock()
 {

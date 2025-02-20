@@ -29,7 +29,7 @@
 #define AC_SPRAYER_DEFAULT_PRESSURE         100
 #define AC_SPRAYER_DEFAULT_USEFUL_LOAD      15.0
 
-#define MSG_TIMEOUT                         3000
+#define MSG_TIMEOUT                         5000
 
 #define ERROR_MSG_TIMEOUT                   10000
 

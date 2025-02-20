@@ -223,7 +223,7 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
 {
     const uint32_t now = AP_HAL::millis();
 
-    if (now - last_reading_ms > 2000) { // we expect @1Hz
+    if (now - last_reading_ms > 5000) { // we expect @1Hz
         hal.util->snprintf(failmsg, failmsg_len, "no messages in %ums", unsigned(now - last_reading_ms));
         return false;
     }
@@ -283,7 +283,7 @@ bool AP_Generator_GX_7::healthy() const
 {
     const uint32_t now = AP_HAL::millis();
 
-    if (last_reading_ms == 0 || now - last_reading_ms > 2000) {
+    if (last_reading_ms == 0 || now - last_reading_ms > 5000) {
         return false;
     }
     if (extender_error) {
@@ -324,17 +324,17 @@ bool AP_Generator_GX_7::is_low_error(const uint32_t err_in) const
     if (
         err_in & 
         (
-            (uint32_t)ExtenderError::LOCK_TIME_EXPIRE_ERROR == 0x1
-            || (uint32_t)ExtenderError::LOW_OIL_ERROR == 0x1 
-            || (uint32_t)ExtenderError::SYSTEM_ERROR == 0x1 
-            || (uint32_t)ExtenderError::COMMUNICATION_ERROR == 0x1 
-            || (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR == 0x1 
-            || (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR == 0x1 
-            || (uint32_t)ExtenderError::THROTTLE_ERROR == 0x1 
-            || (uint32_t)ExtenderError::OVER_SPEED_ERROR == 0x1 
-            || (uint32_t)ExtenderError::OVER_CURRENT_ERROR == 0x1 
-            || (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR == 0x1 
-            || (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR == 0x1
+            (uint32_t)ExtenderError::LOCK_TIME_EXPIRE_ERROR
+            | (uint32_t)ExtenderError::LOW_OIL_ERROR
+            | (uint32_t)ExtenderError::SYSTEM_ERROR
+            | (uint32_t)ExtenderError::COMMUNICATION_ERROR
+            | (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR
+            | (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR
+            | (uint32_t)ExtenderError::THROTTLE_ERROR
+            | (uint32_t)ExtenderError::OVER_SPEED_ERROR
+            | (uint32_t)ExtenderError::OVER_CURRENT_ERROR
+            | (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR
+            | (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR
         )
     )
     {
@@ -419,7 +419,7 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         output_voltage, // bus_voltage; Voltage of the bus seen at the generator
         INT16_MAX, // rectifier_temperature
         std::numeric_limits<double>::quiet_NaN(), // bat_current_setpoint; The target battery current
-        motor_temperature, // generator temperature
+        engine_cyclinder_temperature, // generator temperature
         total_run_time * 60,
         EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60)
         );
@@ -427,7 +427,7 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
     mavlink_msg_fuel_status_send(
         channel.get_chan(),
         0,  // Fuel ID.
-        _frontend.get_fuel_capacity() * 1000, // total fuel capacity
+        5000, // total fuel capacity
         std::numeric_limits<float>::quiet_NaN(),  // Consumed fuel (measured). 
         std::numeric_limits<float>::quiet_NaN(),  // Remaining fuel until empty (measured).
         fuel_level,  // Percentage of remaining fuel, relative to full.

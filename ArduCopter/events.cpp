@@ -122,6 +122,123 @@ void Copter::handle_battery_failsafe(const char *type_str, const int8_t action)
 
 }
 
+void Copter::generator_failsafe_check(void)
+{
+    if (AP::generator()->get_type() != AP_Generator::Type::GX_7)
+    {
+        return;
+    }
+
+    FailsafeAction desired_action = FailsafeAction::NONE;
+    if (AP::generator()->get_state() != 2 && motors->armed()) 
+    {
+        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::STOPPED)
+        {
+            gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Stopped");
+            last_generator_failsafe_notification = AP_HAL::millis();
+            last_generator_failsafe_level = GeneratorFailsafes::STOPPED;
+        }
+        desired_action = (FailsafeAction)AP::generator()->get_off_failsafe_action();
+    }
+    else if (AP::generator()->get_fuel_remaining() < AP::generator()->get_crit_fuel_failsafe_level())
+    {
+        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::CRIT_FUEL)
+        {
+            gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Critical Fuel");
+            last_generator_failsafe_notification = AP_HAL::millis();
+            last_generator_failsafe_level = GeneratorFailsafes::CRIT_FUEL;
+        }
+        desired_action = (FailsafeAction)AP::generator()->get_crit_fuel_failsafe_action();
+    }
+    else if (!AP::generator()->healthy())
+    {
+        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::ERROR)
+        {
+            gcs().send_text(MAV_SEVERITY_ERROR, "Generator Not Healthy");
+            last_generator_failsafe_notification = AP_HAL::millis();
+            last_generator_failsafe_level = GeneratorFailsafes::ERROR;
+        }
+        desired_action = (FailsafeAction)AP::generator()->get_error_failsafe_action();
+    }
+    else if (AP::generator()->get_fuel_remaining() < AP::generator()->get_low_fuel_failsafe_level())
+    {
+        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::LOW_FUEL)
+        {
+            gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator LOW Fuel");
+            last_generator_failsafe_notification = AP_HAL::millis();
+            last_generator_failsafe_level = GeneratorFailsafes::LOW_FUEL;
+        }
+        desired_action = (FailsafeAction)AP::generator()->get_low_fuel_failsafe_action();
+    }
+    else {
+        last_generator_failsafe_level = GeneratorFailsafes::NONE;
+    }
+    
+    if (failsafe.generator && desired_action == FailsafeAction::NONE)
+    {
+        // Failsafe Cleared
+        set_failsafe_generator(false);
+        end_generator_failsafe();
+    }
+    else if (!failsafe.generator && desired_action == FailsafeAction::NONE)
+    {
+        // no problem, do nothing
+    }
+    else if (failsafe.generator && desired_action != FailsafeAction::NONE)
+    {
+        // Already in failsafe, do nothing
+    }
+    else if (!failsafe.generator && desired_action != FailsafeAction::NONE)
+    {
+        set_failsafe_generator(true);
+        do_generator_failsafe(desired_action);
+    }
+}
+
+void Copter::do_generator_failsafe(FailsafeAction desired_action)
+{
+    LOGGER_WRITE_ERROR(LogErrorSubsystem::FAILSAFE_GENERATOR, LogErrorCode::FAILSAFE_OCCURRED);
+    RC_Channels::clear_overrides();
+
+    if (!motors->armed()) 
+    {
+        desired_action = FailsafeAction::NONE;;
+        announce_failsafe("Generator");
+
+    } 
+    else if (should_disarm_on_failsafe()) 
+    {
+        // should immediately disarm when we're on the ground
+        arming.disarm(AP_Arming::Method::GENERATORFAILSAFE);
+        desired_action = FailsafeAction::NONE;;
+        announce_failsafe("Generator", "Disarming");
+
+    }
+    else if (flightmode->is_landing() && ((battery.has_failsafed() && battery.get_highest_failsafe_priority() <= FAILSAFE_LAND_PRIORITY))) 
+    {
+        // Allow landing to continue when battery failsafe requires it (not a user option)
+        announce_failsafe("Generator + Battery", "Continuing Landing");
+        desired_action = FailsafeAction::LAND;
+    }
+    else if (AP::vehicle()->is_landing() &&  failsafe_option(FailsafeOption::CONTINUE_IF_LANDING)) {
+        // Allow landing to continue when FS_OPTIONS is set to continue landing
+        announce_failsafe("Generator", "Continuing Landing");
+        desired_action = FailsafeAction::LAND;
+    }
+    else
+    {
+        announce_failsafe("Generator");
+    }
+
+    do_failsafe_action(desired_action, ModeReason::GENERATOR_FAILSAFE);
+}
+
+void Copter::end_generator_failsafe(void)
+{
+    gcs().send_text(MAV_SEVERITY_WARNING, "Generator Failsafe Cleared");
+    LOGGER_WRITE_ERROR(LogErrorSubsystem::FAILSAFE_GENERATOR, LogErrorCode::FAILSAFE_RESOLVED);
+}
+
 // failsafe_gcs_check - check for ground station failsafe
 void Copter::failsafe_gcs_check()
 {

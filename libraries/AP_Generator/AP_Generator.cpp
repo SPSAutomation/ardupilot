@@ -41,11 +41,47 @@ const AP_Param::GroupInfo AP_Generator::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("OPTIONS", 2, AP_Generator, _options, 0),
 
-    // @Param: FUEL_CAPACITY
-    // @DisplayName: Generator fuel capacity
-    // @Description: Total fuel capacity of generator system
+
+    // @Param: FUEL_LOW_PERCENT
+    // @DisplayName: Generator low fuel level
+    // @Description: Fuel level to low failsafe at
+    // Units: %
     // @User: Standard
-    AP_GROUPINFO("FUEL_CAPACITY", 3, AP_Generator, _fuel_capacity, 0),
+    AP_GROUPINFO("LOW_PER", 3, AP_Generator, _fuel_low_percent, 0),
+
+    // @Param: FUEL_LOW_FS_ACT
+    // @DisplayName: Generator low fuel action
+    // @Description: Action to take when low fuel level is reached
+    // @Values{Copter}: 0:None,1:Land,2:RTL,3:SmartRTL or RTL,4:SmartRTL or Land,5:Terminate,6:Auto DO_LAND_START or RTL
+    // @User: Standard
+    AP_GROUPINFO("LOW_FS", 4, AP_Generator, _fuel_low_fs, 0),
+
+    // @Param: FUEL_CRIT_PERCENT
+    // @DisplayName: Generator critical fuel level
+    // @Description: Fuel level to critical failsafe at
+    // @User: Standard
+    AP_GROUPINFO("CRIT_PER", 5, AP_Generator, _fuel_crit_percent, 0),
+
+    // @Param: FUEL_CRIT_FS_ACT
+    // @DisplayName: Generator critical fuel action
+    // @Description: Action to take when critical fuel level is reached
+    // @Values{Copter}: 0:None,1:Land,2:RTL,3:SmartRTL or RTL,4:SmartRTL or Land,5:Terminate,6:Auto DO_LAND_START or RTL
+    // @User: Standard
+    AP_GROUPINFO("CRIT_FS", 6, AP_Generator, _fuel_crit_fs, 0),
+
+    // @Param: OFF_FS_ACT
+    // @DisplayName: Generator stopped action
+    // @Description: Action to take when generator stops
+    // @Values{Copter}: 0:None,1:Land,2:RTL,3:SmartRTL or RTL,4:SmartRTL or Land,5:Terminate,6:Auto DO_LAND_START or RTL
+    // @User: Standard
+    AP_GROUPINFO("OFF_FS", 7, AP_Generator, _off_fs, 0),
+
+    // @Param: ERROR_FS_ACT
+    // @DisplayName: Generator error action
+    // @Description: Action to take when generator has an error
+    // @Values{Copter}: 0:None,1:Land,2:RTL,3:SmartRTL or RTL,4:SmartRTL or Land,5:Terminate,6:Auto DO_LAND_START or RTL
+    // @User: Standard
+    AP_GROUPINFO("ERROR_FS", 8, AP_Generator, _error_fs, 0),
 
     AP_GROUPEND
 };

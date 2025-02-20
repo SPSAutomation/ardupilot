@@ -428,6 +428,7 @@ private:
         uint8_t terrain             : 1; // true if the missing terrain data failsafe has occurred
         uint8_t adsb                : 1; // true if an adsb related failsafe has occurred
         uint8_t deadreckon          : 1; // true if a dead reckoning failsafe has triggered
+        uint8_t generator           : 1; // A status flag for the generator failsafe
     } failsafe;
 
     bool any_failsafe_triggered() const {
@@ -641,6 +642,14 @@ private:
         BRAKE_LAND         = 7
     };
 
+    enum class GeneratorFailsafes : uint8_t {
+        NONE = 0,
+        LOW_FUEL = 1,
+        ERROR = 2,
+        CRIT_FUEL = 3,
+        STOPPED = 4
+    };
+
     enum class FailsafeOption {
         RC_CONTINUE_IF_AUTO             = (1<<0),   // 1
         GCS_CONTINUE_IF_AUTO            = (1<<1),   // 2
@@ -680,6 +689,7 @@ private:
     void set_simple_mode(SimpleMode b);
     void set_failsafe_radio(bool b);
     void set_failsafe_gcs(bool b);
+    void set_failsafe_generator(bool b);
     void update_using_interlock();
 
     // Copter.cpp
@@ -800,6 +810,9 @@ private:
     void failsafe_gcs_check();
     void failsafe_gcs_on_event(void);
     void failsafe_gcs_off_event(void);
+    void generator_failsafe_check(void);
+    void do_generator_failsafe(FailsafeAction desired_action);
+    void end_generator_failsafe(void);
     void failsafe_terrain_check();
     void failsafe_terrain_set_status(bool data_ok);
     void failsafe_terrain_on_event();
@@ -813,6 +826,9 @@ private:
     bool should_disarm_on_failsafe();
     void do_failsafe_action(FailsafeAction action, ModeReason reason);
     void announce_failsafe(const char *type, const char *action_undertaken=nullptr);
+
+    uint32_t last_generator_failsafe_notification;
+    GeneratorFailsafes last_generator_failsafe_level;
 
     // failsafe.cpp
     void failsafe_enable();

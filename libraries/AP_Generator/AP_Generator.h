@@ -95,7 +95,12 @@ public:
 
     uint8_t get_options(void) {return _options;}
 
-    float get_fuel_capacity(void) {return _fuel_capacity;}
+    int8_t get_low_fuel_failsafe_action(void) {return (int8_t) _fuel_low_fs;}
+    int8_t get_crit_fuel_failsafe_action(void) {return (int8_t) _fuel_crit_fs;}
+    int8_t get_off_failsafe_action(void) {return (int8_t) _off_fs;}
+    int8_t get_low_fuel_failsafe_level(void) {return (int8_t) _fuel_low_percent;}
+    int8_t get_crit_fuel_failsafe_level(void) {return (int8_t) _fuel_crit_percent;}
+    int8_t get_error_failsafe_action(void) {return (int8_t) _error_fs;}
 
 private:
 
@@ -105,8 +110,12 @@ private:
     // Parameters
     AP_Int8 _type; // Select which generator to use
     AP_Int32 _options; // Select which generator to use
-    AP_Float _fuel_capacity; //total fuel capacity of the generator
-
+    AP_Int8 _fuel_low_percent;
+    AP_Int8 _fuel_low_fs; // Low fuel failsafe
+    AP_Int8 _fuel_crit_percent;
+    AP_Int8 _fuel_crit_fs; // Critical fuel failsafe
+    AP_Int8 _off_fs;
+    AP_Int8 _error_fs;
     
 
     // Helper to get param and cast to GenType
