@@ -934,15 +934,17 @@ void AP_DroneCAN::send_spot_spray_control()
     _last_spray_ctrl_ms = now;
 
     com_aeronavics_SprayCtrl spray_ctrl_msg;
+    spray_ctrl_msg.flow_rate = 0;
+    spray_ctrl_msg.volume = 0;
+    spray_ctrl_msg.pressure = AP::spot_sprayer()->get_pressure();
 
     if (AP::spot_sprayer()->spraying()) {
         spray_ctrl_msg.flow_rate = AP::spot_sprayer()->get_flow_rate();
     }
-    else {
-        spray_ctrl_msg.flow_rate = 0;
+    else 
+    {
+        spray_ctrl_msg.volume = AP::spot_sprayer()->volume_queued();
     }
-
-    spray_ctrl_msg.pressure = AP::spot_sprayer()->get_pressure();
 
     sprayer_control.broadcast(spray_ctrl_msg);
 }

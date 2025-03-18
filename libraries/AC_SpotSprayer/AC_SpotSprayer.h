@@ -28,6 +28,11 @@
 #define AC_SPRAYER_DEFAULT_FLOW_RATE_HIGH   120
 #define AC_SPRAYER_DEFAULT_PRESSURE         100
 #define AC_SPRAYER_DEFAULT_USEFUL_LOAD      15.0
+#define AC_SPRAYER_DEFAULT_VOLUME_LOW       100
+#define AC_SPRAYER_DEFAULT_VOLUME_MID       250
+#define AC_SPRAYER_DEFAULT_VOLUME_HIGH      500
+#define AC_SPRAYER_DEFAULT_MODE             0
+#define AC_SPRAYER_DEFAULT_PULSE            50
 
 #define MSG_TIMEOUT                         5000
 
@@ -45,11 +50,13 @@ class AC_SpotSprayer {
 public:
     AC_SpotSprayer();
 
-    enum class FlowRate {
+    enum class OPTION {
         LOW = 0,
         MIDDLE = 1,
         HIGH = 2,
     };
+
+
 
     /* Do not allow copies */
     CLASS_NO_COPY(AC_SpotSprayer);
@@ -64,9 +71,16 @@ public:
     /// run - allow or disallow spraying to occur
     void run(bool true_false);
 
-    void set_flow_rate(FlowRate flow_rate);
+    void set_option(OPTION option);
+    void set_volume();
     uint16_t get_flow_rate();
     uint16_t get_pressure();
+
+    void request_pulse();
+    void queue_volume();
+    uint16_t volume_queued();
+
+    uint8_t get_mode() const { return (uint8_t) _mode; }
 
     /// spraying - returns true if spraying is actually happening
     bool spraying() const { return _spraying; }
@@ -90,11 +104,16 @@ protected:
     AP_Int16        _flow_rate_high;        ///< Desired high flow rate
     AP_Int16        _pressure;              ///< Desired pump pressure
     AP_Float        _useful_load;           ///< Maximum useful load
+    AP_Int16        _volume_low;            ///< Desired low volume
+    AP_Int16        _volume_mid;            ///< Desired middle volume
+    AP_Int16        _volume_high;           ///< Desired high volume
+    AP_Int8         _mode;                  ///< Flowrate or volume mode
+    AP_Int16        _pulse;                 ///< Pulse Volume
 
 private:
 
     bool _spraying;
-    FlowRate _current_flow_rate;
+    OPTION _option;
 
     // internal variables
     uint32_t        _speed_over_min_time;   ///< time at which we reached speed minimum
@@ -107,7 +126,12 @@ private:
     uint8_t     error_flags;
     float       sprayed_volume;
 
+    uint16_t    _volume_queued;
+    bool        _pulse_queued;
+
     float       _reported_weight;
+
+    uint16_t    _volume_to_log;
 
     HAL_Semaphore _sem;
 

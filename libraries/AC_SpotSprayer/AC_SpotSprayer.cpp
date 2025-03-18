@@ -60,6 +60,45 @@ const AP_Param::GroupInfo AC_SpotSprayer::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("MAX_LOAD",   5, AC_SpotSprayer, _useful_load, AC_SPRAYER_DEFAULT_USEFUL_LOAD),
 
+    // @Param: VOL_LOW
+    // @DisplayName: Volume low
+    // @Description: Desired low Volume
+    // @Units: ml
+    // @Range: 0 10000
+    // @User: Standard
+    AP_GROUPINFO("VOL_LOW",   6, AC_SpotSprayer, _volume_low, AC_SPRAYER_DEFAULT_VOLUME_LOW),
+
+    // @Param: VOL_MID
+    // @DisplayName: Volume middle
+    // @Description: Desired middle volume
+    // @Units: ml
+    // @Range: 0 10000
+    // @User: Standard
+    AP_GROUPINFO("VOL_MID",   7, AC_SpotSprayer, _volume_mid, AC_SPRAYER_DEFAULT_VOLUME_MID),
+
+    // @Param: VOL_HIGH
+    // @DisplayName: Volume high
+    // @Description: Desired high volume
+    // @Units: ml
+    // @Range: 0 10000
+    // @User: Standard
+    AP_GROUPINFO("VOL_HIGH",   8, AC_SpotSprayer, _volume_high, AC_SPRAYER_DEFAULT_VOLUME_HIGH),
+
+    // @Param: MODE
+    // @DisplayName: Spot sprayer mode
+    // @Description: Flowrate or volume mode
+    // @Values: 0:Flowrate,1:Volume
+    // @User: Standard
+    AP_GROUPINFO("MODE",   9, AC_SpotSprayer, _mode, AC_SPRAYER_DEFAULT_MODE),
+
+    // @Param: PULSE
+    // @DisplayName: Pulse Volume
+    // @Description: Sprayer Pulse Volume
+    // @Units: ml
+    // @Range: 0 10000
+    // @User: Standard
+    AP_GROUPINFO("PULSE",   10, AC_SpotSprayer, _pulse, AC_SPRAYER_DEFAULT_PULSE),
+
     AP_GROUPEND
 };
 
@@ -152,24 +191,75 @@ void AC_SpotSprayer::run(const bool activate)
 
 }
 
-void AC_SpotSprayer::set_flow_rate(FlowRate flow_rate)
+void AC_SpotSprayer::set_option(OPTION option)
 {
-    _current_flow_rate = flow_rate;
+    _option = option;
 }
+
+
 
 uint16_t AC_SpotSprayer::get_flow_rate()
 {
-    switch (_current_flow_rate)
+    switch (_option)
     {
-    case FlowRate::LOW:
+    case OPTION::LOW:
         return (uint16_t) _flow_rate_low;
-    case FlowRate::MIDDLE:
+    case OPTION::MIDDLE:
         return (uint16_t) _flow_rate_mid;
-    case FlowRate::HIGH:
+    case OPTION::HIGH:
         return (uint16_t) _flow_rate_high;
+    default:
+        return 0;
     }
+}
 
-    return 0;
+void AC_SpotSprayer::queue_volume()
+{
+    if (_volume_queued == 0)
+    {
+        switch (_option)
+        {
+        case OPTION::LOW:
+            if (_volume_low > 0)
+            {
+                _volume_queued = (uint16_t) _volume_low;
+            }
+            break;
+        case OPTION::MIDDLE:
+            if (_volume_mid > 0)
+            {
+                _volume_queued = (uint16_t) _volume_mid;
+            }
+            break;
+        case OPTION::HIGH:
+            if (_volume_high > 0)
+            {
+                _volume_queued = (uint16_t) _volume_high;
+            }
+            break;
+        default:
+            {
+                break;
+            }
+        }
+    }
+    _volume_to_log = _volume_queued;
+}
+
+void AC_SpotSprayer::request_pulse()
+{
+    if (_volume_queued == 0 && !_spraying)
+    {
+        _volume_queued = (uint16_t) _pulse;
+    }
+}
+
+uint16_t  AC_SpotSprayer::volume_queued()
+{
+    uint16_t volume_to_send = _volume_queued;
+    _volume_to_log = _volume_queued;
+    _volume_queued = 0;
+    return volume_to_send;
 }
 
 uint16_t AC_SpotSprayer::get_pressure()
@@ -186,6 +276,11 @@ void AC_SpotSprayer::update()
     }
     // get the current time
     const uint32_t now = AP_HAL::millis();
+
+    if (_mode == 1 && _spraying)
+    {
+        _spraying = false;
+    }
 
     if (_last_fault_msg_ms + ERROR_MSG_TIMEOUT < now) {
         if (last_reading_ms + MSG_TIMEOUT < now) {
@@ -259,17 +354,27 @@ void AC_SpotSprayer::log_write()
 
     last_logged_reading_ms = last_reading_ms;
 
+    uint16_t desired_flow_rate;
+    if (_spraying)
+    {
+        desired_flow_rate = get_flow_rate();
+    }
+    else
+    {
+        desired_flow_rate = 0;
+    }
+
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "SPRAY",
-        "TimeUS,DFlow,MFlow,DPres,MPres,SprayLevel,Error",
-        "syyPP%-",
+        "TimeUS,DFlow,MFlow,DVol,Pres,SprayLevel,Error",
+        "syylP%-",
         "F------",
-        "QHHHHfB",
+        "QfffHfB",
         AP_HAL::micros64(),
-        _current_flow_rate,
-        measured_flow_rate,
-        (uint16_t)_pressure,
+        ((float)desired_flow_rate)/1000,
+        ((float)measured_flow_rate)/1000,
+        ((float)_volume_to_log)/1000,
         measured_pressure,
         spray_level,
         error_flags
@@ -305,7 +410,6 @@ void AC_SpotSprayer::send_spray_status(const mavlink_channel_t channel)
         error_flags
     );
 }
-
 
 namespace AP {
 

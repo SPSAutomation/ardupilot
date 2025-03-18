@@ -284,10 +284,11 @@ public:
 
         // Spot Sprayer inputs
         SPOT_SPRAYER =              310, // Run spot sprayer
-        SPOT_SPRAYER_FLOW_RATE =    311, // Set spot sprayer desired flow rate
+        SPOT_SPRAYER_OPTION =       311, // Set spot sprayer desired flow rate/volume
+        SPOT_SPRAYER_PULSE =        312, // Run spot sprayer pulse
 
         // this must be higher than any aux function above
-        AUX_FUNCTION_MAX =   312,
+        AUX_FUNCTION_MAX =   313,
     };
     typedef enum AUX_FUNC aux_func_t;
 
@@ -364,7 +365,8 @@ protected:
     void do_aux_function_relay(uint8_t relay, bool val);
     void do_aux_function_sprayer(const AuxSwitchPos ch_flag);
     void do_aux_function_spot_sprayer(const AuxSwitchPos ch_flag);
-    void do_aux_function_spot_sprayer_flowrate(const AuxSwitchPos ch_flag);
+    void do_aux_function_spot_sprayer_option(const AuxSwitchPos ch_flag);
+    void do_aux_function_spot_sprayer_pulse(const AuxSwitchPos ch_flag);
     void do_aux_function_generator(const AuxSwitchPos ch_flag);
     void do_aux_function_fft_notch_tune(const AuxSwitchPos ch_flag);
 
