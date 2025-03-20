@@ -1135,13 +1135,28 @@ void RC_Channel::do_aux_function_spot_sprayer(const AuxSwitchPos ch_flag)
     }
     switch (ch_flag) {
         case AuxSwitchPos::LOW:
-            sprayer->run(false);
+            if (sprayer->get_mode() == 0)
+            {
+                sprayer->run(false);
+            }
+            _spray_volume_reset = false;
             break;
         case AuxSwitchPos::MIDDLE:
             // nothing
             break;
         case AuxSwitchPos::HIGH:
-            sprayer->run(true);
+            if (sprayer->get_mode() == 0)
+            {
+                sprayer->run(true);
+            }
+            else 
+            {
+                if (!_spray_volume_reset)
+                {
+                    _spray_volume_reset = true;
+                    sprayer->queue_volume();
+                }
+            }
             break;
     }
 }
@@ -1175,13 +1190,17 @@ void RC_Channel::do_aux_function_spot_sprayer_pulse(const AuxSwitchPos ch_flag)
     }
     switch (ch_flag) {
         case AuxSwitchPos::LOW:
-            // nothing
+            _spray_pulse_reset = false;
             break;
         case AuxSwitchPos::MIDDLE:
             // nothing
             break;
         case AuxSwitchPos::HIGH:
-            sprayer->request_pulse();
+            if (!_spray_pulse_reset)
+            {
+                _spray_pulse_reset = true;
+                sprayer->request_pulse();
+            }
             break;
     }
 }

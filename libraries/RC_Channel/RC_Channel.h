@@ -399,6 +399,9 @@ private:
 
     bool _channel_reset = true;
 
+    bool _spray_pulse_reset = false;
+    bool _spray_volume_reset = false;
+
     // overrides
     uint16_t override_value;
     uint32_t last_override_time;

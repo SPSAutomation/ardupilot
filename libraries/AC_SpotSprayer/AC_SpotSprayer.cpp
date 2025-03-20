@@ -243,7 +243,6 @@ void AC_SpotSprayer::queue_volume()
             }
         }
     }
-    _volume_to_log = _volume_queued;
 }
 
 void AC_SpotSprayer::request_pulse()
@@ -367,16 +366,17 @@ void AC_SpotSprayer::log_write()
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "SPRAY",
-        "TimeUS,DFlow,MFlow,DVol,Pres,SprayLevel,Error",
-        "syylP%-",
-        "F------",
-        "QfffHfB",
+        "TimeUS,DFlow,MFlow,DVol,Pres,SLevel,SVol,Error",
+        "syylP%l-",
+        "F-------",
+        "QfffHffB",
         AP_HAL::micros64(),
         ((float)desired_flow_rate)/1000,
         ((float)measured_flow_rate)/1000,
         ((float)_volume_to_log)/1000,
         measured_pressure,
         spray_level,
+        sprayed_volume,
         error_flags
     );
 }

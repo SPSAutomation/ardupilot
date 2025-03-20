@@ -941,10 +941,7 @@ void AP_DroneCAN::send_spot_spray_control()
     if (AP::spot_sprayer()->spraying()) {
         spray_ctrl_msg.flow_rate = AP::spot_sprayer()->get_flow_rate();
     }
-    else 
-    {
-        spray_ctrl_msg.volume = AP::spot_sprayer()->volume_queued();
-    }
+    spray_ctrl_msg.volume = AP::spot_sprayer()->volume_queued();
 
     sprayer_control.broadcast(spray_ctrl_msg);
 }

@@ -197,7 +197,7 @@ void AP_Generator_GX_7::Log_Write()
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "GEN",
-        "TimeUS,rpm,throttle,fuel_level,temp,cyclinder_temp,volt,curr,runtime,error,state",
+        "TimeUS,Rpm,Thr,Fuel,GTemp,MTemp,Volt,Curr,Runtime,Err,State",
         "sq%%OOvAs--",
         "F----------",
         "QHHBBBHHIIB",
