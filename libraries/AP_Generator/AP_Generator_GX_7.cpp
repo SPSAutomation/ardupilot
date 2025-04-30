@@ -89,8 +89,8 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
     driver->engine_speed = msg.EngineSpeed;
     driver->throttle_position = msg.ThrottlePosition;
     driver->fuel_level = msg.FuelPosition;
-    driver->motor_temperature = msg.Motortemperature - 40;
-    driver->engine_cyclinder_temperature = msg.EngineCylinderTemperature - 40;
+    driver->coil_temperature = msg.Motortemperature - 80;
+    driver->cylinder_temperature = msg.EngineCylinderTemperature - 40;
     driver->output_voltage = msg.OutputVoltage;
     driver->output_current = msg.OutputCurrent;
     driver->total_run_time = msg.total_run_minutes;
@@ -103,7 +103,7 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
 // the "run" (high-RPM) state:
 bool AP_Generator_GX_7::generator_ok_to_run() const
 {
-    return engine_cyclinder_temperature >= EXTENDER_PREARM_TEMP;
+    return cylinder_temperature >= EXTENDER_PREARM_TEMP;
 }
 
 /*
@@ -182,8 +182,8 @@ void AP_Generator_GX_7::Log_Write()
         engine_speed,
         throttle_position,
         fuel_level,
-        motor_temperature,
-        engine_cyclinder_temperature,
+        coil_temperature,
+        cylinder_temperature,
         output_voltage,
         output_current,
         total_run_time*60,
@@ -237,9 +237,9 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return false;
     }
 
-    if (engine_cyclinder_temperature < EXTENDER_PREARM_TEMP)
+    if (cylinder_temperature < EXTENDER_PREARM_TEMP)
     {
-        hal.util->snprintf(failmsg, failmsg_len, "Warming up: %u Needs %u", engine_cyclinder_temperature, EXTENDER_PREARM_TEMP);
+        hal.util->snprintf(failmsg, failmsg_len, "Warming up: %u Needs %u", cylinder_temperature, EXTENDER_PREARM_TEMP);
         return false;
     }
 
@@ -398,11 +398,11 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         engine_speed, // generator_speed
         std::numeric_limits<double>::quiet_NaN(), // battery_current; current into/out of battery
         output_current, // load_current; Current going to UAV
-        std::numeric_limits<double>::quiet_NaN(), // power_generated; the power being generated
+        output_current * output_voltage, // power_generated; the power being generated
         output_voltage, // bus_voltage; Voltage of the bus seen at the generator
-        INT16_MAX, // rectifier_temperature
+        coil_temperature, // rectifier_temperature
         std::numeric_limits<double>::quiet_NaN(), // bat_current_setpoint; The target battery current
-        engine_cyclinder_temperature, // generator temperature
+        cylinder_temperature, // generator temperature
         total_run_time * 60, // total runtime in seconds
         (_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60) // Time till next service in seconds
         );
