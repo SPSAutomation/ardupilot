@@ -101,6 +101,7 @@ public:
     int8_t get_low_fuel_failsafe_level(void) {return (int8_t) _fuel_low_percent;}
     int8_t get_crit_fuel_failsafe_level(void) {return (int8_t) _fuel_crit_percent;}
     int8_t get_error_failsafe_action(void) {return (int8_t) _error_fs;}
+    int16_t get_last_service_time(void) {return (int16_t) _last_service_time;}
 
 private:
 
@@ -116,6 +117,7 @@ private:
     AP_Int8 _fuel_crit_fs; // Critical fuel failsafe
     AP_Int8 _off_fs;
     AP_Int8 _error_fs;
+    AP_Int16 _last_service_time;
     
 
     // Helper to get param and cast to GenType

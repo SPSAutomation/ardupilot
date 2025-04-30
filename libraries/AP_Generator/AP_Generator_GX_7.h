@@ -154,9 +154,6 @@ private:
         return AP_HAL::millis() - idle_state_start_ms;
     }
 
-    // check if the generator requires maintenance and send a message if it does:
-    void check_maintenance_required();
-
     bool is_critical_error(const uint32_t err_in) const;
     bool is_low_error(const uint32_t err_in) const;
 

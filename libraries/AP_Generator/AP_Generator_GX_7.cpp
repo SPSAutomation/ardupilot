@@ -106,35 +106,12 @@ bool AP_Generator_GX_7::generator_ok_to_run() const
     return engine_cyclinder_temperature >= EXTENDER_PREARM_TEMP;
 }
 
-void AP_Generator_GX_7::check_maintenance_required()
-{
-    // don't bother the user while flying:
-    if (hal.util->get_soft_armed()) {
-        return;
-    }
-
-    if (!AP::generator()->option_set(AP_Generator::Option::INHIBIT_MAINTENANCE_WARNINGS)) {
-        const uint32_t now = AP_HAL::millis();
-
-        if ((extender_error >> 1) & 0x1) {
-            if (now - last_maintenance_warning_ms > 60000) {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Generator: requires maintenance");
-                last_maintenance_warning_ms = now;
-            }
-        }
-    }
-}
-
 /*
   update the state of the sensor
 */
 void AP_Generator_GX_7::update(void)
 {
     update_runstate();
-    if (last_reading_ms != 0) {
-        
-        check_maintenance_required();
-    }
 
     update_frontend_readings();
 
@@ -230,9 +207,9 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
 
     uint32_t errors = extender_error;
 
-    // requiring maintenance isn't something that should stop
-    // people flying - they have work to do.  But we definitely
-    // complain about it - a lot.
+    // maintenance is a prearm error, but we will ignore the built in 
+    // maintenance error and use our own one as we cannot reset the
+    // built in one after a service
     errors &= ~(1U << uint32_t(ExtenderError::MAINTENANCE_TIME_ERROR));
 
     if (errors) {
@@ -249,8 +226,14 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return false;
     }
 
+    if ((_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60) <= 0)
+    {
+        hal.util->snprintf(failmsg, failmsg_len, "Requires Service");
+        return false;
+    }
+
     if (working_state != WorkingState::RUN) {
-        hal.util->snprintf(failmsg, failmsg_len, "not started");
+        hal.util->snprintf(failmsg, failmsg_len, "Not Started");
         return false;
     }
 
@@ -420,8 +403,8 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         INT16_MAX, // rectifier_temperature
         std::numeric_limits<double>::quiet_NaN(), // bat_current_setpoint; The target battery current
         engine_cyclinder_temperature, // generator temperature
-        total_run_time * 60,
-        EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60)
+        total_run_time * 60, // total runtime in seconds
+        (_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60) // Time till next service in seconds
         );
 
     mavlink_msg_fuel_status_send(
