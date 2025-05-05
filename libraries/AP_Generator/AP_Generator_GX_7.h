@@ -158,7 +158,7 @@ private:
     bool is_low_error(const uint32_t err_in) const;
 
     // if we are emitting warnings about the generator requiring
-    // maintenamce, this is the last time we sent the warning:
+    // maintenance, this is the last time we sent the warning:
     uint32_t last_maintenance_warning_ms;
 };
 #endif

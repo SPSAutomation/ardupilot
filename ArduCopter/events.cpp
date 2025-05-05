@@ -140,7 +140,7 @@ void Copter::generator_failsafe_check(void)
         }
         desired_action = (FailsafeAction)AP::generator()->get_off_failsafe_action();
     }
-    else if (AP::generator()->get_fuel_remaining() < AP::generator()->get_crit_fuel_failsafe_level())
+    else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_crit_fuel_failsafe_level())
     {
         if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::CRIT_FUEL)
         {
@@ -160,7 +160,7 @@ void Copter::generator_failsafe_check(void)
         }
         desired_action = (FailsafeAction)AP::generator()->get_error_failsafe_action();
     }
-    else if (AP::generator()->get_fuel_remaining() < AP::generator()->get_low_fuel_failsafe_level())
+    else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_low_fuel_failsafe_level())
     {
         if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::LOW_FUEL)
         {

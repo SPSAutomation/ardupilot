@@ -145,7 +145,6 @@ void AP_Generator_GX_7::update_runstate()
         !hal.util->get_soft_armed()) {
         // consider changing the commanded runstate to the pilot
         // desired runstate:
-        commanded_runstate = RunState::IDLE;
         switch (pilot_desired_runstate) {
         case RunState::STOP:
             commanded_runstate = pilot_desired_runstate;
@@ -294,35 +293,12 @@ AP_BattMonitor::Failsafe AP_Generator_GX_7::update_failsafes() const
 // Check for error codes that are deemed critical
 bool AP_Generator_GX_7::is_critical_error(const uint32_t err_in) const
 {
-    if (working_state != WorkingState::RUN) {
-        gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Stopped");
-        return true;
-    }
     return false;
 }
 
 // Check for error codes that are deemed severe and would be cause to trigger a battery monitor low failsafe action
 bool AP_Generator_GX_7::is_low_error(const uint32_t err_in) const
 {
-    if (
-        err_in & 
-        (
-            (uint32_t)ExtenderError::LOCK_TIME_EXPIRE_ERROR
-            | (uint32_t)ExtenderError::LOW_OIL_ERROR
-            | (uint32_t)ExtenderError::SYSTEM_ERROR
-            | (uint32_t)ExtenderError::COMMUNICATION_ERROR
-            | (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR
-            | (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR
-            | (uint32_t)ExtenderError::THROTTLE_ERROR
-            | (uint32_t)ExtenderError::OVER_SPEED_ERROR
-            | (uint32_t)ExtenderError::OVER_CURRENT_ERROR
-            | (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR
-            | (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR
-        )
-    )
-    {
-        return true;
-    }
     return false;
 }
 
