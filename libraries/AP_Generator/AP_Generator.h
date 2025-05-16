@@ -92,6 +92,7 @@ public:
     Type get_type(void) {return (Type)(uint8_t)_type;}
 
     uint8_t get_state(void) {return _state;}
+    uint8_t get_commanded_state(void) {return _commanded_state; }
 
     uint8_t get_options(void) {return _options;}
 
@@ -134,6 +135,7 @@ private:
     bool _has_current;
     bool _has_consumed_energy;
     uint8_t _state;
+    uint8_t _commanded_state;
 
     static AP_Generator *_singleton;
 

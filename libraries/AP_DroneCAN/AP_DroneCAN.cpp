@@ -959,7 +959,7 @@ void AP_DroneCAN::send_gx_7_control()
     _last_extender_ctrl_ms = now;
 
     com_aeronavics_ExtenderCtrl extender_msg;
-    if (AP::generator()->get_state() == 17 || AP::generator()->get_state() == 0)
+    if (AP::generator()->get_commanded_state() == 17 || AP::generator()->get_commanded_state() == 0)
     {
         extender_msg.ExtenderControlCmd = 0;
         extender_msg.DroneStatus = 0;

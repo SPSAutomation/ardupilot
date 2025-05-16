@@ -32,6 +32,7 @@ void AP_Generator_Backend::update_frontend()
     _frontend._fuel_remaining = _fuel_remaining;
     _frontend._rpm = _rpm;
     _frontend._state = _state;
+    _frontend._commanded_state = _commanded_state;
     _frontend._healthy = healthy();
 }
 #endif

@@ -254,6 +254,7 @@ void AP_Generator_GX_7::update_frontend_readings(void)
     _rpm = engine_speed;
     _fuel_remaining = ((float)fuel_level) / 100;
     _state = (uint8_t)working_state;
+    _commanded_state = (uint8_t)commanded_runstate;
 
     update_frontend();
 }

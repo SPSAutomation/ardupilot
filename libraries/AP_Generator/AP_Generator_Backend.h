@@ -47,6 +47,7 @@ protected:
     float _consumed_mah;
     uint16_t _rpm;
     uint8_t _state;
+    uint8_t _commanded_state;
 
     AP_Generator& _frontend;
 
