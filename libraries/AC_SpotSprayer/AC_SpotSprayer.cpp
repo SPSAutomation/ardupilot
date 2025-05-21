@@ -173,7 +173,9 @@ void AC_SpotSprayer::handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRx
     driver->measured_flow_rate = msg.flow_rate;
     driver->measured_pressure = msg.pressure;
     driver->spray_level = msg.spray_remaining;
-    driver->sprayed_volume = msg.sprayed_volume;
+    driver->total_sprayed_volume = msg.total_sprayed_vol;
+    driver->armed_sprayed_volume = msg.armed_sprayed_vol;
+    driver->last_tree_volume = msg.last_tree_vol;
     driver->error_flags = msg.error_flags;
     driver->_reported_weight = msg.tank_weight;
 }
@@ -376,7 +378,7 @@ void AC_SpotSprayer::log_write()
         ((float)_volume_to_log)/1000,
         measured_pressure,
         spray_level,
-        sprayed_volume,
+        armed_sprayed_volume,
         error_flags
     );
 }
@@ -404,7 +406,9 @@ void AC_SpotSprayer::send_spray_status(const mavlink_channel_t channel)
         channel,
         measured_flow_rate,
         desired_flow_rate,
-        sprayed_volume,
+        total_sprayed_volume,
+        armed_sprayed_volume,
+        last_tree_volume,
         spray_level,
         measured_pressure,
         error_flags

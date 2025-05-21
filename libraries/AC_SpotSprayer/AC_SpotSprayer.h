@@ -124,7 +124,9 @@ private:
     uint16_t    measured_pressure;
     float       spray_level;
     uint8_t     error_flags;
-    float       sprayed_volume;
+    float       total_sprayed_volume;
+    float       armed_sprayed_volume;
+    float       last_tree_volume;
 
     uint16_t    _volume_queued;
     bool        _pulse_queued;
