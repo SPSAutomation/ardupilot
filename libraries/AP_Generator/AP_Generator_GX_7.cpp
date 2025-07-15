@@ -224,13 +224,7 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         }
         return false;
     }
-
-    if ((_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60) <= 0)
-    {
-        hal.util->snprintf(failmsg, failmsg_len, "Requires Service");
-        return false;
-    }
-
+    
     if (working_state != WorkingState::RUN) {
         hal.util->snprintf(failmsg, failmsg_len, "Not Started");
         return false;
@@ -395,6 +389,15 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         std::numeric_limits<float>::quiet_NaN(),  // Fuel temperature. 
         MAV_FUEL_TYPE_LIQUID  // Fuel type. 
     );
+
+
+    const uint32_t now = AP_HAL::millis();
+
+    if (((_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60) <= 0) && now - last_maintenance_warning_ms > 30000)
+    {
+        last_maintenance_warning_ms = now;
+        gcs().send_text(MAV_SEVERITY_WARNING, "Aircraft Requires Service");
+    }
 }
 
 // methods to control the generator state:
