@@ -789,6 +789,7 @@ int32_t AP_BattMonitor::pack_capacity_mah(uint8_t instance) const
 void AP_BattMonitor::check_failsafes(void)
 {
     if (hal.util->get_soft_armed()) {
+        bool _has_failsafed = false;
         for (uint8_t i = 0; i < _num_instances; i++) {
             if (drivers[i] == nullptr) {
                 continue;
@@ -817,6 +818,7 @@ void AP_BattMonitor::check_failsafes(void)
             GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Battery %d is %s %.2fV used %.0f mAh", i + 1, type_str,
                             (double)voltage(i), (double)state[i].consumed_mah);
             _has_triggered_failsafe = true;
+            _has_failsafed = true;
 #ifndef HAL_BUILD_AP_PERIPH
             AP_Notify::flags.failsafe_battery = true;
 #endif
@@ -840,6 +842,11 @@ void AP_BattMonitor::check_failsafes(void)
                 _battery_failsafe_handler_fn(type_str, action);
                 _highest_failsafe_priority = priority;
             }
+        }
+        if (!_has_failsafed && !hal.util->get_soft_armed())
+        {
+            _has_triggered_failsafe = false;
+            AP_Notify::flags.failsafe_battery = false;
         }
     }
 }

@@ -90,6 +90,13 @@ const AP_Param::GroupInfo AP_Generator::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("LAST_SERV", 9, AP_Generator, _last_service_time, 0),
 
+    // @Param: MIN_ARM_LVL
+    // @DisplayName: Generator Prearm Fuel Level
+    // @Description: Fuel level to prearm fail at
+    // Units: %
+    // @User: Standard
+    AP_GROUPINFO("MIN_ARM_LVL", 10, AP_Generator, _fuel_prearm_percent, 0),
+
     AP_GROUPEND
 };
 

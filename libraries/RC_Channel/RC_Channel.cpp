@@ -1097,16 +1097,39 @@ void RC_Channel::do_aux_function_generator(const AuxSwitchPos ch_flag)
         return;
     }
 
-    switch (ch_flag) {
-        case AuxSwitchPos::LOW:
-            generator->stop();
-            break;
-        case AuxSwitchPos::MIDDLE:
-            generator->idle();
-            break;
-        case AuxSwitchPos::HIGH:
+    if (generator->get_type() == AP_Generator::Type::GX_7)
+    {
+        // Runstate is currently stopped and we have recieved a high signal
+        if (generator->get_commanded_state() == 17 && ch_flag == AuxSwitchPos::HIGH && _generator_channel_reset) 
+        {
             generator->run();
-            break;
+            _generator_channel_reset = false;
+        }
+        // Runstate is currently not stopped and we have recieved a high signal
+        else if (ch_flag == AuxSwitchPos::HIGH)
+        {
+            generator->stop();
+            _generator_channel_reset = false;
+        }
+        // Channel has gone low, it reset the token
+        else if (ch_flag == AuxSwitchPos::LOW)
+        {
+            _generator_channel_reset = true;
+        }
+    }
+    else
+    {
+        switch (ch_flag) {
+            case AuxSwitchPos::LOW:
+                generator->stop();
+                break;
+            case AuxSwitchPos::MIDDLE:
+                generator->idle();
+                break;
+            case AuxSwitchPos::HIGH:
+                generator->run();
+                break;
+        }
     }
 }
 #endif

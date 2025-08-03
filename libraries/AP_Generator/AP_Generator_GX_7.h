@@ -64,14 +64,15 @@ public:
         INHIBIT = 4,
     };
 
-private:
-
     // methods and state to record pilot desired runstate and actual runstate:
     enum class RunState {
         STOP = 17,
         IDLE = 18,
         RUN = 19,
     };
+
+private:
+
     RunState pilot_desired_runstate = RunState::STOP;
     RunState commanded_runstate = RunState::STOP;  // output is based on this
     void set_pilot_desired_runstate(RunState newstate) {

@@ -124,19 +124,25 @@ void AC_BoomLock::update()
     const uint32_t now = AP_HAL::millis();
 
     bool all_connected = true;
+    bool message_sent = false;
 
-    if (_last_fault_msg_ms + BOOM_ERROR_MSG_TIMEOUT < now) 
+    for (uint8_t i = 1; i <= _num_booms; i++)
     {
-        for (uint8_t i = 1; i <= _num_booms; i++)
+        if (_boom_connection_status[i - 1] + BOOM_MSG_TIMEOUT < now)
         {
-            if (_boom_connection_status[i - 1] + BOOM_MSG_TIMEOUT < now)
+            if (_last_fault_msg_ms + BOOM_ERROR_MSG_TIMEOUT < now) 
             {
                 gcs().send_text(MAV_SEVERITY_ERROR, "Boom %u not connected", i);
-                _last_fault_msg_ms = now;
-                all_connected = false;
+                message_sent = true;
             }
+            all_connected = false;
         }
     }
+    if (message_sent)
+    {
+        _last_fault_msg_ms = now;
+    }
+
     _booms_connected = all_connected;
 }
 

@@ -397,7 +397,7 @@ private:
     // the input channel this corresponds to
     uint8_t     ch_in;
 
-    bool _channel_reset = true;
+    bool _generator_channel_reset = true;
 
     bool _spray_pulse_reset = false;
     bool _spray_volume_reset = false;

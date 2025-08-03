@@ -236,6 +236,12 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return false;
     }
 
+    if (fuel_level < _frontend.get_prearm_fuel_level())
+    {
+        hal.util->snprintf(failmsg, failmsg_len, "Low Fuel: %u%% less than %u%%", fuel_level, _frontend.get_prearm_fuel_level());
+        return false;
+    }
+
     return true;
 }
 
@@ -328,13 +334,15 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
                 }
             }
             break;
-        case WorkingState::INHIBIT:
-            status |= MAV_GENERATOR_STATUS_FLAG_START_INHIBITED;
-            break;
         default:
             break;
         }
     }
+
+    if (commanded_runstate != RunState::RUN) {
+        status |= MAV_GENERATOR_STATUS_FLAG_START_INHIBITED;
+    }
+
 
     if (extender_error & (uint8_t)ExtenderError::OVER_CURRENT_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_OVERCURRENT_FAULT;
