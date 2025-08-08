@@ -173,11 +173,12 @@ void AP_Generator_GX_7::Log_Write()
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "GEN",
-        "TimeUS,Rpm,Thr,Fuel,GTemp,MTemp,Volt,Curr,Runtime,Err,State",
-        "sq%%OOvAs--",
-        "F----------",
-        "QHHBBBHHIIB",
+        "TimeUS,MsgUS,Rpm,Thr,Fuel,GTemp,MTemp,Volt,Curr,Runtime,Err,State",
+        "ssq%%OOvAs--",
+        "FC----------",
+        "QIHHBBBHHIIB",
         AP_HAL::micros64(),
+        last_logged_reading_ms,
         engine_speed,
         throttle_position,
         fuel_level,
@@ -267,6 +268,7 @@ bool AP_Generator_GX_7::healthy() const
     const uint32_t now = AP_HAL::millis();
 
     if (last_reading_ms == 0 || now - last_reading_ms > 5000) {
+        gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %dms", now - last_reading_ms);
         return false;
     }
     if (extender_error) {

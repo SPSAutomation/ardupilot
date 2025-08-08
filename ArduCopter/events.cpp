@@ -174,7 +174,7 @@ void Copter::generator_failsafe_check(void)
         last_generator_failsafe_level = GeneratorFailsafes::NONE;
     }
     
-    if (failsafe.generator && desired_action == FailsafeAction::NONE)
+    if (failsafe.generator && desired_action == FailsafeAction::NONE && !motors->armed())
     {
         // Failsafe Cleared
         set_failsafe_generator(false);

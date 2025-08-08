@@ -13,6 +13,7 @@
 #include <AP_Common/AP_Common.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 
 
 #define EXTENDER_PREARM_TEMP 35
@@ -117,7 +118,7 @@ private:
 
     uint32_t last_reading_ms;
 
-    const char *error_strings[12] = {
+    std::string error_strings[12] = {
         "Lock Time Expired",
         "Maintenance Required",
         "Low Oil",
