@@ -268,7 +268,7 @@ bool AP_Generator_GX_7::healthy() const
     const uint32_t now = AP_HAL::millis();
 
     if (last_reading_ms == 0 || now - last_reading_ms > 5000) {
-        gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %dms", now - last_reading_ms);
+        gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %ldms", now - last_reading_ms);
         return false;
     }
     if (extender_error) {
