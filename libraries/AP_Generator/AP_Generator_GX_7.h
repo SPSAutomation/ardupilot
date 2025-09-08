@@ -102,7 +102,7 @@ private:
     uint16_t        throttle_position;              // %
     uint8_t         fuel_level;                     // %
     uint8_t         coil_temperature;               // Degree Celsius
-    uint8_t         cylinder_temperature;          // Degree Celsius
+    uint8_t         cylinder_temperature;           // Degree Celsius
     uint16_t        output_voltage;                 // Volts
     uint16_t        output_current;                 // Amps
     uint16_t        total_run_time;                 // Minutes
