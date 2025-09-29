@@ -268,49 +268,57 @@ bool AP_Generator_GX_7::healthy() const
     const uint32_t now = AP_HAL::millis();
 
     if (last_reading_ms == 0 || now - last_reading_ms > 10000) {
-        gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %ldms", now - last_reading_ms);
+        if (now - last_error_sent > 5000)
+        {
+            last_error_sent = now;
+            gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %dms", now - last_reading_ms);
+        }
         return false;
     }
     if (extender_error) {
-        if (extender_error & (uint32_t)ExtenderError::MAINTENANCE_TIME_ERROR)
+        if (now - last_error_sent > 5000)
         {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Requires Maintenance");
-        }
-        if (extender_error & (uint32_t)ExtenderError::SYSTEM_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator System Error");
-        }
-        if (extender_error & (uint32_t)ExtenderError::COMMUNICATION_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Communication Error");
-        }
-        if (extender_error & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Coil Overtemp: %u°c", coil_temperature);
-        }
-        if (extender_error & (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Motor Overtemp: %u°c", cylinder_temperature);
-        }
-        if (extender_error & (uint32_t)ExtenderError::THROTTLE_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Throttle Error");
-        }
-        if (extender_error & (uint32_t)ExtenderError::OVER_SPEED_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Speed Error");
-        }
-        if (extender_error & (uint32_t)ExtenderError::OVER_CURRENT_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Current Error");
-        }
-        if (extender_error & (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Low Voltage Error");
-        }
-        if (extender_error & (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR)
-        {
-            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Voltage Error");
+            last_error_sent = now;
+            if (extender_error & (uint32_t)ExtenderError::MAINTENANCE_TIME_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Requires Maintenance");
+            }
+            if (extender_error & (uint32_t)ExtenderError::SYSTEM_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator System Error");
+            }
+            if (extender_error & (uint32_t)ExtenderError::COMMUNICATION_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Communication Error");
+            }
+            if (extender_error & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Coil Overtemp: %u°c", coil_temperature);
+            }
+            if (extender_error & (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Motor Overtemp: %u°c", cylinder_temperature);
+            }
+            if (extender_error & (uint32_t)ExtenderError::THROTTLE_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Throttle Error");
+            }
+            if (extender_error & (uint32_t)ExtenderError::OVER_SPEED_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Speed Error");
+            }
+            if (extender_error & (uint32_t)ExtenderError::OVER_CURRENT_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Current Error");
+            }
+            if (extender_error & (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Low Voltage Error");
+            }
+            if (extender_error & (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR)
+            {
+                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Voltage Error");
+            }
         }
 
         return false;

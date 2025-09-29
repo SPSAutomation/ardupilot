@@ -117,6 +117,8 @@ private:
 
     uint32_t last_reading_ms;
 
+    uint32_t last_error_sent;
+
     const char* error_strings[12] = {
         "Lock Time Expired",
         "Maintenance Required",
