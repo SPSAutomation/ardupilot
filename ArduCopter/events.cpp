@@ -179,14 +179,44 @@ void Copter::generator_failsafe_check(void)
         // Failsafe Cleared
         set_failsafe_generator(false);
         end_generator_failsafe();
+        current_generator_failsafe = FailsafeAction::NONE;
     }
     else if (!failsafe.generator && desired_action == FailsafeAction::NONE)
     {
         // no problem, do nothing
     }
-    else if (failsafe.generator && desired_action != FailsafeAction::NONE)
+    else if (failsafe.generator && desired_action == current_generator_failsafe)
     {
         // Already in failsafe, do nothing
+    }
+    else if (failsafe.generator && desired_action != current_generator_failsafe)
+    {
+        // Already in failsafe, check if the desired is a higher failsafe than the current
+
+        bool update_failsafe = false;
+
+        if (desired_action == FailsafeAction::LAND && current_generator_failsafe != FailsafeAction::TERMINATE)
+        {
+            update_failsafe = true;
+        }
+        else if (desired_action == FailsafeAction::RTL && (current_generator_failsafe != FailsafeAction::TERMINATE && current_generator_failsafe != FailsafeAction::LAND)) {
+            update_failsafe = true;
+        }
+        else if (desired_action == FailsafeAction::SMARTRTL && (current_generator_failsafe != FailsafeAction::TERMINATE && current_generator_failsafe != FailsafeAction::LAND)) {
+            update_failsafe = true;
+        }
+        else if (desired_action == FailsafeAction::SMARTRTL_LAND && (current_generator_failsafe != FailsafeAction::TERMINATE && current_generator_failsafe != FailsafeAction::LAND)) {
+            update_failsafe = true;
+        }
+        else if (desired_action == FailsafeAction::TERMINATE) {
+            update_failsafe = true;
+        }
+
+        if (update_failsafe)
+        {
+            do_generator_failsafe(desired_action);
+            current_generator_failsafe = desired_action;
+        }
     }
     else if (!failsafe.generator && desired_action != FailsafeAction::NONE)
     {
@@ -220,7 +250,7 @@ void Copter::do_generator_failsafe(FailsafeAction desired_action)
         announce_failsafe("Generator + Battery", "Continuing Landing");
         desired_action = FailsafeAction::LAND;
     }
-    else if (AP::vehicle()->is_landing() &&  failsafe_option(FailsafeOption::CONTINUE_IF_LANDING)) {
+    else if (AP::vehicle()->is_landing() && failsafe_option(FailsafeOption::CONTINUE_IF_LANDING)) {
         // Allow landing to continue when FS_OPTIONS is set to continue landing
         announce_failsafe("Generator", "Continuing Landing");
         desired_action = FailsafeAction::LAND;

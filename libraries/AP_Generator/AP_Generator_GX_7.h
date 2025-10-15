@@ -101,8 +101,8 @@ private:
     uint16_t        engine_speed;                   // RPM
     uint16_t        throttle_position;              // %
     uint8_t         fuel_level;                     // %
-    uint8_t         coil_temperature;               // Degree Celsius
-    uint8_t         cylinder_temperature;           // Degree Celsius
+    int16_t         coil_temperature;               // Degree Celsius
+    int16_t         cylinder_temperature;           // Degree Celsius
     uint16_t        output_voltage;                 // Volts
     uint16_t        output_current;                 // Amps
     uint16_t        total_run_time;                 // Minutes
@@ -116,8 +116,6 @@ private:
 #endif
 
     uint32_t last_reading_ms;
-
-    uint32_t last_error_sent;
 
     const char* error_strings[12] = {
         "Lock Time Expired",
@@ -163,5 +161,6 @@ private:
     // if we are emitting warnings about the generator requiring
     // maintenance, this is the last time we sent the warning:
     uint32_t last_maintenance_warning_ms;
+    mutable uint32_t last_error_sent;
 };
 #endif

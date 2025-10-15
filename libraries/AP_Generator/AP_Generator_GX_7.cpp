@@ -267,15 +267,15 @@ bool AP_Generator_GX_7::healthy() const
 {
     const uint32_t now = AP_HAL::millis();
 
-    if (last_reading_ms == 0 || now - last_reading_ms > 10000) {
+    if (last_reading_ms == 0 || now - last_reading_ms > 5000) {
         if (now - last_error_sent > 5000)
         {
             last_error_sent = now;
-            gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %dms", now - last_reading_ms);
+            gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %ldms", now - last_reading_ms);
         }
         return false;
     }
-    if (extender_error) {
+    if (extender_error & (~(uint32_t)ExtenderError::COMMUNICATION_ERROR)) {
         if (now - last_error_sent > 5000)
         {
             last_error_sent = now;
@@ -287,10 +287,10 @@ bool AP_Generator_GX_7::healthy() const
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator System Error");
             }
-            if (extender_error & (uint32_t)ExtenderError::COMMUNICATION_ERROR)
-            {
-                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Communication Error");
-            }
+            // if (extender_error & (uint32_t)ExtenderError::COMMUNICATION_ERROR)
+            // {
+            //     gcs().send_text(MAV_SEVERITY_WARNING, "Generator Communication Error");
+            // }
             if (extender_error & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Coil Overtemp: %u°c", coil_temperature);
