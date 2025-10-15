@@ -154,7 +154,6 @@ void Copter::generator_failsafe_check(void)
     {
         if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::ERROR)
         {
-            gcs().send_text(MAV_SEVERITY_ERROR, "Generator Not Healthy");
             last_generator_failsafe_notification = AP_HAL::millis();
             last_generator_failsafe_level = GeneratorFailsafes::ERROR;
         }

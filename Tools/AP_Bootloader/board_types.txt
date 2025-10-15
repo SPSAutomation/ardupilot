@@ -307,3 +307,6 @@ AP_HW_Sierra-F1-Pro                  5309
 # OpenDroneID enabled boards. Use 10000 + the base board ID
 AP_HW_CubeOrange_ODID               10140
 AP_HW_Pixhawk6_ODID                 10053
+
+
+AP_HW_ANV_NAV_PERIPH                20001

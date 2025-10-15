@@ -1,0 +1,144 @@
+# hw definition file for processing by chibios_pins.py
+
+# MCU class and specific type
+MCU STM32F7xx STM32F732xx
+
+# bootloader starts firmware at 22k + 4k (STORAGE_FLASH)
+FLASH_RESERVE_START_KB 64
+
+# store parameters in pages 11 and 12
+STORAGE_FLASH_PAGE 2
+define HAL_STORAGE_SIZE 8192
+
+# board ID for firmware load
+APJ_BOARD_ID 20001
+
+# setup build for a peripheral firmware
+env AP_PERIPH 1
+
+STM32_ST_USE_TIMER 5
+
+# enable watchdog
+
+# crystal frequency
+OSCILLATOR_HZ 16000000
+
+define CH_CFG_ST_FREQUENCY 1000000
+
+# assume the 512k flash part
+FLASH_SIZE_KB 512
+
+# order of UARTs
+SERIAL_ORDER USART1 USART3 USART2
+
+# USART1, connected to GPS
+PA9  USART1_TX USART1 SPEED_HIGH
+PA10 USART1_RX USART1 SPEED_HIGH
+
+# USART2
+PA2 USART2_TX USART2 SPEED_HIGH NODMA
+PA3 USART2_RX USART2 SPEED_HIGH NODMA
+
+# USART3
+PB10 USART3_TX USART3 SPEED_HIGH NODMA
+PB11 USART3_RX USART3 SPEED_HIGH NODMA
+
+# debugger support
+PA13 JTMS-SWDIO SWD
+PA14 JTCK-SWCLK SWD
+
+# I2C1 for first compass
+PB6 I2C1_SCL I2C1
+PB7 I2C1_SDA I2C1
+
+# I2C3 for second compass
+PA8 I2C3_SCL I2C3
+PC9 I2C3_SDA I2C3
+
+# adjust I2C timing from Stm32CubeMX, with 100ns rise, 100ns fall
+define HAL_I2C_F7_100_TIMINGR 0x10906999
+
+define HAL_USE_I2C TRUE
+define STM32_I2C_USE_I2C1 TRUE
+define STM32_I2C_USE_I2C3 TRUE
+
+define HAL_I2C_CLEAR_ON_TIMEOUT 0
+
+define HAL_I2C_INTERNAL_MASK 3
+
+I2C_ORDER I2C1 I2C3
+
+# spi bus for compass
+PA5 SPI1_SCK SPI1
+PA6 SPI1_MISO SPI1
+PA7 SPI1_MOSI SPI1
+
+# SPI CS
+PA4 BARO_CS CS
+
+
+# SPI devices
+SPIDEV ms5611         SPI1 DEVID1  BARO_CS     MODE3 20*MHZ 20*MHZ
+
+# compass
+COMPASS MMC3416 I2C:0:0x0E false ROTATION_ROLL_180_YAW_90
+
+# compass
+COMPASS AK09916 I2C:2:0x0E false ROTATION_ROLL_180
+
+# baro
+BARO MS56XX SPI:ms5611
+
+# safety LED, active low is same as main LED
+PC8 SAFE_LED OUTPUT HIGH
+define SAFE_LED_ON 0
+
+define HAL_BARO_ALLOW_INIT_NO_BARO
+
+define HAL_USE_ADC FALSE
+define STM32_ADC_USE_ADC1 FALSE
+define HAL_DISABLE_ADC_DRIVER TRUE
+
+define HAL_NO_GPIO_IRQ
+
+# avoid RCIN thread to save memory
+define HAL_NO_RCIN_THREAD
+
+define DMA_RESERVE_SIZE 0
+
+define HAL_DISABLE_LOOP_DELAY
+
+# enable CAN support
+PB8 CAN1_RX CAN1
+PB9 CAN1_TX CAN1
+
+define HAL_NO_MONITOR_THREAD
+
+define HAL_DEVICE_THREAD_STACK 768
+
+# we setup a small defaults.parm
+define AP_PARAM_MAX_EMBEDDED_PARAM 256
+
+# disable dual GPS and GPS blending to save flash space
+define GPS_MAX_RECEIVERS 1
+define GPS_MAX_INSTANCES 1
+define GPS_MOVING_BASELINE 1
+define HAL_COMPASS_MAX_SENSORS 2
+
+# GPS+MAG+BARO+Buzzer+NeoPixels
+define HAL_PERIPH_ENABLE_GPS
+define HAL_PERIPH_ENABLE_MAG
+define HAL_PERIPH_ENABLE_BARO
+define HAL_PERIPH_ENABLE_RC_OUT
+define HAL_PERIPH_ENABLE_NOTIFY
+
+# use NCP5623 RGB LED on I2C1
+define DEFAULT_NTF_LED_TYPES 128
+
+define BARO_MAX_INSTANCES 1
+
+define HAL_PERIPH_GPS_PORT_DEFAULT 2
+
+# listen for reboot command from uploader.py script
+# undefine to disable. Use -1 to allow on all ports, otherwise serial number index defined in SERIAL_ORDER starting at 0
+define HAL_PERIPH_LISTEN_FOR_SERIAL_UART_REBOOT_CMD_PORT 0

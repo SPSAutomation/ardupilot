@@ -179,7 +179,7 @@ void ShipSim::send_report(void)
 
     uint32_t now = AP_HAL::millis();
 
-    const uint8_t component_id = MAV_COMP_ID_USER10;
+    const uint8_t component_id = 10;
 
     if (now - last_heartbeat_ms >= 1000) {
         last_heartbeat_ms = now;
