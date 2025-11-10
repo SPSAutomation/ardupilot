@@ -146,6 +146,17 @@ const AP_Param::GroupInfo AP_BattMonitor_Params::var_info[] = {
     AP_GROUPINFO("ARM_MAH", 19, AP_BattMonitor_Params, _arming_minimum_capacity, 0),
 
     // 20 was BUS
+    // @Param: FS_BAD_ACT
+    // @DisplayName: Unhealthy battery failsafe action
+    // @Description: What action the vehicle should perform if it hits an unhealthy battery failsafe
+    // @Values{Plane}: 0:None,1:RTL,2:Land,3:Terminate,4:QLand,6:Loiter to QLand
+    // @Values{Copter}: 0:None,1:Land,2:RTL,3:SmartRTL or RTL,4:SmartRTL or Land,5:Terminate,6:Auto DO_LAND_START or RTL
+    // @Values{Sub}: 0:None,2:Disarm,3:Enter surface mode
+    // @Values{Rover}: 0:None,1:RTL,2:Hold,3:SmartRTL,4:SmartRTL or Hold,5:Terminate
+    // @Values{Tracker}: 0:None
+    // @Values{Blimp}: 0:None,1:Land
+    // @User: Standard
+    AP_GROUPINFO("FS_BAD_ACT", 20, AP_BattMonitor_Params, _failsafe_unhealthy_action, 0),
 
     // @Param: OPTIONS
     // @DisplayName: Battery monitor options

@@ -809,6 +809,10 @@ void AP_BattMonitor::check_failsafes(void)
                     action = _params[i]._failsafe_low_action;
                     type_str = "low";
                     break;
+                case Failsafe::Unhealthy:
+                    action = _params[i]._failsafe_unhealthy_action;
+                    type_str = "unhealthy";
+                    break;
                 case Failsafe::Critical:
                     action = _params[i]._failsafe_critical_action;
                     type_str = "critical";
@@ -1045,6 +1049,9 @@ MAV_BATTERY_CHARGE_STATE AP_BattMonitor::get_mavlink_charge_state(const uint8_t 
 
     case Failsafe::Low:
         return MAV_BATTERY_CHARGE_STATE_LOW;
+    
+    case Failsafe::Unhealthy:
+        return MAV_BATTERY_CHARGE_STATE_UNHEALTHY;
 
     case Failsafe::Critical:
         return MAV_BATTERY_CHARGE_STATE_CRITICAL;

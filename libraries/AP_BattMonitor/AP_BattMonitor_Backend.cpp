@@ -147,6 +147,10 @@ AP_BattMonitor::Failsafe AP_BattMonitor_Backend::update_failsafes(void)
         return AP_BattMonitor::Failsafe::Critical;
     }
 
+    if (!_state.healthy) {
+        return AP_BattMonitor::Failsafe::Unhealthy;
+    }
+
     if (low_voltage) {
         // this is the first time our voltage has dropped below minimum so start timer
         if (_state.low_voltage_start_ms == 0) {

@@ -114,7 +114,7 @@ AP_BattMonitor_DroneCAN* AP_BattMonitor_DroneCAN::get_dronecan_backend(AP_DroneC
 
 void AP_BattMonitor_DroneCAN::handle_battery_info(const uavcan_equipment_power_BatteryInfo &msg)
 {
-    update_interim_state(msg.voltage, msg.current, msg.temperature, msg.state_of_charge_pct, msg.state_of_health_pct); 
+    update_interim_state(msg.voltage, msg.current, msg.temperature, msg.state_of_charge_pct, msg.state_of_health_pct, msg.status_flags); 
 
     WITH_SEMAPHORE(_sem_battmon);
     _remaining_capacity_wh = msg.remaining_capacity_wh;
@@ -127,7 +127,7 @@ void AP_BattMonitor_DroneCAN::handle_battery_info(const uavcan_equipment_power_B
     }
 }
 
-void AP_BattMonitor_DroneCAN::update_interim_state(const float voltage, const float current, const float temperature_K, const uint8_t soc, uint8_t soh_pct)
+void AP_BattMonitor_DroneCAN::update_interim_state(const float voltage, const float current, const float temperature_K, const uint8_t soc, uint8_t soh_pct, uint16_t status)
 {
     WITH_SEMAPHORE(_sem_battmon);
 
@@ -159,7 +159,15 @@ void AP_BattMonitor_DroneCAN::update_interim_state(const float voltage, const fl
 
     // record time
     _interim_state.last_time_micros = tnow;
-    _interim_state.healthy = true;
+    
+    if (status & UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATUS_FLAG_BAD_BATTERY)
+    {
+        _interim_state.healthy = false;
+    }
+    else
+    {
+        _interim_state.healthy = true;
+    }
 }
 
 void AP_BattMonitor_DroneCAN::handle_battery_info_aux(const ardupilot_equipment_power_BatteryInfoAux &msg)
@@ -197,7 +205,7 @@ void AP_BattMonitor_DroneCAN::handle_mppt_stream(const mppt_Stream &msg)
     // convert C to Kelvin
     const float temperature_K = isnan(msg.temperature) ? 0 : C_TO_KELVIN(msg.temperature);
 
-    update_interim_state(voltage, current, temperature_K, soc, UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATE_OF_HEALTH_UNKNOWN); 
+    update_interim_state(voltage, current, temperature_K, soc, UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATE_OF_HEALTH_UNKNOWN, UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATUS_FLAG_IN_USE); 
 
     if (!_mppt.is_detected) {
         // this is the first time the mppt message has been received

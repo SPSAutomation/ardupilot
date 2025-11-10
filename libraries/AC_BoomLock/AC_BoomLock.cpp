@@ -154,7 +154,7 @@ bool AC_BoomLock::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
     }
     if (!_booms_connected)
     {
-        hal.util->snprintf(failmsg, failmsg_len, "Booms not connected");
+        hal.util->snprintf(failmsg, failmsg_len, "Not all booms are connected");
         return false;
     }
     
