@@ -12,6 +12,7 @@ class AP_Generator_IE_650_800;
 class AP_Generator_IE_2400;
 class AP_Generator_RichenPower;
 class AP_Generator_GX_7;
+class AP_Generator_GX_16;
 
 class AP_Generator
 {
@@ -20,6 +21,7 @@ class AP_Generator
     friend class AP_Generator_IE_2400;
     friend class AP_Generator_RichenPower;
     friend class AP_Generator_GX_7;
+    friend class AP_Generator_GX_16;
 
 public:
     // Constructor
@@ -85,6 +87,9 @@ public:
 #endif
 #if AP_GENERATOR_GX_7_ENABLED
         GX_7 = 4,
+#endif
+#if AP_GENERATOR_GX_16_ENABLED
+        GX_16 = 5,
 #endif
     };
 

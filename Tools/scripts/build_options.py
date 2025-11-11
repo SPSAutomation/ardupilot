@@ -106,6 +106,7 @@ BUILD_OPTIONS = [
     Feature('Generator', 'GENERATOR_IE2400', 'AP_GENERATOR_IE_2400_ENABLED', 'Enable IntelligentEnergy 2400', 0, "GENERATOR"),  # noqa
     Feature('Generator', 'GENERATOR_IE650', 'AP_GENERATOR_IE_650_800_ENABLED', 'Enable IntelligentEnergy 650 and 800 support', 0, "GENERATOR"),  # noqa
     Feature('Generator', 'GENERATOR_GX_7', 'AP_GENERATOR_GX_7_ENABLED', 'Enable GX 7 Generator', 0, "GENERATOR"),  # noqa
+    Feature('Generator', 'GENERATOR_GX_16', 'AP_GENERATOR_GX_16_ENABLED', 'Enable GX 16 Generator', 0, "GENERATOR"),  # noqa
 
     Feature('OSD', 'OSD', 'OSD_ENABLED', 'Enable OSD', 0, None),
     Feature('OSD', 'PLUSCODE', 'HAL_PLUSCODE_ENABLE', 'Enable PlusCode', 0, 'OSD'),

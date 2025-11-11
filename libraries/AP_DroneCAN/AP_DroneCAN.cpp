@@ -39,6 +39,7 @@
 #include <AC_SpotSprayer/AC_SpotSprayer.h>
 #include <AC_BoomLock/AC_BoomLock.h>
 #include <AP_Generator/AP_Generator_GX_7.h>
+#include <AP_Generator/AP_Generator_GX_16.h>
 #include <AP_GPS/AP_GPS_DroneCAN.h>
 #include <AP_GPS/AP_GPS.h>
 #include <AP_BattMonitor/AP_BattMonitor_DroneCAN.h>
@@ -402,6 +403,9 @@ void AP_DroneCAN::init(uint8_t driver_index, bool enable_filters)
 #if AP_GENERATOR_GX_7_ENABLED
     AP_Generator_GX_7::subscribe_msgs(this);
 #endif
+#if AP_GENERATOR_GX_16_ENABLED
+    AP_Generator_GX_16::subscribe_msgs(this);
+#endif
 
     act_out_array.set_timeout_ms(5);
     act_out_array.set_priority(CANARD_TRANSFER_PRIORITY_HIGH);
@@ -537,6 +541,10 @@ void AP_DroneCAN::loop(void)
         if ((uint8_t)AP::generator()->get_type() == 4)
         {
             send_gx_7_control();
+        }
+        else if ((uint8_t)AP::generator()->get_type() == 5)
+        {
+            send_gx_16_control();
         }
 
 
@@ -986,6 +994,31 @@ void AP_DroneCAN::send_gx_7_control()
     }
 
     extender_control.broadcast(extender_msg);
+}
+
+
+void AP_DroneCAN::send_gx_16_control()
+{
+    uint32_t now = AP_HAL::millis();
+    if (now - _last_extender_ctrl_ms < 100) {
+        // update at 10Hz
+        return;
+    }
+    _last_extender_ctrl_ms = now;
+
+    com_aeronavics_GX16ExtenderCtrl extender_msg;
+    if (AP::generator()->get_commanded_state() == 17 || AP::generator()->get_commanded_state() == 0)
+    {
+        extender_msg.SysControl = 0;
+    }
+    else 
+    {
+        extender_msg.SysControl = 1;
+    }
+
+    extender_msg.ClientCommand = 0x12;
+
+    gx16_extender_control.broadcast(extender_msg);
 }
 
 

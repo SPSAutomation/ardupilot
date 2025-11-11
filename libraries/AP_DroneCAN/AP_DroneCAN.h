@@ -178,6 +178,9 @@ public:
     void send_gx_7_control();
     Canard::Publisher<com_aeronavics_ExtenderCtrl> extender_control{canard_iface};
 
+    void send_gx_16_control();
+    Canard::Publisher<com_aeronavics_GX16ExtenderCtrl> gx16_extender_control{canard_iface};
+
 private:
     void loop(void);
 

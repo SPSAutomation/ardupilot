@@ -124,53 +124,101 @@ void Copter::handle_battery_failsafe(const char *type_str, const int8_t action)
 
 void Copter::generator_failsafe_check(void)
 {
+    FailsafeAction desired_action = FailsafeAction::NONE;
+
     if (AP::generator()->get_type() != AP_Generator::Type::GX_7)
     {
-        return;
+        
+        if (AP::generator()->get_state() != 2 && motors->armed()) 
+        {
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::STOPPED)
+            {
+                gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Stopped");
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::STOPPED;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_off_failsafe_action();
+        }
+        else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_crit_fuel_failsafe_level())
+        {
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::CRIT_FUEL)
+            {
+                gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Critical Fuel");
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::CRIT_FUEL;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_crit_fuel_failsafe_action();
+        }
+        else if (!AP::generator()->healthy())
+        {
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::ERROR)
+            {
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::ERROR;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_error_failsafe_action();
+        }
+        else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_low_fuel_failsafe_level())
+        {
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::LOW_FUEL)
+            {
+                gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator LOW Fuel");
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::LOW_FUEL;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_low_fuel_failsafe_action();
+        }
+        else {
+            last_generator_failsafe_level = GeneratorFailsafes::NONE;
+        }
     }
 
-    FailsafeAction desired_action = FailsafeAction::NONE;
-    if (AP::generator()->get_state() != 2 && motors->armed()) 
+
+    if (AP::generator()->get_type() != AP_Generator::Type::GX_16)
     {
-        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::STOPPED)
+        
+        if (AP::generator()->get_state() != 0xc0 && motors->armed()) 
         {
-            gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Stopped");
-            last_generator_failsafe_notification = AP_HAL::millis();
-            last_generator_failsafe_level = GeneratorFailsafes::STOPPED;
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::STOPPED)
+            {
+                gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Stopped");
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::STOPPED;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_off_failsafe_action();
         }
-        desired_action = (FailsafeAction)AP::generator()->get_off_failsafe_action();
-    }
-    else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_crit_fuel_failsafe_level())
-    {
-        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::CRIT_FUEL)
+        else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_crit_fuel_failsafe_level())
         {
-            gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Critical Fuel");
-            last_generator_failsafe_notification = AP_HAL::millis();
-            last_generator_failsafe_level = GeneratorFailsafes::CRIT_FUEL;
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::CRIT_FUEL)
+            {
+                gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Critical Fuel");
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::CRIT_FUEL;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_crit_fuel_failsafe_action();
         }
-        desired_action = (FailsafeAction)AP::generator()->get_crit_fuel_failsafe_action();
-    }
-    else if (!AP::generator()->healthy())
-    {
-        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::ERROR)
+        else if (!AP::generator()->healthy())
         {
-            last_generator_failsafe_notification = AP_HAL::millis();
-            last_generator_failsafe_level = GeneratorFailsafes::ERROR;
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::ERROR)
+            {
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::ERROR;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_error_failsafe_action();
         }
-        desired_action = (FailsafeAction)AP::generator()->get_error_failsafe_action();
-    }
-    else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_low_fuel_failsafe_level())
-    {
-        if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::LOW_FUEL)
+        else if (AP::generator()->get_fuel_remaining() * 100 < AP::generator()->get_low_fuel_failsafe_level())
         {
-            gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator LOW Fuel");
-            last_generator_failsafe_notification = AP_HAL::millis();
-            last_generator_failsafe_level = GeneratorFailsafes::LOW_FUEL;
+            if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::LOW_FUEL)
+            {
+                gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator LOW Fuel");
+                last_generator_failsafe_notification = AP_HAL::millis();
+                last_generator_failsafe_level = GeneratorFailsafes::LOW_FUEL;
+            }
+            desired_action = (FailsafeAction)AP::generator()->get_low_fuel_failsafe_action();
         }
-        desired_action = (FailsafeAction)AP::generator()->get_low_fuel_failsafe_action();
-    }
-    else {
-        last_generator_failsafe_level = GeneratorFailsafes::NONE;
+        else {
+            last_generator_failsafe_level = GeneratorFailsafes::NONE;
+        }
     }
     
     if (failsafe.generator && desired_action == FailsafeAction::NONE && !motors->armed())
