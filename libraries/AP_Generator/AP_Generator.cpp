@@ -235,6 +235,16 @@ bool AP_Generator::run()
     return _driver_ptr->run();
 }
 
+// Pass through to backend
+void AP_Generator::shutdown_on_land(bool shutdown)
+{
+    // Don't allow operators to request generator be set to run if it has been disabled
+    if (_driver_ptr == nullptr) {
+        return;
+    }
+    _driver_ptr->shutdown_on_land(shutdown);
+}
+
 // Get the AP_Generator singleton
 AP_Generator *AP_Generator::get_singleton()
 {

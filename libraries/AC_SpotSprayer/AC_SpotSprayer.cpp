@@ -290,6 +290,11 @@ void AC_SpotSprayer::update()
             return;
         }
 
+        if (_reported_weight > (float) _useful_load) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Overweight by %fkg", _reported_weight - (float) _useful_load);
+            _last_fault_msg_ms = now;
+        }
+
         if (error_flags > 0) {
             if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_1)
             {
@@ -368,16 +373,17 @@ void AC_SpotSprayer::log_write()
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "SPRAY",
-        "TimeUS,DFlow,MFlow,DVol,Pres,SLevel,SVol,Error",
-        "syylP%l-",
-        "F-------",
-        "QfffHffB",
+        "TimeUS,DFlow,MFlow,DVol,Pres,SLevel,Weight,SVol,Error",
+        "syylP%?l-",
+        "F--------",
+        "QfffHfffB",
         AP_HAL::micros64(),
         ((float)desired_flow_rate)/1000,
         ((float)measured_flow_rate)/1000,
         ((float)_volume_to_log)/1000,
         measured_pressure,
         spray_level,
+        _reported_weight,
         armed_sprayed_volume,
         error_flags
     );

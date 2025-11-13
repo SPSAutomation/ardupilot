@@ -41,6 +41,14 @@ AP_BattMonitor *AP_BattMonitor::_singleton;
 const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // 0 - 18, 20- 22 used by old parameter indexes
 
+    // @Param: CUR_TIME
+    // @DisplayName: Current draw timeout
+    // @Description: Timeout period to call an error if a generator is enabled and a sustained positive current draw it held.
+    // @Units: s
+    // @Increment: 1
+    // @User: Advanced
+    AP_GROUPINFO("CUR_TIME", 19, AP_BattMonitor, _current_draw_timeout, AP_BATT_MONITOR_CURRENT_DRAW_TIMEOUT),
+
     // Monitor 1
 
     // @Group: _
@@ -683,6 +691,37 @@ void AP_BattMonitor::read()
     check_failsafes();
     
     checkPoweringOff();
+
+    if (int8_t(AP::generator()->get_type()) > 0 && hal.util->get_soft_armed()) {
+        check_current_draw();
+    }
+
+}
+
+void AP_BattMonitor::check_current_draw() 
+{
+    float total_current = 0;
+    for (uint8_t i = 0; i < _num_instances; i++)
+    {
+        float instance_current;
+        if (current_amps(instance_current, i))
+        {
+            total_current += instance_current;
+        }
+    } 
+    if (total_current <= 0)
+    {
+        time_since_current_draw_start = 0;
+    }
+    else if (time_since_current_draw_start == 0)
+    {
+        time_since_current_draw_start = AP_HAL::millis();
+    }
+    else if (AP_HAL::millis() - time_since_current_draw_start > _current_draw_timeout * 1000 && AP_HAL::millis() - time_since_current_draw_msg > 10000)
+    {
+        time_since_current_draw_msg = AP_HAL::millis();
+        gcs().send_text(MAV_SEVERITY_ERROR, "High Battery Draw, Aircraft over Weight");
+    }
 }
 
 // healthy - returns true if monitor is functioning
@@ -789,7 +828,6 @@ int32_t AP_BattMonitor::pack_capacity_mah(uint8_t instance) const
 void AP_BattMonitor::check_failsafes(void)
 {
     if (hal.util->get_soft_armed()) {
-        bool _has_failsafed = false;
         for (uint8_t i = 0; i < _num_instances; i++) {
             if (drivers[i] == nullptr) {
                 continue;
@@ -822,7 +860,6 @@ void AP_BattMonitor::check_failsafes(void)
             GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Battery %d is %s %.2fV used %.0f mAh", i + 1, type_str,
                             (double)voltage(i), (double)state[i].consumed_mah);
             _has_triggered_failsafe = true;
-            _has_failsafed = true;
 #ifndef HAL_BUILD_AP_PERIPH
             AP_Notify::flags.failsafe_battery = true;
 #endif
@@ -847,11 +884,11 @@ void AP_BattMonitor::check_failsafes(void)
                 _highest_failsafe_priority = priority;
             }
         }
-        if (!_has_failsafed && !hal.util->get_soft_armed())
-        {
-            _has_triggered_failsafe = false;
-            AP_Notify::flags.failsafe_battery = false;
-        }
+    }
+    else
+    {
+        _has_triggered_failsafe = false;
+        AP_Notify::flags.failsafe_battery = false;
     }
 }
 

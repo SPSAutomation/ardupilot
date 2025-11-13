@@ -59,6 +59,8 @@ public:
     bool idle(void);
     bool run(void);
 
+    void shutdown_on_land(bool shutdown);
+
     void send_generator_status(const class GCS_MAVLINK &channel);
 
     // Parameter block

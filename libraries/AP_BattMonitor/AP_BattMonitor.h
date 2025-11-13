@@ -20,6 +20,8 @@
 
 #define AP_BATT_MONITOR_TIMEOUT             5000
 
+#define AP_BATT_MONITOR_CURRENT_DRAW_TIMEOUT 10
+
 #define AP_BATT_MONITOR_RES_EST_TC_1        0.5f
 #define AP_BATT_MONITOR_RES_EST_TC_2        0.1f
 
@@ -286,6 +288,8 @@ public:
     bool handle_scripting(uint8_t idx, const struct BattMonitorScript_State &state);
 #endif
 
+    AP_Int8  _current_draw_timeout;     /// timeout in seconds before a current draw event will be triggered
+
 protected:
 
     /// parameters
@@ -304,6 +308,10 @@ private:
     /// returns the failsafe state of the battery
     Failsafe check_failsafe(const uint8_t instance);
     void check_failsafes(void); // checks all batteries failsafes
+
+    void check_current_draw(); // checks if we have a consistent current draw
+    uint32_t time_since_current_draw_start;
+    uint32_t time_since_current_draw_msg;
 
     battery_failsafe_handler_fn_t _battery_failsafe_handler_fn;
     const int8_t *_failsafe_priorities; // array of failsafe priorities, sorted highest to lowest priority, -1 indicates no more entries

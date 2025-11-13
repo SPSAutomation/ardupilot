@@ -643,6 +643,8 @@ void Copter::three_hz_loop()
 
     // check if avoidance should be enabled based on alt
     low_alt_avoidance();
+
+    AP::generator()->shutdown_on_land(any_failsafe_triggered());
 }
 
 // one_hz_loop - runs at 1Hz
