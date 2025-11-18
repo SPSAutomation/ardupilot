@@ -691,13 +691,15 @@ void AP_BattMonitor::read()
     check_failsafes();
     
     checkPoweringOff();
-
+#if HAL_GENERATOR_ENABLED
     if (int8_t(AP::generator()->get_type()) > 0 && hal.util->get_soft_armed()) {
         check_current_draw();
     }
+#endif
 
 }
 
+#if HAL_GENERATOR_ENABLED
 void AP_BattMonitor::check_current_draw() 
 {
     float total_current = 0;
@@ -723,6 +725,7 @@ void AP_BattMonitor::check_current_draw()
         gcs().send_text(MAV_SEVERITY_ERROR, "High Battery Draw, Aircraft over Weight");
     }
 }
+#endif
 
 // healthy - returns true if monitor is functioning
 bool AP_BattMonitor::healthy(uint8_t instance) const {
