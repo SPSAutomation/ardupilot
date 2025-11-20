@@ -20,7 +20,7 @@
 #include "AP_Generator_IE_650_800.h"
 #include "AP_Generator_IE_2400.h"
 #include "AP_Generator_RichenPower.h"
-#include "AP_Generator_GX_7.h"
+// #include "AP_Generator_GX_7.h"
 #include "AP_Generator_GX_16.h"
 
 #include <GCS_MAVLink/GCS.h>
@@ -140,11 +140,11 @@ void AP_Generator::init()
             _driver_ptr = new AP_Generator_RichenPower(*this);
             break;
 #endif
-#if AP_GENERATOR_GX_7_ENABLED
-        case Type::GX_7:
-            _driver_ptr = new AP_Generator_GX_7(*this);
-            break;
-#endif
+// #if AP_GENERATOR_GX_7_ENABLED
+//         case Type::GX_7:
+//             _driver_ptr = new AP_Generator_GX_7(*this);
+//             break;
+// #endif
 #if AP_GENERATOR_GX_16_ENABLED
         case Type::GX_16:
             _driver_ptr = new AP_Generator_GX_16(*this);

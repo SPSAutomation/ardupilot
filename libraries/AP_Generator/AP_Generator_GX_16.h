@@ -127,7 +127,7 @@ private:
         INTAKE_TEMP_SENSOR_MISSING      = (1U << 7),    // 0x00080  128         The intake temperature sensor is not installed (ground open circuit)
     };
 
-    enum class GeneralFault2 : uint8_t {                // HEX      DECIMAL     EXPLANATION
+    enum class GeneralFault3 : uint8_t {                // HEX      DECIMAL     EXPLANATION
         // RESERVED                     = (1U << 0),    // 0x00001  1           reserved
         OIL_PUMP_MISSING                = (1U << 1),    // 0x00002  2           Oil pump not installed (ground short circuit)
         // RESERVED                     = (1U << 2),    // 0x00004  4           reserved
