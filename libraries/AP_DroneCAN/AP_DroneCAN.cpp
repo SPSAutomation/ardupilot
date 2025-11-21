@@ -1016,24 +1016,23 @@ void AP_DroneCAN::send_gx_16_control()
         extender_msg.SysControl = 1;
     }
 
-    // if (clientCommandToggle)
-    // {
-    //     if (extender_msg.SysControl == 0)
-    //     {
-    //         extender_msg.ClientCommand = 0;
-    //     }
-    //     else
-    //     {
-    //         extender_msg.ClientCommand = 1;
-    //     }
-    //     clientCommandToggle = !clientCommandToggle;
-    // }
-    // else
-    // {
-    //     extender_msg.ClientCommand = 0x12;
-    //     clientCommandToggle = !clientCommandToggle;
-    // }
-    extender_msg.ClientCommand = 0x12;
+    if (clientCommandToggle)
+    {
+        if (extender_msg.SysControl == 0)
+        {
+            extender_msg.ClientCommand = 0;
+        }
+        else
+        {
+            extender_msg.ClientCommand = 1;
+        }
+        clientCommandToggle = !clientCommandToggle;
+    }
+    else
+    {
+        extender_msg.ClientCommand = 0x12;
+        clientCommandToggle = !clientCommandToggle;
+    }
 
     gx16_extender_control.broadcast(extender_msg);
 }
