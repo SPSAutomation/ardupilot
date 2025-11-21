@@ -180,7 +180,7 @@ public:
 
     void send_gx_16_control();
     Canard::Publisher<com_aeronavics_GX16ExtenderCtrl> gx16_extender_control{canard_iface};
-    bool clientCommandToggle;
+    // bool clientCommandToggle;
 
 private:
     void loop(void);
