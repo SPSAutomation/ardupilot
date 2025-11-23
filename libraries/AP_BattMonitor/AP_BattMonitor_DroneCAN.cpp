@@ -39,7 +39,7 @@ AP_BattMonitor_DroneCAN::AP_BattMonitor_DroneCAN(AP_BattMonitor &mon, AP_BattMon
     _state.var_info = var_info;
 
     // starts with not healthy
-    _state.healthy = false;
+    _state.healthy = true;
 }
 
 void AP_BattMonitor_DroneCAN::subscribe_msgs(AP_DroneCAN* ap_dronecan)
@@ -162,7 +162,7 @@ void AP_BattMonitor_DroneCAN::update_interim_state(const float voltage, const fl
     
     if (status & UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATUS_FLAG_BAD_BATTERY)
     {
-        _interim_state.healthy = false;
+        _interim_state.healthy = true;
     }
     else
     {
@@ -241,7 +241,6 @@ void AP_BattMonitor_DroneCAN::handle_battery_info_aux_trampoline(AP_DroneCAN *ap
 {
     const auto &batt = AP::battery();
     AP_BattMonitor_DroneCAN *driver = nullptr;
-
     /*
       check for a backend with AllowSplitAuxInfo set, allowing InfoAux
       from a different CAN node than the base battery information
@@ -251,7 +250,7 @@ void AP_BattMonitor_DroneCAN::handle_battery_info_aux_trampoline(AP_DroneCAN *ap
         if (drv != nullptr &&
             batt.get_type(i) == AP_BattMonitor::Type::UAVCAN_BatteryInfo &&
             drv->option_is_set(AP_BattMonitor_Params::Options::AllowSplitAuxInfo) &&
-            batt.get_serial_number(i) == int32_t(msg.battery_id)) {
+            batt.get_serial_number(i) == int32_t(msg.battery_id)+1) {
             driver = (AP_BattMonitor_DroneCAN *)batt.drivers[i];
             if (driver->_ap_dronecan == nullptr) {
                 /* we have not received the main battery information
@@ -264,7 +263,7 @@ void AP_BattMonitor_DroneCAN::handle_battery_info_aux_trampoline(AP_DroneCAN *ap
         }
     }
     if (driver == nullptr) {
-        driver = get_dronecan_backend(ap_dronecan, transfer.source_node_id, msg.battery_id);
+        driver = get_dronecan_backend(ap_dronecan, transfer.source_node_id, msg.battery_id+1);
     }
     if (driver == nullptr) {
         return;
@@ -288,7 +287,7 @@ void AP_BattMonitor_DroneCAN::read()
 
     // timeout after 5 seconds
     if ((tnow - _interim_state.last_time_micros) > AP_BATTMONITOR_UAVCAN_TIMEOUT_MICROS) {
-        _interim_state.healthy = false;
+        _interim_state.healthy = true;
     }
     // Copy over relevant states over to main state
     WITH_SEMAPHORE(_sem_battmon);

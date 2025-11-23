@@ -229,7 +229,7 @@ private:
     float           coolant_temp_2;                 // degree Celsius
     float           coil_temp;                      // degree Celsius
     uint16_t        engine_speed;                   // RPM
-    uint16_t        output_voltage;                 // V
+    float        output_voltage;                    // V
     float           output_current;                 // A
     float           battery_current;                // A
     uint16_t        target_throttle_position;       // %

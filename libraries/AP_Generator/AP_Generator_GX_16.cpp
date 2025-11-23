@@ -91,8 +91,8 @@ void AP_Generator_GX_16::handle_measurement(AP_DroneCAN *ap_dronecan, const Cana
     driver->coolant_temp_2 = msg.ECT2 - 40;
     driver->coil_temp = msg.GWT - 40;
     driver->engine_speed = msg.EngineSpeed;
-    driver->output_voltage = msg.OutputVoltage;
-    driver->output_current = msg.OutputCurrent - 400;
+    driver->output_voltage = ((float) msg.OutputVoltage) / 100;
+    driver->output_current = (((float) msg.OutputCurrent) / 20) - 400;
     driver->target_throttle_position = msg.TargetTP1;
     driver->actual_throttle_position = msg.ActualTP1;
     driver->baro = msg.BARO;
