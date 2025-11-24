@@ -100,11 +100,11 @@ void AP_Generator_GX_16::handle_measurement(AP_DroneCAN *ap_dronecan, const Cana
     driver->IAT = msg.IAT - 40;
     driver->fuel_consumption = msg.FuelConsumption;
     driver->fuel_level = msg.GPS;
-    driver->rail_12V = msg.B12V;
-    driver->rail_5V1 = msg.B5V1;
-    driver->rail_7V4 = msg.B7V4;
-    driver->rail_VBATT = msg.VBAT;
-    driver->rail_VREF = msg.VREF;
+    driver->rail_12V = ((float)msg.B12V) / 10;
+    driver->rail_5V1 = ((float)msg.B5V1) / 20;
+    driver->rail_7V4 = ((float)msg.B7V4) / 20;
+    driver->rail_VBATT = ((float)msg.VBAT) / 50;
+    driver->rail_VREF = ((float)msg.VREF) / 50;
     driver->EmgST0 = msg.EmgST0;
     driver->EmgST1 = msg.EmgST1;
     driver->ErrST0 = msg.ErrST0;
@@ -203,14 +203,13 @@ void AP_Generator_GX_16::Log_Write()
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "GEN",
-        "TimeUS,MsgUS,Rpm,TThr,AThr,Fuel,CoilTemp,Cool1Temp,Cool2Temp,Volt,Curr,State",
-        "ssq%%%OOOvA-",
-        "FC----------",
-        "QIHHHBBBBHHB",
+        "TimeUS,MsgUS,Rpm,Thr,Fuel,CoilT,C1Temp,C2Temp,Volt,Curr,State",
+        "ssq%%OOOvA-",
+        "FC---------",
+        "QIHHBfffffB",
         AP_HAL::micros64(),
         last_logged_reading_ms,
         engine_speed,
-        target_throttle_position,
         actual_throttle_position,
         fuel_level,
         coil_temp,
@@ -219,7 +218,55 @@ void AP_Generator_GX_16::Log_Write()
         output_voltage,
         output_current,
         working_state
-        );
+    );
+
+    AP::logger().WriteStreaming(
+        "GEN2",
+        "TimeUS,TThr,IAT,BCurr,R12V,R5V1,R7V4,RVBATT,RVREF",
+        "s%OAvvvvv",
+        "F--------",
+        "QHfffffff",
+        AP_HAL::micros64(),
+        target_throttle_position,
+        IAT,
+        battery_current,
+        rail_12V,
+        rail_5V1,
+        rail_7V4,
+        rail_VBATT,
+        rail_VREF
+    );
+
+    AP::logger().WriteStreaming(
+        "GEN3",
+        "TimeUS,EmgST0,EmgST1,ErrST0,ErrST1,ErrST2,ErrST3",
+        "s------",
+        "F------",
+        "QBBBBBB",
+        AP_HAL::micros64(),
+        EmgST0,
+        EmgST1,
+        ErrST0,
+        ErrST1,
+        ErrST2,
+        ErrST3
+    );
+
+    AP::logger().WriteStreaming(
+        "GEN4",
+        "TimeUS,AlmST0,AlmST1,AlmST2,AlmST3,SysST0,SysST1,SysST2",
+        "s-------",
+        "F-------",
+        "QBBBBBBB",
+        AP_HAL::micros64(),
+        AlmST0,
+        AlmST1,
+        AlmST2,
+        AlmST3,
+        SysST0,
+        SysST1,
+        SysST2
+    );
 }
 #endif
 
@@ -235,28 +282,106 @@ bool AP_Generator_GX_16::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return false;
     }
 
-    // uint32_t errors = extender_error;
 
-    // // maintenance is a prearm error, but we will ignore the built in 
-    // // maintenance error and use our own one as we cannot reset the
-    // // built in one after a service
-    // errors &= ~(1U << uint32_t(ExtenderError::MAINTENANCE_TIME_ERROR));
+    if (
+        (AlmST0 & (uint8_t)AbnormalAlert0::OUTPUT_OVER_CURRENT_ALARM
+        || EmgST0 & (uint8_t)OverlimitFault1::OVER_CURRENT_ERROR)
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Over Current Error");
+        return false;
+    }
+    if (
+        AlmST2 & (uint8_t)AbnormalAlert2::LOW_OUTPUT_VOLTAGE_ALARM
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Low Voltage Error");
+        return false;
+    }
 
-    // if (errors) {
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::COIL_OVER_TEMP
+        || AlmST0 & (uint8_t)AbnormalAlert0::COIL_OVER_TEMP_ALARM
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Coil Overtemp: %f°c", coil_temp);
+        return false;
+    }
 
-    //     for (uint8_t i=0; i<32; i++) {
-    //         if (errors & (1U << i)) {
-    //             if (errors < (uint32_t)ExtenderError::LAST) {
-    //                 hal.util->snprintf(failmsg, failmsg_len, "error: %s", error_strings[i]);
-    //             } else {
-    //                 hal.util->snprintf(failmsg, failmsg_len, "unknown error: 1U<<%u", i);
-    //             }
-    //         }
-    //     }
-    //     return false;
-    // }
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::COOL1_OVER_TEMP
+        || EmgST0 & (uint8_t)OverlimitFault1::COOL2_OVER_TEMP
+        || AlmST0 & (uint8_t)AbnormalAlert0::COOL1_OVER_TEMP_ALARM
+        || AlmST0 & (uint8_t)AbnormalAlert0::COOL2_OVER_TEMP_ALARM
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Motor Overtemp: %f°c", MAX(coolant_temp_1, coolant_temp_2));
+        return false;
+    }
+
+    if (
+        AlmST0 & (uint8_t)AbnormalAlert0::OVER_VOLTAGE_ALARM
+        || EmgST0 & (uint8_t)OverlimitFault1::OVER_VOLTAGE_ERROR
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Over Voltage Error");
+        return false;
+    }
+
+    if (
+        AlmST2 & (uint8_t)AbnormalAlert2::THROTTLE_ABNORMAL_ALARM
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Throttle Error");
+        return false;
+    }
+
+    if (
+        EmgST1 & (uint8_t)OverlimitFault2::ENG_OVER_SPEED
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Over Speed Error");
+        return false;
+    }
+
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::INTAKE_OVER_TEMP
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Intake Overtemp: %f°c", IAT);
+        return false;
+    }
+
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::RAIL_OVER_TEMP
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Rail Overtemp");
+        return false;
+    }
+
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::BATT_CHRG_OVER_LIMIT
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Battery Overcurrent");
+        return false;
+    }
+
+    if (
+        EmgST1 & (uint8_t)OverlimitFault2::IGNITION_COIL_ERROR
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Ignition Coil Error");
+        return false;
+    }
+
+    if (
+        EmgST1 & (uint8_t)OverlimitFault2::FUEL_INJECTOR_ERROR
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Fuel Injector Error");
+        return false;
+    }
+
+    if (
+        EmgST1 & (uint8_t)OverlimitFault2::OIL_PUMP_ERROR
+    ) {
+        hal.util->snprintf(failmsg, failmsg_len, "Oil Pump Error");
+        return false;
+    }
+
     
-    if (working_state & (uint8_t)WorkingState::STOP || working_state & (uint8_t)WorkingState::CRANK) {
+    if (!(working_state & (uint8_t)WorkingState::RUN && working_state & (uint8_t)WorkingState::CRANK && working_state & (uint8_t)WorkingState::IDLE)) 
+    {
         hal.util->snprintf(failmsg, failmsg_len, "Not Started");
         return false;
     }
@@ -319,70 +444,137 @@ bool AP_Generator_GX_16::healthy() const
         }
         return false;
     }
-    // if (extender_error & (~(uint32_t)ExtenderError::COMMUNICATION_ERROR)) {
-    //     if (now - last_error_sent > 5000)
-    //     {
-    //         last_error_sent = now;
-    //         if (extender_error & (uint32_t)ExtenderError::MAINTENANCE_TIME_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Requires Maintenance");
-    //         }
-    //         if (extender_error & (uint32_t)ExtenderError::SYSTEM_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator System Error");
-    //         }
-    //         // if (extender_error & (uint32_t)ExtenderError::COMMUNICATION_ERROR)
-    //         // {
-    //         //     gcs().send_text(MAV_SEVERITY_WARNING, "Generator Communication Error");
-    //         // }
-    //         if (extender_error & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Coil Overtemp: %u°c", coil_temperature);
-    //         }
-    //         if (extender_error & (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Motor Overtemp: %u°c", cylinder_temperature);
-    //         }
-    //         if (extender_error & (uint32_t)ExtenderError::THROTTLE_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Throttle Error");
-    //         }
-    //         if (extender_error & (uint32_t)ExtenderError::OVER_SPEED_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Speed Error");
-    //         }
-    //         if (extender_error & (uint32_t)ExtenderError::OVER_CURRENT_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Current Error");
-    //         }
-    //         if (extender_error & (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Low Voltage Error");
-    //         }
-    //         if (extender_error & (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR)
-    //         {
-    //             gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Voltage Error");
-    //         }
-    //     }
-    //
-    //     return false;
-    // }
+
+    bool error_seen = false;
+    bool message_sent = false;
+
+    if (AlmST0 & (uint8_t)AbnormalAlert0::OUTPUT_OVER_CURRENT_ALARM
+        || EmgST0 & (uint8_t)OverlimitFault1::OVER_CURRENT_ERROR) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Current Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+    if (AlmST2 & (uint8_t)AbnormalAlert2::LOW_OUTPUT_VOLTAGE_ALARM) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Low Voltage Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST0 & (uint8_t)OverlimitFault1::COIL_OVER_TEMP
+        || AlmST0 & (uint8_t)AbnormalAlert0::COIL_OVER_TEMP_ALARM) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Coil Overtemp: %f°c", coil_temp);
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::COOL1_OVER_TEMP
+        || EmgST0 & (uint8_t)OverlimitFault1::COOL2_OVER_TEMP
+        || AlmST0 & (uint8_t)AbnormalAlert0::COOL1_OVER_TEMP_ALARM
+        || AlmST0 & (uint8_t)AbnormalAlert0::COOL2_OVER_TEMP_ALARM
+    ) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Motor Overtemp: %f°c", MAX(coolant_temp_1, coolant_temp_2));
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (AlmST0 & (uint8_t)AbnormalAlert0::OVER_VOLTAGE_ALARM
+        || EmgST0 & (uint8_t)OverlimitFault1::OVER_VOLTAGE_ERROR) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Voltage Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (AlmST2 & (uint8_t)AbnormalAlert2::THROTTLE_ABNORMAL_ALARM) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Throttle Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST1 & (uint8_t)OverlimitFault2::ENG_OVER_SPEED) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Speed Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST0 & (uint8_t)OverlimitFault1::INTAKE_OVER_TEMP) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Intake Overtemp: %f°c", IAT);
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST0 & (uint8_t)OverlimitFault1::RAIL_OVER_TEMP) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Rail Overtemp");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST0 & (uint8_t)OverlimitFault1::BATT_CHRG_OVER_LIMIT) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Battery Overcurrent");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST1 & (uint8_t)OverlimitFault2::IGNITION_COIL_ERROR) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Ignition Coil Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST1 & (uint8_t)OverlimitFault2::FUEL_INJECTOR_ERROR) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Fuel Injector Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+    if (EmgST1 & (uint8_t)OverlimitFault2::OIL_PUMP_ERROR) {
+        if (now - last_error_sent > 5000) {
+            gcs().send_text(MAV_SEVERITY_WARNING, "Generator Oil Pump Error");
+            message_sent = true;
+        }
+        error_seen = true;
+    }
+
+
+    if (message_sent)
+    {
+        last_error_sent = now;
+    }
+
+    if (error_seen)
+    {
+        return false;
+    }
     return true;
 }
 
-// Check for failsafes
+// Battery failsafe not used
 AP_BattMonitor::Failsafe AP_Generator_GX_16::update_failsafes() const
 {
-    // // Check for error codes that lead to critical action battery monitor failsafe
-    // if (is_critical_error(extender_error)) {
-    //     return AP_BattMonitor::Failsafe::Critical;
-    // }
-
-    // // Check for error codes that lead to low action battery monitor failsafe
-    // if (is_low_error(extender_error)) {
-    //     return AP_BattMonitor::Failsafe::Low;
-    // }
-
     return AP_BattMonitor::Failsafe::None;
 }
 

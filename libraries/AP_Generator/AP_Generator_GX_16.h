@@ -240,14 +240,14 @@ private:
     uint16_t        target_throttle_position;       // %
     uint16_t        actual_throttle_position;       // %
     uint8_t         baro;
-    float           IAT;                            // degree
+    float           IAT;                            // degree Intake Air Temperature Maybe?
     uint16_t        fuel_consumption;                
     uint8_t         fuel_level;                     // %
-    uint8_t         rail_12V;                       // V
-    uint8_t         rail_5V1;                       // V
-    uint8_t         rail_7V4;                       // V
-    uint8_t         rail_VBATT;                     // V
-    uint8_t         rail_VREF;                      // V
+    float           rail_12V;                       // V
+    float           rail_5V1;                       // V
+    float           rail_7V4;                       // V
+    float           rail_VBATT;                     // V
+    float           rail_VREF;                      // V
     uint8_t         EmgST0;                         // Overlimit fault 0  $1EC
     uint8_t         EmgST1;                         // Overlimit fault 1
     uint8_t         ErrST0;                         // General fault status 0
