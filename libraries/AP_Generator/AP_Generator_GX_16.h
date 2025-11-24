@@ -58,6 +58,11 @@ public:
     // reported mode from the generator:
     enum class WorkingState {
         STOP = 0x00,
+        MOTORCONTROL = 0x01,
+        MOTORRESPONSE = 0x02,
+        CONTROLCMD_RUNCAN = 0x10,
+        CONTROLCMD_RUNCOM = 0x20,
+        CONTROLCMD_RUNREMOTE = 0x30,
         CRANK = 0x40,
         IDLE = 0x80,
         RUN = 0xc0
@@ -224,12 +229,12 @@ private:
     void update_runstate();
 
     // CAN message fields of the generator
-    WorkingState    working_state;
+    uint8_t         working_state;
     float           coolant_temp_1;                 // degree Celsius
     float           coolant_temp_2;                 // degree Celsius
     float           coil_temp;                      // degree Celsius
     uint16_t        engine_speed;                   // RPM
-    float        output_voltage;                    // V
+    float           output_voltage;                    // V
     float           output_current;                 // A
     float           battery_current;                // A
     uint16_t        target_throttle_position;       // %

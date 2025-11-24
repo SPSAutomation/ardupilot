@@ -86,13 +86,14 @@ void AP_Generator_GX_16::handle_measurement(AP_DroneCAN *ap_dronecan, const Cana
     WITH_SEMAPHORE(driver->_sem);
     //fetch the matching uavcan driver, node id and sensor id backend instance
     driver->last_reading_ms = AP_HAL::millis();
-    driver->working_state = (WorkingState)msg.WorkingState;
+    driver->working_state = msg.WorkingState;
     driver->coolant_temp_1 = msg.ECT1 - 40;
     driver->coolant_temp_2 = msg.ECT2 - 40;
     driver->coil_temp = msg.GWT - 40;
     driver->engine_speed = msg.EngineSpeed;
     driver->output_voltage = ((float) msg.OutputVoltage) / 100;
     driver->output_current = (((float) msg.OutputCurrent) / 20) - 400;
+    driver->battery_current = (((float) msg.BatteryCurrent) / 20) - 400;
     driver->target_throttle_position = msg.TargetTP1;
     driver->actual_throttle_position = msg.ActualTP1;
     driver->baro = msg.BARO;
@@ -255,7 +256,7 @@ bool AP_Generator_GX_16::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
     //     return false;
     // }
     
-    if (working_state != WorkingState::RUN) {
+    if (working_state & (uint8_t)WorkingState::RUN) {
         hal.util->snprintf(failmsg, failmsg_len, "Not Started");
         return false;
     }
@@ -289,8 +290,20 @@ void AP_Generator_GX_16::update_frontend_readings(void)
     _current = output_current;
     _rpm = engine_speed;
     _fuel_remaining = ((float)fuel_level) / 100;
-    _state = (uint8_t)working_state;
     _commanded_state = (uint8_t)commanded_runstate;
+
+    if (working_state & (uint8_t)WorkingState::STOP)
+    {
+        _state = 0;
+    }
+    else if (working_state & (uint8_t)WorkingState::CRANK)
+    {
+        _state = 1;
+    }
+    else if (working_state & (uint8_t)WorkingState::IDLE || working_state & (uint8_t)WorkingState::RUN)
+    {
+        _state = 2;
+    }
 
     update_frontend();
 }
@@ -401,31 +414,31 @@ void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
     WITH_SEMAPHORE(_sem);
 
     uint64_t status = 0;
-    if (engine_speed == 0) {
+    // if (engine_speed == 0) {
+    //     status |= MAV_GENERATOR_STATUS_FLAG_OFF;
+    // }
+
+    if (working_state & (uint8_t)WorkingState::STOP)
+    {
         status |= MAV_GENERATOR_STATUS_FLAG_OFF;
-    } else {
-        switch (working_state) {
-        case WorkingState::STOP:
-            status |= MAV_GENERATOR_STATUS_FLAG_OFF;
-            break;
-        case WorkingState::RUN:
-            if (!generator_ok_to_run()) {
-                status |= MAV_GENERATOR_STATUS_FLAG_WARMING_UP;
+    }
+    else if (working_state & (uint8_t)WorkingState::CRANK 
+        || working_state & (uint8_t)WorkingState::IDLE
+        || working_state & (uint8_t)WorkingState::RUN
+    )
+    {
+        if (!generator_ok_to_run()) {
+            status |= MAV_GENERATOR_STATUS_FLAG_WARMING_UP;
+        } else {
+            if (AP::arming().is_armed()) {
+                status |= MAV_GENERATOR_STATUS_FLAG_GENERATING;
             } else {
-                if (AP::arming().is_armed()) {
-                    status |= MAV_GENERATOR_STATUS_FLAG_GENERATING;
-                }
-                else {
-                    status |= MAV_GENERATOR_STATUS_FLAG_IDLE;
-                }
+                status |= MAV_GENERATOR_STATUS_FLAG_IDLE;
             }
-            break;
-        default:
-            break;
         }
     }
 
-    if (commanded_runstate != RunState::RUN) {
+    if (commanded_runstate == RunState::STOP) {
         status |= MAV_GENERATOR_STATUS_FLAG_START_INHIBITED;
     }
 
@@ -461,7 +474,7 @@ void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
         channel.get_chan(),
         status,
         engine_speed, // generator_speed
-        std::numeric_limits<double>::quiet_NaN(), // battery_current; current into/out of battery
+        battery_current, // battery_current; current into/out of battery
         output_current, // load_current; Current going to UAV
         output_current * output_voltage, // power_generated; the power being generated
         output_voltage, // bus_voltage; Voltage of the bus seen at the generator

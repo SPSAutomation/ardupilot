@@ -12,6 +12,7 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_DroneCAN/AP_DroneCAN.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
+#include <AP_Generator/AP_Generator_GX_16.h>
 
 #define LOG_TAG "BattMon"
 
@@ -58,6 +59,13 @@ void AP_BattMonitor_DroneCAN::subscribe_msgs(AP_DroneCAN* ap_dronecan)
 
     if (Canard::allocate_sub_arg_callback(ap_dronecan, &handle_mppt_stream_trampoline, ap_dronecan->get_driver_index()) == nullptr) {
         AP_BoardConfig::allocation_error("mppt_stream_sub");
+    }
+
+    if ((uint8_t)AP::generator()->get_type() == 5)
+    {
+        if (Canard::allocate_sub_arg_callback(ap_dronecan, &handle_gx16_trampoline, ap_dronecan->get_driver_index()) == nullptr) {
+            AP_BoardConfig::allocation_error("gx17_sub");
+        }
     }
 }
 
@@ -132,7 +140,9 @@ void AP_BattMonitor_DroneCAN::update_interim_state(const float voltage, const fl
     WITH_SEMAPHORE(_sem_battmon);
 
     _interim_state.voltage = voltage;
-    _interim_state.current_amps = _curr_mult * current;
+    if ((uint8_t)AP::generator()->get_type() != 5) {
+        _interim_state.current_amps = _curr_mult * current;
+    }
     _soc = soc;
 
     if (!isnan(temperature_K) && temperature_K > 0) {
@@ -228,6 +238,11 @@ void AP_BattMonitor_DroneCAN::handle_mppt_stream(const mppt_Stream &msg)
     _mppt.fault_flags = msg.fault_flags;
 }
 
+void AP_BattMonitor_DroneCAN::handle_gx16_info(const com_aeronavics_GX16ExtenderInfo &msg)
+{
+    _interim_state.current_amps = (((float)msg.BatteryCurrent) / 20) - 400;
+}
+
 void AP_BattMonitor_DroneCAN::handle_battery_info_trampoline(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const uavcan_equipment_power_BatteryInfo &msg)
 {
     AP_BattMonitor_DroneCAN* driver = get_dronecan_backend(ap_dronecan, transfer.source_node_id, msg.battery_id);
@@ -279,6 +294,27 @@ void AP_BattMonitor_DroneCAN::handle_mppt_stream_trampoline(AP_DroneCAN *ap_dron
     }
     driver->handle_mppt_stream(msg);
 }
+
+void AP_BattMonitor_DroneCAN::handle_gx16_trampoline(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_GX16ExtenderInfo &msg)
+{
+    AP_BattMonitor_DroneCAN *driver = nullptr;
+    const auto &batt = AP::battery();
+    
+    for (uint8_t i = 0; i < batt._num_instances; i++) {
+        const auto *drv = batt.drivers[i];
+        if (drv != nullptr && batt.get_type(i) == AP_BattMonitor::Type::UAVCAN_BatteryInfo) {
+            driver = (AP_BattMonitor_DroneCAN *)batt.drivers[i];
+            break;
+        }
+    }
+
+    if (driver == nullptr) {
+        return;
+    }
+
+    driver->handle_gx16_info(msg);
+}
+
 
 // read - read the voltage and current
 void AP_BattMonitor_DroneCAN::read()
