@@ -16,7 +16,7 @@
 
 
 #define EXTENDER_PREARM_TEMP 35
-#define EXTENDER_MAINTAINANCE_SCHEDULE 720000 // 200 Hours in seconds
+#define EXTENDER_MAINTENANCE_SCHEDULE 720000 // 200 Hours in seconds
 
 class AP_Generator_GX_16 : public AP_Generator_Backend
 {
