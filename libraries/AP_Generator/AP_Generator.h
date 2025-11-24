@@ -109,6 +109,7 @@ public:
     int8_t get_error_failsafe_action(void) {return (int8_t) _error_fs;}
     int16_t get_last_service_time(void) {return (int16_t) _last_service_time;}
     int8_t get_prearm_fuel_level(void) {return (int8_t) _fuel_prearm_percent;}
+    float get_fuel_tank_size(void) {return (float) _fuel_tank_size;}
 
 private:
 
@@ -126,6 +127,7 @@ private:
     AP_Int8 _error_fs;
     AP_Int16 _last_service_time;
     AP_Int8 _fuel_prearm_percent;
+    AP_Float _fuel_tank_size;
     
 
     // Helper to get param and cast to GenType

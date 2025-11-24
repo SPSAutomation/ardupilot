@@ -56,16 +56,16 @@ public:
     bool healthy() const override;
 
     // reported mode from the generator:
-    enum class WorkingState {
-        STOP = 0x00,
-        MOTORCONTROL = 0x01,
-        MOTORRESPONSE = 0x02,
-        CONTROLCMD_RUNCAN = 0x10,
-        CONTROLCMD_RUNCOM = 0x20,
-        CONTROLCMD_RUNREMOTE = 0x30,
-        CRANK = 0x40,
-        IDLE = 0x80,
-        RUN = 0xc0
+    enum class WorkingState {           // HEX      DECIMAL
+        STOP = 0x00,                    // 0x00     0
+        MOTORCONTROL = 0x01,            // 0x01     1
+        MOTORRESPONSE = 0x02,           // 0x02     2
+        CONTROLCMD_RUNCAN = 0x10,       // 0x10     16
+        CONTROLCMD_RUNCOM = 0x20,       // 0x20     32
+        CONTROLCMD_RUNREMOTE = 0x30,    // 0x30     48
+        CRANK = 0x40,                   // 0x40     64
+        IDLE = 0x80,                    // 0x80     128
+        RUN = 0xc0                      // 0xc0     192
     };
 
     // methods and state to record pilot desired runstate and actual runstate:

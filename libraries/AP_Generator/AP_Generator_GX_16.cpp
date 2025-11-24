@@ -292,17 +292,13 @@ void AP_Generator_GX_16::update_frontend_readings(void)
     _fuel_remaining = ((float)fuel_level) / 100;
     _commanded_state = (uint8_t)commanded_runstate;
 
-    if (working_state & (uint8_t)WorkingState::STOP)
-    {
-        _state = 0;
-    }
-    else if (working_state & (uint8_t)WorkingState::CRANK)
-    {
-        _state = 1;
-    }
-    else if (working_state & (uint8_t)WorkingState::IDLE || working_state & (uint8_t)WorkingState::RUN)
+    if (working_state & (uint8_t)WorkingState::CRANK || working_state & (uint8_t)WorkingState::IDLE || working_state & (uint8_t)WorkingState::RUN)
     {
         _state = 2;
+    }
+    else 
+    {
+        _state = 0;
     }
 
     update_frontend();
@@ -414,15 +410,8 @@ void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
     WITH_SEMAPHORE(_sem);
 
     uint64_t status = 0;
-    // if (engine_speed == 0) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_OFF;
-    // }
 
-    if (working_state & (uint8_t)WorkingState::STOP)
-    {
-        status |= MAV_GENERATOR_STATUS_FLAG_OFF;
-    }
-    else if (working_state & (uint8_t)WorkingState::CRANK 
+    if (working_state & (uint8_t)WorkingState::CRANK 
         || working_state & (uint8_t)WorkingState::IDLE
         || working_state & (uint8_t)WorkingState::RUN
     )
@@ -437,38 +426,50 @@ void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
             }
         }
     }
+    else
+    {
+        status |= MAV_GENERATOR_STATUS_FLAG_OFF;
+    }
 
     if (commanded_runstate == RunState::STOP) {
         status |= MAV_GENERATOR_STATUS_FLAG_START_INHIBITED;
     }
 
 
-    // if (extender_error & (uint8_t)ExtenderError::OVER_CURRENT_ERROR) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_OVERCURRENT_FAULT;
-    // }
-    // if (extender_error & (uint8_t)ExtenderError::LOW_VOLTAGE_ERROR) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_REDUCED_POWER;
-    // }
+    if (
+        AlmST0 & (uint8_t)AbnormalAlert0::OUTPUT_OVER_CURRENT_ALARM
+        || EmgST0 & (uint8_t)OverlimitFault1::OVER_CURRENT_ERROR
+    ) {
+        status |= MAV_GENERATOR_STATUS_FLAG_OVERCURRENT_FAULT;
+    }
+    if (
+        AlmST2 & (uint8_t)AbnormalAlert2::LOW_OUTPUT_VOLTAGE_ALARM
+    ) {
+        status |= MAV_GENERATOR_STATUS_FLAG_REDUCED_POWER;
+    }
 
-    // if (extender_error & (uint8_t)ExtenderError::MAINTENANCE_TIME_ERROR) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_MAINTENANCE_REQUIRED;
-    // }
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::COIL_OVER_TEMP
+        || AlmST0 & (uint8_t)AbnormalAlert0::COIL_OVER_TEMP_ALARM
+    ) {
+        status |= MAV_GENERATOR_STATUS_FLAG_ELECTRONICS_OVERTEMP_WARNING;
+    }
 
-    // if (extender_error & (uint8_t)ExtenderError::COMMUNICATION_ERROR) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_COMMUNICATION_WARNING;
-    // }
+    if (
+        EmgST0 & (uint8_t)OverlimitFault1::COOL1_OVER_TEMP
+        || EmgST0 & (uint8_t)OverlimitFault1::COOL2_OVER_TEMP
+        || AlmST0 & (uint8_t)AbnormalAlert0::COOL1_OVER_TEMP_ALARM
+        || AlmST0 & (uint8_t)AbnormalAlert0::COOL2_OVER_TEMP_ALARM
+    ) {
+        status |= MAV_GENERATOR_STATUS_FLAG_OVERTEMP_WARNING;
+    }
 
-    // if (extender_error & (uint8_t)ExtenderError::COIL_OVER_TEMP_ERROR) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_ELECTRONICS_OVERTEMP_WARNING;
-    // }
-
-    // if (extender_error & (uint8_t)ExtenderError::COOLANT_OVER_TEMP_ERROR) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_OVERTEMP_WARNING;
-    // }
-
-    // if (extender_error & (uint8_t)ExtenderError::OVER_VOLTAGE_ERROR) {
-    //     status |= MAV_GENERATOR_STATUS_FLAG_OVERVOLTAGE_FAULT;
-    // }
+    if (
+        AlmST0 & (uint8_t)AbnormalAlert0::OVER_VOLTAGE_ALARM
+        || EmgST0 & (uint8_t)OverlimitFault1::OVER_VOLTAGE_ERROR
+    ) {
+        status |= MAV_GENERATOR_STATUS_FLAG_OVERVOLTAGE_FAULT;
+    }
 
     mavlink_msg_generator_status_send(
         channel.get_chan(),
@@ -480,7 +481,7 @@ void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
         output_voltage, // bus_voltage; Voltage of the bus seen at the generator
         coil_temp, // rectifier_temperature
         std::numeric_limits<double>::quiet_NaN(), // bat_current_setpoint; The target battery current
-        coolant_temp_1, // generator temperature
+        MAX(coolant_temp_1, coolant_temp_2), // generator temperature
         0, // total runtime in seconds
         0 // Time till next service in seconds
         );
@@ -488,7 +489,7 @@ void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
     mavlink_msg_fuel_status_send(
         channel.get_chan(),
         0,  // Fuel ID.
-        5000, // total fuel capacity
+        _frontend.get_fuel_tank_size(), // total fuel capacity
         std::numeric_limits<float>::quiet_NaN(),  // Consumed fuel (measured). 
         std::numeric_limits<float>::quiet_NaN(),  // Remaining fuel until empty (measured).
         fuel_level,  // Percentage of remaining fuel, relative to full.

@@ -98,6 +98,13 @@ const AP_Param::GroupInfo AP_Generator::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("MIN_ARM_LVL", 10, AP_Generator, _fuel_prearm_percent, 0),
 
+    // @Param:  TANK_SIZE
+    // @DisplayName: Generator Fuel Tank Size
+    // @Description: Fuel Tank size in Litres
+    // Units: L
+    // @User: Standard
+    AP_GROUPINFO("TANK_SIZE", 11, AP_Generator, _fuel_tank_size, 0),
+
     AP_GROUPEND
 };
 
