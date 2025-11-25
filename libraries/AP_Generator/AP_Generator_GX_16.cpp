@@ -203,7 +203,7 @@ void AP_Generator_GX_16::Log_Write()
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
         "GEN",
-        "TimeUS,MsgUS,Rpm,Thr,Fuel,CoilT,C1Temp,C2Temp,Volt,Curr,State",
+        "TimeUS,MsgUS,Rpm,Thr,Fuel,CoilT,M1Temp,M2Temp,Volt,Curr,State",
         "ssq%%OOOvA-",
         "FC---------",
         "QIHHBfffffB",
@@ -222,7 +222,7 @@ void AP_Generator_GX_16::Log_Write()
 
     AP::logger().WriteStreaming(
         "GEN2",
-        "TimeUS,TThr,IAT,BCurr,R12V,R5V1,R7V4,RVBATT,RVREF",
+        "TimeUS,TThr,IAT,BCurr,R12V,R5V1,R7V4,VBATT,VREF",
         "s%OAvvvvv",
         "F--------",
         "QHfffffff",
