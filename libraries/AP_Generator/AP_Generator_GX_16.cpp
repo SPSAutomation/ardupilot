@@ -94,8 +94,8 @@ void AP_Generator_GX_16::handle_measurement(AP_DroneCAN *ap_dronecan, const Cana
     driver->output_voltage = ((float) msg.OutputVoltage) / 100;
     driver->output_current = (((float) msg.OutputCurrent) / 20) - 400;
     driver->battery_current = (((float) msg.BatteryCurrent) / 20) - 400;
-    driver->target_throttle_position = msg.TargetTP1;
-    driver->actual_throttle_position = msg.ActualTP1;
+    driver->target_throttle_position = ((float) msg.TargetTP1) / 20;
+    driver->actual_throttle_position = ((float) msg.ActualTP1) / 20;
     driver->baro = msg.BARO;
     driver->IAT = msg.IAT - 40;
     driver->fuel_consumption = msg.FuelConsumption;
@@ -206,7 +206,7 @@ void AP_Generator_GX_16::Log_Write()
         "TimeUS,MsgUS,Rpm,Thr,Fuel,CoilT,M1Temp,M2Temp,Volt,Curr,State",
         "ssq%%OOOvA-",
         "FC---------",
-        "QIHHBfffffB",
+        "QIHfBfffffB",
         AP_HAL::micros64(),
         last_logged_reading_ms,
         engine_speed,
@@ -225,7 +225,7 @@ void AP_Generator_GX_16::Log_Write()
         "TimeUS,TThr,IAT,BCurr,R12V,R5V1,R7V4,VBATT,VREF",
         "s%OAvvvvv",
         "F--------",
-        "QHfffffff",
+        "Qffffffff",
         AP_HAL::micros64(),
         target_throttle_position,
         IAT,
