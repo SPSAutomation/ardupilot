@@ -137,7 +137,7 @@ define DEFAULT_NTF_LED_TYPES 128
 
 define BARO_MAX_INSTANCES 1
 
-define HAL_PERIPH_GPS_PORT_DEFAULT 2
+define HAL_PERIPH_GPS_PORT_DEFAULT 1
 
 # listen for reboot command from uploader.py script
 # undefine to disable. Use -1 to allow on all ports, otherwise serial number index defined in SERIAL_ORDER starting at 0

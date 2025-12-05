@@ -32,6 +32,8 @@ public:
     virtual bool idle(void) { return false; }
     virtual bool run(void) { return false; }
 
+    virtual void shutdown_on_land(bool shutdown) { return; };
+
     // Use generator mavlink message
     virtual void send_generator_status(const GCS_MAVLINK &channel) {}
 
