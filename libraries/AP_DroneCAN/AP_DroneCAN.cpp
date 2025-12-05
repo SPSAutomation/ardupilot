@@ -38,7 +38,7 @@
 #include <AP_EFI/AP_EFI_DroneCAN.h>
 #include <AC_SpotSprayer/AC_SpotSprayer.h>
 #include <AC_BoomLock/AC_BoomLock.h>
-// #include <AP_Generator/AP_Generator_GX_7.h>
+#include <AP_Generator/AP_Generator_GX_7.h>
 #include <AP_Generator/AP_Generator_GX_16.h>
 #include <AP_GPS/AP_GPS_DroneCAN.h>
 #include <AP_GPS/AP_GPS.h>
@@ -557,10 +557,10 @@ void AP_DroneCAN::loop(void)
         }
 #endif
 
-        // if ((uint8_t)AP::generator()->get_type() == 4)
-        // {
-        //     send_gx_7_control();
-        // }
+        if ((uint8_t)AP::generator()->get_type() == 4)
+        {
+            send_gx_7_control();
+        }
         else if ((uint8_t)AP::generator()->get_type() == 5)
         {
             send_gx_16_control();
@@ -979,44 +979,44 @@ void AP_DroneCAN::send_spot_spray_control()
 
 
 
-// void AP_DroneCAN::send_gx_7_control()
-// {
-//     uint32_t now = AP_HAL::millis();
-//     if (now - _last_extender_ctrl_ms < 100) {
-//         // update at 10Hz
-//         return;
-//     }
-//     _last_extender_ctrl_ms = now;
+void AP_DroneCAN::send_gx_7_control()
+{
+    uint32_t now = AP_HAL::millis();
+    if (now - _last_extender_ctrl_ms < 100) {
+        // update at 10Hz
+        return;
+    }
+    _last_extender_ctrl_ms = now;
 
-//     com_aeronavics_ExtenderCtrl extender_msg;
-//     if (AP::generator()->get_commanded_state() == 17 || AP::generator()->get_commanded_state() == 0)
-//     {
-//         extender_msg.ExtenderControlCmd = 0;
-//         extender_msg.DroneStatus = 0;
-//     }
-//     else 
-//     {
-//         extender_msg.ExtenderControlCmd = 1;
-//         if (((AP::generator()->get_options() >> 1) & 0x1) == 1)
-//         {
-//             extender_msg.DroneStatus = 1;
-//         }
-//         else
-//         {
-//             if (AP::arming().is_armed())
-//             {
-//                 extender_msg.DroneStatus = 1;
-//             }
-//             else
-//             {
-//                 extender_msg.DroneStatus = 0;
-//             }
-//         }
+    com_aeronavics_ExtenderCtrl extender_msg;
+    if (AP::generator()->get_commanded_state() == 17 || AP::generator()->get_commanded_state() == 0)
+    {
+        extender_msg.ExtenderControlCmd = 0;
+        extender_msg.DroneStatus = 0;
+    }
+    else 
+    {
+        extender_msg.ExtenderControlCmd = 1;
+        if (((AP::generator()->get_options() >> 1) & 0x1) == 1)
+        {
+            extender_msg.DroneStatus = 1;
+        }
+        else
+        {
+            if (AP::arming().is_armed())
+            {
+                extender_msg.DroneStatus = 1;
+            }
+            else
+            {
+                extender_msg.DroneStatus = 0;
+            }
+        }
 
-//     }
+    }
 
-//     extender_control.broadcast(extender_msg);
-// }
+    extender_control.broadcast(extender_msg);
+}
 
 
 void AP_DroneCAN::send_gx_16_control()
