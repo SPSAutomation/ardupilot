@@ -49,6 +49,9 @@ void AP_Generator_GX_16::subscribe_msgs(AP_DroneCAN* ap_dronecan)
     if (Canard::allocate_sub_arg_callback(ap_dronecan, &handle_measurement, ap_dronecan->get_driver_index()) == nullptr) {
         AP_BoardConfig::allocation_error("measurement_sub");
     }
+    if (Canard::allocate_sub_arg_callback(ap_dronecan, &handle_fans, ap_dronecan->get_driver_index()) == nullptr) {
+        AP_BoardConfig::allocation_error("measurement_sub");
+    }
 }
 
 //Method to find the backend relating to the node id
@@ -128,6 +131,30 @@ void AP_Generator_GX_16::handle_measurement(AP_DroneCAN *ap_dronecan, const Cana
     driver->RxMotorAccCount = msg.RxMotorAccCount;
 }
 
+// Fan status message handler
+void AP_Generator_GX_16::handle_fans(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_FanStatus &msg)
+{
+    AP_Generator_GX_16* driver = get_dronecan_backend(ap_dronecan);
+    if (driver == nullptr)
+    {
+        return;
+    }
+
+    WITH_SEMAPHORE(driver->_sem);
+    //fetch the matching uavcan driver, node id and sensor id backend instance
+
+    while (msg.fan_index >= driver->fanInfo.size())
+    {
+        fanStatus fan;
+        fan.id = driver->fanInfo.size() - 1;
+        driver->fanInfo.push_back(fan);
+    }
+
+    driver->fanInfo[msg.fan_index].rpm = msg.rpm;
+    driver->fanInfo[msg.fan_index].power_pct = msg.power_pct;
+    driver->fanInfo[msg.fan_index].health = msg.health;
+}
+
 
 // returns true if the generator should be allowed to move into
 // the "run" (high-RPM) state:
@@ -169,6 +196,11 @@ void AP_Generator_GX_16::update_runstate()
         }
     } else {
         vehicle_was_crashed = false;
+    }
+
+    if (shutdown_on_landing && !AP::arming().is_armed())
+    {
+        pilot_desired_runstate = RunState::STOP;
     }
 
     if (commanded_runstate != pilot_desired_runstate &&
@@ -267,6 +299,24 @@ void AP_Generator_GX_16::Log_Write()
         SysST1,
         SysST2
     );
+
+    for (uint8_t i = 0; i < fanInfo.size(); i++)
+    {
+        char fan_log_name[4];
+        hal.util->snprintf(fan_log_name, 4, "FAN%d", i);
+        
+        AP::logger().WriteStreaming(
+        fan_log_name,
+        "TimeUS,Rpm,Thr,Health",
+        "sq%-",
+        "F---",
+        "QHHB",
+        AP_HAL::micros64(),
+        fanInfo[i].rpm,
+        fanInfo[i].power_pct,
+        fanInfo[i].health
+        );
+    }
 }
 #endif
 

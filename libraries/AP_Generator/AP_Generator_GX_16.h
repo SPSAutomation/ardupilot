@@ -13,6 +13,7 @@
 #include <AP_Common/AP_Common.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <vector>
 
 
 #define EXTENDER_PREARM_TEMP 35
@@ -33,12 +34,15 @@ public:
 
     static void subscribe_msgs(AP_DroneCAN* ap_dronecan);
     static void handle_measurement(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_GX16ExtenderInfo &msg);
+    static void handle_fans(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const com_aeronavics_FanStatus &msg);
     static AP_Generator_GX_16* get_dronecan_backend(AP_DroneCAN* ap_dronecan);
 
     // methods to control the generator state:
     bool stop(void) override;
     bool idle(void) override;
     bool run(void) override;
+
+    void shutdown_on_land(bool shutdown) override {shutdown_on_landing = shutdown; };
 
     // method to send a GENERATOR_STATUS mavlink message
     void send_generator_status(const GCS_MAVLINK &channel) override;
@@ -269,6 +273,17 @@ private:
     uint8_t         RxCtrlAccCount;                 // Accumulated number of errors in receiving control messages
     uint8_t         RxMotorAccTime;                 // Accumulated time of not receiving motor message
     uint8_t         RxMotorAccCount;                // Accumulated number of errors in receiving motor messages
+
+    struct fanStatus {
+        uint8_t id;
+        int32_t rpm;
+        uint8_t power_pct;
+        uint8_t health;
+    };
+
+    std::vector<fanStatus> fanInfo;
+
+    bool shutdown_on_landing;
 
 
 #if HAL_LOGGING_ENABLED
