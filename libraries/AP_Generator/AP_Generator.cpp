@@ -20,7 +20,7 @@
 #include "AP_Generator_IE_650_800.h"
 #include "AP_Generator_IE_2400.h"
 #include "AP_Generator_RichenPower.h"
-// #include "AP_Generator_GX_7.h"
+#include "AP_Generator_GX_7.h"
 #include "AP_Generator_GX_16.h"
 
 #include <GCS_MAVLink/GCS.h>
