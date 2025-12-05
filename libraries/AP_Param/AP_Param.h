@@ -36,7 +36,9 @@
 #define AP_MAX_NAME_SIZE 16
 
 // optionally enable debug code for dumping keys
+#ifndef AP_PARAM_KEY_DUMP
 #define AP_PARAM_KEY_DUMP 0
+#endif
 
 #if defined(HAL_GCS_ENABLED)
     #define AP_PARAM_DEFAULTS_ENABLED HAL_GCS_ENABLED
@@ -175,12 +177,12 @@
 
 enum ap_var_type {
     AP_PARAM_NONE    = 0,
-    AP_PARAM_INT8,
-    AP_PARAM_INT16,
-    AP_PARAM_INT32,
-    AP_PARAM_FLOAT,
-    AP_PARAM_VECTOR3F,
-    AP_PARAM_GROUP
+    AP_PARAM_INT8    = 1,
+    AP_PARAM_INT16   = 2,
+    AP_PARAM_INT32   = 3,
+    AP_PARAM_FLOAT   = 4,
+    AP_PARAM_VECTOR3F= 5,
+    AP_PARAM_GROUP   = 6,
 };
 
 
@@ -428,6 +430,11 @@ public:
     ///
     static bool load_all();
 
+    // return true if eeprom is full, used for arming check
+    static bool get_eeprom_full(void) {
+        return eeprom_full;
+    }
+
     // returns storage space used:
     static uint16_t storage_used() { return sentinal_offset; }
 
@@ -470,16 +477,40 @@ public:
     // convert old vehicle parameters to new object parameters with scaling - assumes we use the same scaling factor for all values in the table
     static void         convert_old_parameters_scaled(const ConversionInfo *conversion_table, uint8_t table_size, float scaler, uint8_t flags);
 
+    // convert an object which was stored in a vehicle's G2 into a new
+    // object in AP_Vehicle.cpp:
+    struct G2ObjectConversion {
+        void *object_pointer;
+        const struct AP_Param::GroupInfo *var_info;
+        uint16_t old_index;  // Old parameter index in g2
+    };
+    static void         convert_g2_objects(const void *g2, const G2ObjectConversion g2_conversions[], uint8_t num_conversions);
+
+    // convert an object which was stored in a vehicle's top-level
+    // Parameters object into a new object in AP_Vehicle.cpp:
+    struct TopLevelObjectConversion {
+        void *object_pointer;
+        const struct AP_Param::GroupInfo *var_info;
+        uint16_t old_index;  // Old parameter index in g
+    };
+    static void         convert_toplevel_objects(const TopLevelObjectConversion g2_conversions[], uint8_t num_conversions);
+
     /*
       convert width of a parameter, allowing update to wider scalar
       values without changing the parameter indexes. This will return
       true if the parameter was converted from an old parameter value
     */
-    bool convert_parameter_width(ap_var_type old_ptype, float scale_factor=1.0);
+    bool convert_parameter_width(ap_var_type old_ptype, float scale_factor=1.0) {
+        return _convert_parameter_width(old_ptype, scale_factor, false);
+    }
     bool convert_centi_parameter(ap_var_type old_ptype) {
         return convert_parameter_width(old_ptype, 0.01f);
     }
-    
+    // Converting bitmasks should be done bitwise rather than numerically
+    bool convert_bitmask_parameter_width(ap_var_type old_ptype) {
+        return _convert_parameter_width(old_ptype, 1.0, true);
+    }
+
     // convert a single parameter with scaling
     enum {
         CONVERT_FLAG_REVERSE=1, // handle _REV -> _REVERSED conversion
@@ -491,7 +522,7 @@ public:
     // is_top_level: Is true if the class had its own top level key, param_key. It is false if the class was a subgroup
     static void         convert_class(uint16_t param_key, void *object_pointer,
                                         const struct AP_Param::GroupInfo *group_info,
-                                        uint16_t old_index, uint16_t old_top_element, bool is_top_level);
+                                        uint16_t old_index, bool is_top_level);
 
     /*
       fetch a parameter value based on the index within a group. This
@@ -537,7 +568,11 @@ public:
 
     // return the persistent top level key for the ParamToken key
     static uint16_t get_persistent_key(uint16_t key) { return var_info(key).key; }
-    
+
+    // returns true if this parameter should be settable via the
+    // MAVLink interface:
+    bool allow_set_via_mavlink(uint16_t flags) const;
+
     // count of parameters in tree
     static uint16_t count_parameters(void);
 
@@ -765,6 +800,13 @@ private:
     // return true if the parameter is configured in EEPROM/FRAM
     bool configured_in_storage(void) const;
 
+    /*
+      convert width of a parameter, allowing update to wider scalar
+      values without changing the parameter indexes. This will return
+      true if the parameter was converted from an old parameter value
+    */
+    bool _convert_parameter_width(ap_var_type old_ptype, float scale_factor, bool bitmask);
+
     // send a parameter to all GCS instances
     void send_parameter(const char *name, enum ap_var_type param_header_type, uint8_t idx) const;
 
@@ -832,6 +874,8 @@ private:
     };
     static defaults_list *default_list;
     static void check_default(AP_Param *ap, float *default_value);
+
+    static bool eeprom_full;
 };
 
 namespace AP {

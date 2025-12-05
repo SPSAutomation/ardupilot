@@ -3,6 +3,8 @@
 #include <AP_HAL/AP_HAL_Boards.h>
 #include <AP_HAL/Semaphores.h>
 #include <AP_Param/AP_Param.h>
+#include <AP_GPS/AP_GPS_config.h>
+#include <AP_BoardConfig/AP_BoardConfig_config.h>
 
 #include "AP_Arming_config.h"
 #include "AP_InertialSensor/AP_InertialSensor_config.h"
@@ -95,6 +97,7 @@ public:
     // these functions should not be used by Copter which holds the armed state in the motors library
     Required arming_required() const;
     virtual bool arm(AP_Arming::Method method, bool do_arming_checks=true);
+    virtual bool arm_force(AP_Arming::Method method) { return arm(method, false); }
     virtual bool disarm(AP_Arming::Method method, bool do_disarm_checks=true);
     bool is_armed() const;
     bool is_armed_and_safety_off() const;
@@ -143,6 +146,7 @@ public:
     enum class Option : int32_t {
         DISABLE_PREARM_DISPLAY             = (1U << 0),
         DISABLE_STATUSTEXT_ON_STATE_CHANGE = (1U << 1),
+        SKIP_IMU_CONSISTENCY_ICE_RUNNING   = (1U << 2),
     };
     bool option_enabled(Option option) const {
         return (_arming_options & uint32_t(option)) != 0;
@@ -153,6 +157,12 @@ public:
     static bool method_is_GCS(Method method) {
         return (method == Method::MAVLINK || method == Method::DDS);
     }
+
+    enum class RequireLocation : uint8_t {
+        NO = 0,
+        YES = 1,
+    };
+
 protected:
 
     // Parameters
@@ -163,6 +173,7 @@ protected:
     AP_Int32                _required_mission_items;
     AP_Int32                _arming_options;
     AP_Int16                magfield_error_threshold;
+    AP_Enum<RequireLocation> require_location;
 
     // internal members
     bool                    armed;
@@ -230,6 +241,10 @@ protected:
     bool serial_protocol_checks(bool display_failure);
     
     bool estop_checks(bool display_failure);
+
+#if AP_ARMING_CRASHDUMP_ACK_ENABLED
+    bool crashdump_checks(bool report);
+#endif
 
     virtual bool system_checks(bool report);
 
@@ -310,6 +325,18 @@ private:
     bool report_immediately; // set to true when check goes from true to false, to trigger immediate report
 
     void update_arm_gpio();
+
+#if !AP_GPS_BLENDED_ENABLED
+    bool blending_auto_switch_checks(bool report);
+#endif
+
+#if AP_ARMING_CRASHDUMP_ACK_ENABLED
+    struct CrashDump {
+        void check_reset();
+        AP_Int8  acked;
+    } crashdump_ack;
+#endif  // AP_ARMING_CRASHDUMP_ACK_ENABLED
+
 };
 
 namespace AP {
