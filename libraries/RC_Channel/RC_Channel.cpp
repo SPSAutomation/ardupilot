@@ -1097,8 +1097,7 @@ void RC_Channel::do_aux_function_generator(const AuxSwitchPos ch_flag)
         return;
     }
 
-    // if (generator->get_type() == AP_Generator::Type::GX_7 || generator->get_type() == AP_Generator::Type::GX_16)
-    if (generator->get_type() == AP_Generator::Type::GX_16)
+    if (generator->get_type() == AP_Generator::Type::GX_7 || generator->get_type() == AP_Generator::Type::GX_16)
     {
         // Runstate is currently stopped and we have recieved a high signal
         if (generator->get_commanded_state() == 17 && ch_flag == AuxSwitchPos::HIGH && _generator_channel_reset) 
