@@ -773,7 +773,7 @@ void AP_BattMonitor::check_current_draw()
     {
         time_since_current_draw_start = AP_HAL::millis();
     }
-    else if (AP_HAL::millis() - time_since_current_draw_start > _current_draw_timeout * 1000 && AP_HAL::millis() - time_since_current_draw_msg > 10000)
+    else if ((int64_t)AP_HAL::millis() - time_since_current_draw_start > _current_draw_timeout * 1000 && AP_HAL::millis() - time_since_current_draw_msg > 10000)
     {
         time_since_current_draw_msg = AP_HAL::millis();
         gcs().send_text(MAV_SEVERITY_ERROR, "High Battery Draw, Aircraft over Weight");
@@ -908,11 +908,6 @@ void AP_BattMonitor::check_failsafes(void)
             switch (type) {
                 case Failsafe::None:
                     continue; // should not have been called in this case
-                case Failsafe::Unhealthy:
-                    // Report only for unhealthy, could add action param in the future
-                    action = 0;
-                    type_str = "missing, last:";
-                    break;
                 case Failsafe::Low:
                     action = _params[i]._failsafe_low_action;
                     type_str = "low";
@@ -1179,8 +1174,8 @@ MAV_BATTERY_CHARGE_STATE AP_BattMonitor::get_mavlink_charge_state(const uint8_t 
     case Failsafe::Low:
         return MAV_BATTERY_CHARGE_STATE_LOW;
     
-    case Failsafe::Unhealthy:
-        return MAV_BATTERY_CHARGE_STATE_UNHEALTHY;
+    // case Failsafe::Unhealthy:
+    //     return MAV_BATTERY_CHARGE_STATE_UNHEALTHY;
 
     case Failsafe::Critical:
         return MAV_BATTERY_CHARGE_STATE_CRITICAL;

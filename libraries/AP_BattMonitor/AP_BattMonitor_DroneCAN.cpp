@@ -302,7 +302,7 @@ void AP_BattMonitor_DroneCAN::handle_gx16_trampoline(AP_DroneCAN *ap_dronecan, c
     
     for (uint8_t i = 0; i < batt._num_instances; i++) {
         const auto *drv = batt.drivers[i];
-        if (drv != nullptr && batt.get_type(i) == AP_BattMonitor::Type::UAVCAN_BatteryInfo) {
+        if (drv != nullptr && batt.configured_type(i) == AP_BattMonitor::Type::UAVCAN_BatteryInfo) {
             driver = (AP_BattMonitor_DroneCAN *)batt.drivers[i];
             break;
         }
