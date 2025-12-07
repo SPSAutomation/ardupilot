@@ -126,7 +126,7 @@ void Copter::generator_failsafe_check(void)
 {
     FailsafeAction desired_action = FailsafeAction::NONE;
 
-    if (AP::generator()->get_type() != AP_Generator::Type::GX_7)
+    if (AP::generator()->get_type() == AP_Generator::Type::GX_7)
     {
         
         if (AP::generator()->get_state() != 2 && motors->armed()) 
@@ -174,7 +174,7 @@ void Copter::generator_failsafe_check(void)
     }
 
 
-    if (AP::generator()->get_type() != AP_Generator::Type::GX_16)
+    if (AP::generator()->get_type() == AP_Generator::Type::GX_16)
     {
         
         if (AP::generator()->get_state() != 0xc0 && motors->armed()) 
