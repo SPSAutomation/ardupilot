@@ -339,5 +339,6 @@ private:
     // maintenance, this is the last time we sent the warning:
     uint32_t last_maintenance_warning_ms;
     mutable uint32_t last_error_sent;
+    uint32_t last_fan_warning_ms;
 };
 #endif

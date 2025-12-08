@@ -740,13 +740,26 @@ void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
     );
 
 
-    // const uint32_t now = AP_HAL::millis();
+    const uint32_t now = AP_HAL::millis();
     //
     // if (((_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTENANCE_SCHEDULE - (total_run_time * 60) <= 0) && now - last_maintenance_warning_ms > 30000)
     // {
     //     last_maintenance_warning_ms = now;
     //     gcs().send_text(MAV_SEVERITY_WARNING, "Aircraft Requires Service");
     // }
+
+    // Check fan health
+    if (now - last_fan_warning_ms > 10000)
+    {
+        for (uint8_t i = 0; i < fanInfo.size(); i++)
+        {
+            if (fanInfo[i].health != 1)
+            {
+                last_fan_warning_ms = now;
+                gcs().send_text(MAV_SEVERITY_WARNING, "Fan %u failure", i);
+            }
+        }
+    }
 }
 
 // methods to control the generator state:
