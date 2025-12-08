@@ -490,7 +490,7 @@ bool AP_Generator_GX_16::healthy() const
         if (now - last_error_sent > 5000)
         {
             last_error_sent = now;
-            gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %ums", now - last_reading_ms);
+            gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %lums", now - last_reading_ms);
         }
         return false;
     }
@@ -641,7 +641,6 @@ bool AP_Generator_GX_16::is_low_error(const uint32_t err_in) const
 }
 
 
-// TODO update this function
 // send mavlink generator status
 void AP_Generator_GX_16::send_generator_status(const GCS_MAVLINK &channel)
 {

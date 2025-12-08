@@ -320,7 +320,7 @@ bool AP_Generator_GX_7::healthy() const
         if (now - last_error_sent > 5000)
         {
             last_error_sent = now;
-            gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %ums", now - last_reading_ms);
+            gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %lums", now - last_reading_ms);
         }
         return false;
     }
