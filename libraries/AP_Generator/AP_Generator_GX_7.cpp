@@ -508,8 +508,6 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
     }
 
      // Check fan health
-
-
     if (now - last_fan_warning_ms > 10000)
     {
         for (uint8_t i = 0; i < fanInfo.size(); i++)
