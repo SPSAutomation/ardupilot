@@ -455,9 +455,9 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         status |= MAV_GENERATOR_STATUS_FLAG_MAINTENANCE_REQUIRED;
     }
 
-    if (extender_error & (uint8_t)ExtenderError::COMMUNICATION_ERROR) {
-        status |= MAV_GENERATOR_STATUS_FLAG_COMMUNICATION_WARNING;
-    }
+    // if (extender_error & (uint8_t)ExtenderError::COMMUNICATION_ERROR) {
+    //     status |= MAV_GENERATOR_STATUS_FLAG_COMMUNICATION_WARNING;
+    // }
 
     if (extender_error & (uint8_t)ExtenderError::COIL_OVER_TEMP_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_ELECTRONICS_OVERTEMP_WARNING;

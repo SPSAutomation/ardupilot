@@ -412,6 +412,7 @@ void AC_SpotSprayer::send_spray_status(const mavlink_channel_t channel)
         channel,
         measured_flow_rate,
         desired_flow_rate,
+        get_flow_rate(),
         total_sprayed_volume,
         armed_sprayed_volume,
         last_tree_volume,
