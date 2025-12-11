@@ -167,10 +167,10 @@ void AP_Generator_GX_7::update_runstate()
         vehicle_was_crashed = false;
     }
 
-    if (shutdown_on_landing && !AP::arming().is_armed())
-    {
-        pilot_desired_runstate = RunState::STOP;
-    }
+    // if (shutdown_on_landing && !AP::arming().is_armed())
+    // {
+    //     pilot_desired_runstate = RunState::STOP;
+    // }
 
     if (commanded_runstate != pilot_desired_runstate &&
         !hal.util->get_soft_armed()) {
@@ -260,6 +260,7 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
     // maintenance error and use our own one as we cannot reset the
     // built in one after a service
     errors &= ~(1U << uint32_t(ExtenderError::MAINTENANCE_TIME_ERROR));
+    errors &= ~(1U << uint32_t(ExtenderError::COMMUNICATION_ERROR));
 
     if (errors) {
 
