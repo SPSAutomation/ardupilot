@@ -167,13 +167,13 @@ void AP_Generator_GX_7::update_runstate()
         vehicle_was_crashed = false;
     }
 
-    // if (shutdown_on_landing && !AP::arming().is_armed())
-    // {
-    //     pilot_desired_runstate = RunState::STOP;
-    // }
+    if (shutdown_on_landing && !AP::arming().is_armed())
+    {
+        pilot_desired_runstate = RunState::STOP;
+        shutdown_on_landing = false;
+    }
 
-    if (commanded_runstate != pilot_desired_runstate &&
-        !hal.util->get_soft_armed()) {
+    if (commanded_runstate != pilot_desired_runstate && !AP::arming().is_armed()) {
         // consider changing the commanded runstate to the pilot
         // desired runstate:
         switch (pilot_desired_runstate) {
@@ -540,4 +540,13 @@ bool AP_Generator_GX_7::run()
     set_pilot_desired_runstate(RunState::RUN);
     return true;
 }
+
+void AP_Generator_GX_7::shutdown_on_land(bool shutdown)
+{
+    if (working_state == WorkingState::RUN && AP::arming().is_armed())
+    {
+        shutdown_on_landing = shutdown;
+    }
+}
+
 #endif  // AP_GENERATOR_RICHENPOWER_ENABLED

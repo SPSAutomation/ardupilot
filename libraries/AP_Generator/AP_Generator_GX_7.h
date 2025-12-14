@@ -42,7 +42,7 @@ public:
     bool idle(void) override;
     bool run(void) override;
 
-    void shutdown_on_land(bool shutdown) override {shutdown_on_landing = shutdown; };
+    void shutdown_on_land(bool shutdown) override;
 
     // method to send a GENERATOR_STATUS mavlink message
     void send_generator_status(const GCS_MAVLINK &channel) override;
