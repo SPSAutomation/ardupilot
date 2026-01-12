@@ -259,8 +259,8 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
     // maintenance is a prearm error, but we will ignore the built in 
     // maintenance error and use our own one as we cannot reset the
     // built in one after a service
-    errors &= ~(1U << uint32_t(ExtenderError::MAINTENANCE_TIME_ERROR));
-    errors &= ~(1U << uint32_t(ExtenderError::COMMUNICATION_ERROR));
+    errors &= ~(uint32_t)ExtenderError::MAINTENANCE_TIME_ERROR;
+    errors &= ~(uint32_t)ExtenderError::COMMUNICATION_ERROR;
 
     if (errors) {
 
