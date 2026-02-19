@@ -127,8 +127,8 @@ AP_BattMonitor::Failsafe AP_BattMonitor_Backend::update_failsafes(void)
 {
     const uint32_t now = AP_HAL::millis();
 
-    bool low_voltage, low_capacity, critical_voltage, critical_capacity;
-    check_failsafe_types(low_voltage, low_capacity, critical_voltage, critical_capacity);
+    bool low_voltage, low_capacity, critical_voltage, critical_capacity, high_charge_rate;
+    check_failsafe_types(low_voltage, low_capacity, critical_voltage, critical_capacity, high_charge_rate);
 
     if (critical_voltage) {
         // this is the first time our voltage has dropped below minimum so start timer
@@ -183,8 +183,8 @@ static bool update_check(size_t buflen, char *buffer, bool failed, const char *m
 
 bool AP_BattMonitor_Backend::arming_checks(char * buffer, size_t buflen) const
 {
-    bool low_voltage, low_capacity, critical_voltage, critical_capacity;
-    check_failsafe_types(low_voltage, low_capacity, critical_voltage, critical_capacity);
+    bool low_voltage, low_capacity, critical_voltage, critical_capacity, high_charge_rate;
+    check_failsafe_types(low_voltage, low_capacity, critical_voltage, critical_capacity, high_charge_rate);
 
     bool below_arming_voltage = is_positive(_params._arming_minimum_voltage) &&
                                 (_state.voltage < _params._arming_minimum_voltage);
@@ -206,11 +206,12 @@ bool AP_BattMonitor_Backend::arming_checks(char * buffer, size_t buflen) const
     result = result && update_check(buflen, buffer, critical_capacity, "critical capacity failsafe");
     result = result && update_check(buflen, buffer, fs_capacity_inversion, "capacity failsafe critical >= low");
     result = result && update_check(buflen, buffer, fs_voltage_inversion, "voltage failsafe critical >= low");
+    result = result && update_check(buflen, buffer, high_charge_rate, "high charge rate");
 
     return result;
 }
 
-void AP_BattMonitor_Backend::check_failsafe_types(bool &low_voltage, bool &low_capacity, bool &critical_voltage, bool &critical_capacity) const
+void AP_BattMonitor_Backend::check_failsafe_types(bool &low_voltage, bool &low_capacity, bool &critical_voltage, bool &critical_capacity, bool &high_charge_rate) const
 {
     // use voltage or sag compensated voltage
     float voltage_used;
@@ -251,6 +252,14 @@ void AP_BattMonitor_Backend::check_failsafe_types(bool &low_voltage, bool &low_c
         low_capacity = true;
     } else {
         low_capacity = false;
+    }
+
+    // check if the battery is charging to fast
+    if (has_current() && _current_filt_amps < -(_params._max_arm_charge_current)) {
+        high_charge_rate = true;
+    }
+    else {
+        high_charge_rate = false;
     }
 }
 

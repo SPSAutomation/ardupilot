@@ -51,4 +51,5 @@ public:
 #if AP_BATTERY_ESC_TELEM_OUTBOUND_ENABLED
     AP_Int8  _esc_telem_outbound_index; /// bitmask of ESCs to forward voltage, current, consumption and temperature to.
 #endif
+    AP_Float _max_arm_charge_current;   /// Maximum charge current draw that the aircraft will arm at
 };
