@@ -58,10 +58,10 @@ bool AP_Proximity::check_obstacle_near_ground(float pitch, float yaw, float dist
     if (!_ign_gnd_enable) {
         return false;
     }
-    if (!hal.util->get_soft_armed()) {
-        // don't run this feature while vehicle is disarmed, otherwise proximity data will not show up on GCS
-        return false;
-    }
+    // if (!hal.util->get_soft_armed()) {
+    //     // don't run this feature while vehicle is disarmed, otherwise proximity data will not show up on GCS
+    //     return false;
+    // }
     if ((pitch > 90.0f) || (pitch < -90.0f)) {
         // sanity check on pitch
         return false;
