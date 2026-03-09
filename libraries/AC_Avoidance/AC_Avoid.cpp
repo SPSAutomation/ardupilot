@@ -1464,6 +1464,17 @@ void AC_Avoid::get_proximity_roll_pitch_pct(float &roll_positive, float &roll_ne
 #endif // HAL_PROXIMITY_ENABLED
 }
 
+void AC_Avoid::proximity_avoidance_enable(bool on_off) 
+{ 
+    _proximity_enabled = on_off; 
+    if (_proximity_enabled) {
+        gcs().send_text(MAV_SEVERITY_WARNING, "Collision Avoidance Enabled");
+    }
+    else {
+        gcs().send_text(MAV_SEVERITY_WARNING, "Collision Avoidance Disabled");
+    }
+}
+
 // singleton instance
 AC_Avoid *AC_Avoid::_singleton;
 
