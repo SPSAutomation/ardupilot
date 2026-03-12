@@ -47,7 +47,15 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Units: s
     // @Increment: 1
     // @User: Advanced
-    AP_GROUPINFO("CUR_TIME", 19, AP_BattMonitor, _current_draw_timeout, AP_BATT_MONITOR_CURRENT_DRAW_TIMEOUT),
+    AP_GROUPINFO("_CUR_TIME", 19, AP_BattMonitor, _current_draw_timeout, AP_BATT_MONITOR_CURRENT_DRAW_TIMEOUT),
+
+    // @Param: CUR_LIMIT
+    // @DisplayName: Current draw limit
+    // @Description: Sustained positive current draw to use for current draw warning.
+    // @Units: A
+    // @Increment: 0.1
+    // @User: Advanced
+    AP_GROUPINFO("_CUR_LIMIT", 20, AP_BattMonitor, _current_draw_limit, AP_BATT_MONITOR_CURRENT_DRAW_LIMIT),
 
     // Monitor 1
 
@@ -711,7 +719,7 @@ void AP_BattMonitor::check_current_draw()
             total_current += instance_current;
         }
     } 
-    if (total_current <= 0)
+    if (total_current < _current_draw_limit)
     {
         time_since_current_draw_start = 0;
     }
