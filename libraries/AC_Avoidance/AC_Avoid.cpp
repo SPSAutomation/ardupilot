@@ -21,6 +21,7 @@
 #include <AP_Logger/AP_Logger.h>
 #include <AP_Vehicle/AP_Vehicle_Type.h>
 #include <stdio.h>
+#include <GCS_MAVLink/GCS.h>
 
 #if !APM_BUILD_TYPE(APM_BUILD_ArduPlane)
 
