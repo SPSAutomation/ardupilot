@@ -916,11 +916,6 @@ void AP_BattMonitor::check_failsafes(void)
             switch (type) {
                 case Failsafe::None:
                     continue; // should not have been called in this case
-                case Failsafe::Unhealthy:
-                    // Report only for unhealthy, could add action param in the future
-                    action = 0;
-                    type_str = "missing, last:";
-                    break;
                 case Failsafe::Low:
                     action = _params[i]._failsafe_low_action;
                     type_str = "low";
@@ -1178,7 +1173,6 @@ MAV_BATTERY_CHARGE_STATE AP_BattMonitor::get_mavlink_charge_state(const uint8_t 
     switch (state[instance].failsafe) {
 
     case Failsafe::None:
-    case Failsafe::Unhealthy:
         if (get_mavlink_fault_bitmask(instance) != 0 || !healthy()) {
             return MAV_BATTERY_CHARGE_STATE_UNHEALTHY;
         }
