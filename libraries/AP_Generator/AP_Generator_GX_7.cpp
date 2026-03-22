@@ -196,10 +196,6 @@ void AP_Generator_GX_7::Log_Write()
     if (!AP::logger().should_log(MASK_LOG_ANY)) {
         return;
     }
-    if (last_logged_reading_ms == last_reading_ms) {
-        return;
-    }
-    last_logged_reading_ms = last_reading_ms;
 
     WITH_SEMAPHORE(_sem);
     AP::logger().WriteStreaming(
@@ -209,7 +205,7 @@ void AP_Generator_GX_7::Log_Write()
         "FC----------",
         "QIHHBBBHHIIB",
         AP_HAL::micros64(),
-        last_logged_reading_ms,
+        last_reading_ms,
         engine_speed,
         throttle_position,
         fuel_level,
