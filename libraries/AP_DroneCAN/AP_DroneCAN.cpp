@@ -738,7 +738,7 @@ void AP_DroneCAN::handle_node_info_request(const CanardRxTransfer& transfer, con
 
 int16_t AP_DroneCAN::scale_esc_output(uint8_t idx){
     static const int16_t cmd_max = ((1<<13)-1);
-    float scaled = hal.rcout->scale_esc_to_unity(_SRV_conf[idx].pulse);
+    float scaled = hal.rcout->scale_esc_to_unity(_ESC_conf[idx].pulse);
     // Prevent invalid values (from misconfigured scaling parameters) from sending non-zero commands
     if (!isfinite(scaled)) {
         return 0;
@@ -860,7 +860,7 @@ void AP_DroneCAN::SRV_send_esc(void)
     for (uint8_t i = esc_offset; i < DRONECAN_SRV_NUMBER; i++) {
         if ((((uint32_t) 1) << i) & _ESC_armed_mask) {
             max_esc_num = i + 1;
-            if (_SRV_conf[i].esc_pending) {
+            if (_ESC_conf[i].esc_pending) {
                 active_esc_num++;
             }
         }
@@ -891,7 +891,7 @@ void AP_DroneCAN::SRV_send_esc(void)
     }
 
     for (uint8_t i = 0; i < DRONECAN_SRV_NUMBER; i++) {
-        _SRV_conf[i].esc_pending = false;
+        _ESC_conf[i].esc_pending = false;
     }
 }
 
@@ -913,7 +913,7 @@ void AP_DroneCAN::SRV_send_esc_hobbywing(void)
     for (uint8_t i = esc_offset; i < DRONECAN_SRV_NUMBER; i++) {
         if ((((uint32_t) 1) << i) & _ESC_armed_mask) {
             max_esc_num = i + 1;
-            if (_SRV_conf[i].esc_pending) {
+            if (_ESC_conf[i].esc_pending) {
                 active_esc_num++;
             }
         }
@@ -1015,23 +1015,81 @@ void AP_DroneCAN::SRV_push_servos()
 {
     WITH_SEMAPHORE(SRV_sem);
 
-    uint32_t non_zero_channels = 0;
     for (uint8_t i = 0; i < DRONECAN_SRV_NUMBER; i++) {
         // Check if this channels has any function assigned
         if (SRV_Channels::channel_function(i) >= SRV_Channel::k_none) {
             _SRV_conf[i].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
             _SRV_conf[i].esc_pending = true;
             _SRV_conf[i].servo_pending = true;
-
-            // Flag channels which are non zero
-            if (_SRV_conf[i].pulse > 0) {
-                non_zero_channels |= 1U << i;
-            }
         }
     }
 
-    uint32_t servo_armed_mask = _servo_bm & non_zero_channels;
-    uint32_t esc_armed_mask = _esc_bm & non_zero_channels;
+    for (uint8_t i = 0; i < DRONECAN_SRV_NUMBER; i++) {
+        // Check if this channels has any function assigned
+        if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor1) {
+            _ESC_conf[0].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[0].esc_pending = true;
+            _ESC_conf[0].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor2) {
+            _ESC_conf[1].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[1].esc_pending = true;
+            _ESC_conf[1].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor3) {
+            _ESC_conf[2].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[2].esc_pending = true;
+            _ESC_conf[2].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor4) {
+            _ESC_conf[3].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[3].esc_pending = true;
+            _ESC_conf[3].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor5) {
+            _ESC_conf[4].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[4].esc_pending = true;
+            _ESC_conf[4].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor6) {
+            _ESC_conf[5].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[5].esc_pending = true;
+            _ESC_conf[5].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor7) {
+            _ESC_conf[6].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[6].esc_pending = true;
+            _ESC_conf[6].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor8) {
+            _ESC_conf[7].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[7].esc_pending = true;
+            _ESC_conf[7].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor9) {
+            _ESC_conf[8].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[8].esc_pending = true;
+            _ESC_conf[8].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor10) {
+            _ESC_conf[9].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[9].esc_pending = true;
+            _ESC_conf[9].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor11) {
+            _ESC_conf[10].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[10].esc_pending = true;
+            _ESC_conf[10].servo_pending = true;
+        }
+        else if (SRV_Channels::channel_function(i) == SRV_Channel::k_motor12) {
+            _ESC_conf[11].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
+            _ESC_conf[11].esc_pending = true;
+            _ESC_conf[11].servo_pending = true;
+        }
+    }
+
+    uint32_t servo_armed_mask = _servo_bm;
+    uint32_t esc_armed_mask = _esc_bm;
     const bool safety_off = hal.util->safety_switch_state() != AP_HAL::Util::SAFETY_DISARMED;
     if (!safety_off) {
         AP_BoardConfig *boardconfig = AP_BoardConfig::get_singleton();

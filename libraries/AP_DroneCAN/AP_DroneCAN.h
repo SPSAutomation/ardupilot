@@ -261,6 +261,12 @@ private:
         bool servo_pending;
     } _SRV_conf[DRONECAN_SRV_NUMBER];
 
+    struct {
+        uint16_t pulse;
+        bool esc_pending;
+        bool servo_pending;
+    } _ESC_conf[DRONECAN_SRV_NUMBER];
+
     uint32_t _esc_send_count;
     uint32_t _srv_send_count;
     uint32_t _fail_send_count;
