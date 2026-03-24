@@ -860,7 +860,7 @@ void AP_DroneCAN::SRV_send_esc(void)
     for (uint8_t i = esc_offset; i < DRONECAN_SRV_NUMBER; i++) {
         if ((((uint32_t) 1) << i) & _ESC_armed_mask) {
             max_esc_num = i + 1;
-            if (_ESC_conf[i].esc_pending) {
+            if (_SRV_conf[i].esc_pending) {
                 active_esc_num++;
             }
         }
@@ -891,7 +891,7 @@ void AP_DroneCAN::SRV_send_esc(void)
     }
 
     for (uint8_t i = 0; i < DRONECAN_SRV_NUMBER; i++) {
-        _ESC_conf[i].esc_pending = false;
+        _SRV_conf[i].esc_pending = false;
     }
 }
 
@@ -913,7 +913,7 @@ void AP_DroneCAN::SRV_send_esc_hobbywing(void)
     for (uint8_t i = esc_offset; i < DRONECAN_SRV_NUMBER; i++) {
         if ((((uint32_t) 1) << i) & _ESC_armed_mask) {
             max_esc_num = i + 1;
-            if (_ESC_conf[i].esc_pending) {
+            if (_SRV_conf[i].esc_pending) {
                 active_esc_num++;
             }
         }
