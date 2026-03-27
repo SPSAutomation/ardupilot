@@ -341,7 +341,7 @@ bool AC_SpotSprayer::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return true;
     }
     if (_reported_weight > (float) _useful_load) {
-        hal.util->snprintf(failmsg, failmsg_len, "Overweight by %fkg", _reported_weight - (float) _useful_load);
+        hal.util->snprintf(failmsg, failmsg_len, "Overweight by %.2fkg", _reported_weight - (float) _useful_load);
         return false;
     }
     return true;
