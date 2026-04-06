@@ -300,26 +300,6 @@ void AC_SpotSprayer::update()
             {
                 gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Possible blockage");
             }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_2)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Nozzle 2 possible blockage");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_3)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Nozzle 3 possible blockage");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_4)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Nozzle 4 possible blockage");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_LOW_PRESSURE)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Low Spray Pressure");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_OVER_PRESSURE)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: High Spray Pressure");
-            }
             if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_NO_SPRAY)
             {
                 gcs().send_text(MAV_SEVERITY_INFO, "Sprayer: No spray remaining");
@@ -371,22 +351,21 @@ void AC_SpotSprayer::log_write()
     }
 
     WITH_SEMAPHORE(_sem);
-    AP::logger().WriteStreaming(
-        "SPRAY",
-        "TimeUS,DFlow,MFlow,DVol,Pres,SLevel,Weight,SVol,Error",
-        "syylP%?l-",
-        "F--------",
-        "QfffHfffB",
-        AP_HAL::micros64(),
-        ((float)desired_flow_rate)/1000,
-        ((float)measured_flow_rate)/1000,
-        ((float)_volume_to_log)/1000,
-        measured_pressure,
-        spray_level,
-        _reported_weight,
-        armed_sprayed_volume,
-        error_flags
-    );
+
+    struct log_Spray pkt {
+        LOG_PACKET_HEADER_INIT(LOG_SPRAY_MSG),
+        time_us: AP_HAL::micros64(),
+        desired_flow: ((float)desired_flow_rate)/1000,
+        measured_flow: ((float)measured_flow_rate)/1000,
+        desired_volume: ((float)_volume_to_log)/1000,
+        pressure: measured_pressure,
+        spray_level: spray_level,
+        weight: _reported_weight,
+        armed_volume: armed_sprayed_volume,
+        error: error_flags
+    };
+    AP::logger().WriteBlock(&pkt, sizeof(pkt));
+
 }
 #endif
 

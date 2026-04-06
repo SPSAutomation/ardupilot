@@ -781,7 +781,7 @@ void AP_BattMonitor::check_current_draw()
     {
         time_since_current_draw_start = AP_HAL::millis();
     }
-    else if (AP_HAL::millis() - time_since_current_draw_start > _current_draw_timeout * 1000 && AP_HAL::millis() - time_since_current_draw_msg > 10000)
+    else if (AP_HAL::millis() - time_since_current_draw_start > (uint32_t)_current_draw_timeout * 1000 && AP_HAL::millis() - time_since_current_draw_msg > 10000)
     {
         time_since_current_draw_msg = AP_HAL::millis();
         gcs().send_text(MAV_SEVERITY_ERROR, "High Battery Draw, Aircraft over Weight");
