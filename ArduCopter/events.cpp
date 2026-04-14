@@ -130,7 +130,7 @@ void Copter::generator_failsafe_check(void)
     }
 
     FailsafeAction desired_action = FailsafeAction::NONE;
-    if (AP::generator()->get_state() != 2 && motors->armed()) 
+    if ((AP::generator()->get_state() != 2 && motors->armed()) || (AP::generator()->get_state() == 2 && motors->armed() && AP_HAL::millis() - AP::generator()->get_state_change_time() < 3000)) 
     {
         if (AP_HAL::millis() - last_generator_failsafe_notification > 10000 || last_generator_failsafe_level < GeneratorFailsafes::STOPPED)
         {

@@ -94,6 +94,7 @@ public:
     Type get_type(void) {return (Type)(uint8_t)_type;}
 
     uint8_t get_state(void) {return _state;}
+    uint32_t get_state_change_time(void) {return _state_change_time;}
     uint8_t get_commanded_state(void) {return _commanded_state; }
 
     uint8_t get_options(void) {return _options;}
@@ -140,6 +141,7 @@ private:
     bool _has_consumed_energy;
     uint8_t _state;
     uint8_t _commanded_state;
+    uint32_t _state_change_time;
 
     static AP_Generator *_singleton;
 

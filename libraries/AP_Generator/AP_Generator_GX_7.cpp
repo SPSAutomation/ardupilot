@@ -98,6 +98,10 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
     driver->output_current = msg.OutputCurrent * 2;
     driver->total_run_time = msg.total_run_minutes * 60;
     driver->extender_error = msg.ExtenderAlarm;
+    if (driver->working_state != (WorkingState)msg.WorkingState)
+    {
+        driver->state_change_time = AP_HAL::millis();
+    }
     driver->working_state = (WorkingState)msg.WorkingState;
 }
 
@@ -295,6 +299,7 @@ void AP_Generator_GX_7::update_frontend_readings(void)
     _fuel_remaining = ((float)fuel_level) / 100;
     _state = (uint8_t)working_state;
     _commanded_state = (uint8_t)commanded_runstate;
+    _state_change_time = (uint32_t)state_change_time;
 
     update_frontend();
 }

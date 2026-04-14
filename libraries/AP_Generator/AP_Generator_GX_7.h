@@ -112,6 +112,7 @@ private:
     uint16_t        total_run_time;                 // Minutes
     uint32_t        extender_error;                 // Bitmask of ExtenderErrors
     WorkingState    working_state; 
+    uint32_t        state_change_time;              // Time of last working state change
 
     struct fanStatus {
         uint8_t id;

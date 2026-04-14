@@ -50,6 +50,7 @@ protected:
     uint16_t _rpm;
     uint8_t _state;
     uint8_t _commanded_state;
+    uint32_t _state_change_time;
 
     AP_Generator& _frontend;
 
