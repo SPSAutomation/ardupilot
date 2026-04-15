@@ -219,6 +219,7 @@ void AC_SpotSprayer::queue_volume()
 {
     if (_volume_queued == 0)
     {
+        _volume_queued_time = AP_HAL::millis();
         switch (_option)
         {
         case OPTION::LOW:
@@ -251,15 +252,24 @@ void AC_SpotSprayer::request_pulse()
 {
     if (_volume_queued == 0 && !_spraying)
     {
+        _volume_queued_time = AP_HAL::millis();
         _volume_queued = (uint16_t) _pulse;
     }
 }
 
-uint16_t  AC_SpotSprayer::volume_queued()
+void AC_SpotSprayer::reset_volume()
+{
+    _volume_queued = 0;
+}
+
+uint16_t AC_SpotSprayer::volume_queued()
 {
     uint16_t volume_to_send = _volume_queued;
     _volume_to_log = _volume_queued;
-    _volume_queued = 0;
+    if (AP_HAL::millis() - _volume_queued_time > 300)
+    {
+        reset_volume();
+    }
     return volume_to_send;
 }
 
