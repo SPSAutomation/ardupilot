@@ -203,34 +203,40 @@ void AP_Generator_GX_7::Log_Write()
 
     WITH_SEMAPHORE(_sem);
 
-    struct log_GX7 gen_pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_GX7_MSG),
-        time_us: AP_HAL::micros64(),
-        msgUS: last_reading_ms,
-        rpm: engine_speed,
-        throttle: throttle_position,
-        fuel_level: fuel_level,
-        coil_temperature: coil_temperature,
-        cylinder_temperature: cylinder_temperature,
-        voltage: output_voltage,
-        current: output_current,
-        run_time: total_run_time,
-        error: extender_error,
-        state: (uint8_t) working_state
-    };
-    AP::logger().WriteBlock(&gen_pkt, sizeof(gen_pkt));
+    AP::logger().WriteStreaming(
+        "GEN",
+        "TimeUS,MsgUS,Rpm,Thr,Fuel,GTemp,MTemp,Volt,Curr,Runtime,Err,State",
+        "ssq%%OOvAs--",
+        "FC----------",
+        "QIHHBBBHHIIB",
+        AP_HAL::micros64(),
+        last_reading_ms,
+        engine_speed,
+        throttle_position,
+        fuel_level,
+        coil_temperature,
+        cylinder_temperature,
+        output_voltage,
+        output_current,
+        total_run_time*60,
+        extender_error,
+        working_state
+    );
         
     for (uint8_t i = 0; i < fanInfo.size(); i++)
     {
-        struct log_Fan fan_pkt = {
-            LOG_PACKET_HEADER_INIT(LOG_FAN_MSG),
-            time_us  : AP_HAL::micros64(),
-            instance : i,
-            rpm      : fanInfo[i].rpm,
-            power_pct: fanInfo[i].power_pct,
-            health   : fanInfo[i].health
-        };
-        AP::logger().WriteBlock(&fan_pkt, sizeof(fan_pkt));
+        AP::logger().WriteStreaming(
+            "FAN",
+            "TimeUS,Instance,Rpm,Thr,Health",
+            "s#q%-",
+            "F----",
+            "QBHHB",
+            AP_HAL::micros64(),
+            i,
+            fanInfo[i].rpm,
+            fanInfo[i].power_pct,
+            fanInfo[i].health
+        );
     }
 }
 #endif

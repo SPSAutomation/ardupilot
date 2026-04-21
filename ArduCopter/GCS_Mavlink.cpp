@@ -542,7 +542,13 @@ static const ap_message STREAM_EXTRA1_msgs[] = {
     MSG_SIMSTATE,
 #endif
     MSG_AHRS2,
-    MSG_PID_TUNING // Up to four PID_TUNING messages are sent, depending on GCS_PID_MASK parameter
+    MSG_PID_TUNING, // Up to four PID_TUNING messages are sent, depending on GCS_PID_MASK parameter
+#if HAL_GENERATOR_ENABLED
+    MSG_GENERATOR_STATUS,
+#endif
+#if HAL_SPOT_SPRAYER_ENABLED
+    MSG_SPOT_SPRAY
+#endif
 };
 static const ap_message STREAM_EXTRA2_msgs[] = {
     MSG_VFR_HUD
@@ -579,12 +585,6 @@ static const ap_message STREAM_EXTRA3_msgs[] = {
 #endif
 #if HAL_WITH_ESC_TELEM
     MSG_ESC_TELEMETRY,
-#endif
-#if HAL_GENERATOR_ENABLED
-    MSG_GENERATOR_STATUS,
-#endif
-#if HAL_SPOT_SPRAYER_ENABLED
-    MSG_SPOT_SPRAY,
 #endif
 #if AP_WINCH_ENABLED
     MSG_WINCH_STATUS,

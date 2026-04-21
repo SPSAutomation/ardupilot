@@ -362,20 +362,22 @@ void AC_SpotSprayer::log_write()
 
     WITH_SEMAPHORE(_sem);
 
-    struct log_Spray pkt {
-        LOG_PACKET_HEADER_INIT(LOG_SPRAY_MSG),
-        time_us: AP_HAL::micros64(),
-        desired_flow: ((float)desired_flow_rate)/1000,
-        measured_flow: ((float)measured_flow_rate)/1000,
-        desired_volume: ((float)_volume_to_log)/1000,
-        pressure: measured_pressure,
-        spray_level: spray_level,
-        weight: _reported_weight,
-        armed_volume: armed_sprayed_volume,
-        error: error_flags
-    };
-    AP::logger().WriteBlock(&pkt, sizeof(pkt));
-
+    AP::logger().WriteStreaming(
+        "SPRY",
+        "TimeUS,DFlow,MFlow,DVol,Pres,SLevel,Weight,SVol,Error",
+        "syylP%?l-",
+        "F--------",
+        "QfffHfffB",
+        AP_HAL::micros64(),
+        ((float)desired_flow_rate)/1000,
+        ((float)measured_flow_rate)/1000,
+        ((float)_volume_to_log)/1000,
+        measured_pressure,
+        spray_level,
+        _reported_weight,
+        armed_sprayed_volume,
+        error_flags
+    );
 }
 #endif
 

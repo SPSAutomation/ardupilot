@@ -652,44 +652,6 @@ struct PACKED log_VER {
     uint8_t filter_version;
 };
 
-struct PACKED log_GX7 {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-    uint32_t msgUS;
-    uint16_t rpm;
-    uint16_t throttle;
-    uint8_t  fuel_level;
-    int16_t  coil_temperature;
-    int16_t  cylinder_temperature;
-    uint16_t voltage;
-    uint16_t current;
-    uint16_t run_time;
-    uint32_t error;
-    uint8_t  state;
-};
-
-struct PACKED log_Fan {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-    uint8_t instance;
-    int32_t rpm;
-    uint8_t power_pct;
-    uint8_t health;
-};
-
-struct PACKED log_Spray {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-    float desired_flow;
-    float measured_flow;
-    float desired_volume;
-    uint16_t pressure;
-    float spray_level;
-    float weight;
-    float armed_volume;
-    uint8_t error;
-};
-
 
 // FMT messages define all message formats other than FMT
 // UNIT messages define units which can be referenced by FMTU messages
@@ -1318,13 +1280,7 @@ LOG_STRUCTURE_FROM_AIS \
     { LOG_VER_MSG, sizeof(log_VER), \
       "VER",   "QBHBBBBIZHBB", "TimeUS,BT,BST,Maj,Min,Pat,FWT,GH,FWS,APJ,BU,FV", "s-----------", "F-----------", false }, \
     { LOG_MOTBATT_MSG, sizeof(log_MotBatt), \
-      "MOTB", "QfffffB",  "TimeUS,LiftMax,BatVolt,ThLimit,ThrAvMx,ThrOut,FailFlags", "s------", "F------" , true }, \
-    { LOG_GX7_MSG, sizeof(log_GX7), \
-      "GEN", "QIHHBBBHHIIB", "TimeUS,MsgUS,Rpm,Thr,Fuel,GTemp,MTemp,Volt,Curr,Runtime,Err,State", "ssq%%OOvAs--", "FC----------" }, \
-    { LOG_FAN_MSG, sizeof(log_Fan), \
-      "FAN", "QBHHB", "TimeUS,Instance,Rpm,Thr,Health", "s#q%-", "F----" }, \
-    { LOG_SPRAY_MSG, sizeof(log_Spray), \
-      "SPRY", "QfffHfffB", "TimeUS,DFlow,MFlow,DVol,Pres,SLevel,Weight,SVol,Error", "syylP%?l-", "F--------" }
+      "MOTB", "QfffffB",  "TimeUS,LiftMax,BatVolt,ThLimit,ThrAvMx,ThrOut,FailFlags", "s------", "F------" , true }
 
 // message types 0 to 31 reserved for vehicle-specific use
 
@@ -1412,9 +1368,6 @@ enum LogMessages : uint8_t {
     LOG_RCOUT3_MSG,
     LOG_IDS_FROM_FENCE,
     LOG_IDS_FROM_HAL,
-    LOG_GX7_MSG,
-    LOG_FAN_MSG,
-    LOG_SPRAY_MSG,
 
     _LOG_LAST_MSG_
 };
