@@ -218,7 +218,7 @@ void AP_Generator_GX_7::Log_Write()
         cylinder_temperature,
         output_voltage,
         output_current,
-        total_run_time*60,
+        total_run_time,
         extender_error,
         working_state
     );

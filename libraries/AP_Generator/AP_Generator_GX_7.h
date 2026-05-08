@@ -109,7 +109,7 @@ private:
     int16_t         cylinder_temperature;           // Degree Celsius
     uint16_t        output_voltage;                 // Volts
     uint16_t        output_current;                 // Amps
-    uint16_t        total_run_time;                 // Minutes
+    uint32_t        total_run_time;                 // Seconds
     uint32_t        extender_error;                 // Bitmask of ExtenderErrors
     WorkingState    working_state; 
     uint32_t        state_change_time;              // Time of last working state change
