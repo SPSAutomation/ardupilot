@@ -47,53 +47,53 @@ PB11 USART3_RX USART3 SPEED_HIGH NODMA
 PA13 JTMS-SWDIO SWD
 PA14 JTCK-SWCLK SWD
 
-# I2C
-I2C_ORDER I2C1 I2C3
-
-define HAL_USE_I2C TRUE
-define STM32_I2C_USE_I2C1 TRUE
-define STM32_I2C_USE_I2C3 TRUE
-define HAL_I2C_CLEAR_ON_TIMEOUT 0
-define HAL_I2C_INTERNAL_MASK 3
-
-# AP_Periph does not natively publish two compass instances at once.
-# On each flashed node, you must set the parameter COMPASS_USE2 to publish the first or second instance.
-# A fresh compass calibration will need to be performed each time this parameter is changed.
-
-# I2C1 bus for first compass, AK09916
+# I2C1 for first compass
 PB6 I2C1_SCL I2C1
 PB7 I2C1_SDA I2C1
 
-# I2C3 bus for second compass, MMC3416
+# I2C3 for second compass
 PA8 I2C3_SCL I2C3
 PC9 I2C3_SDA I2C3
 
 # adjust I2C timing from Stm32CubeMX, with 100ns rise, 100ns fall
 define HAL_I2C_F7_100_TIMINGR 0x10906999
 
-# Compass
-COMPASS AK09916 I2C:0:0x0c false ROTATION_ROLL_180_YAW_90
-COMPASS MMC3416 I2C:1:0x30 false ROTATION_YAW_180
+define HAL_USE_I2C TRUE
+define STM32_I2C_USE_I2C1 TRUE
+define STM32_I2C_USE_I2C3 TRUE
 
-# SPI bus for barometer
-PA5 SPI1_SCK  SPI1
+define HAL_I2C_CLEAR_ON_TIMEOUT 0
+
+define HAL_I2C_INTERNAL_MASK 3
+
+I2C_ORDER I2C1 I2C3
+
+# spi bus for compass
+PA5 SPI1_SCK SPI1
 PA6 SPI1_MISO SPI1
 PA7 SPI1_MOSI SPI1
 
 # SPI CS
 PA4 BARO_CS CS
 
+
 # SPI devices
-SPIDEV ms5611 SPI1 DEVID1 BARO_CS MODE3 20*MHZ 20*MHZ
+SPIDEV ms5611         SPI1 DEVID1  BARO_CS     MODE3 20*MHZ 20*MHZ
 
-# Barometer
+# compass
+COMPASS MMC3416 I2C:0:0x0E false ROTATION_ROLL_180_YAW_90
+
+# compass
+COMPASS AK09916 I2C:2:0x0E false ROTATION_ROLL_180
+
+# baro
 BARO MS56XX SPI:ms5611
-define HAL_BARO_ALLOW_INIT_NO_BARO
-define BARO_MAX_INSTANCES 1
 
-# Safety LED, active low is same as main LED
+# safety LED, active low is same as main LED
 PC8 SAFE_LED OUTPUT HIGH
 define SAFE_LED_ON 0
+
+define HAL_BARO_ALLOW_INIT_NO_BARO
 
 define HAL_USE_ADC FALSE
 define STM32_ADC_USE_ADC1 FALSE
@@ -125,10 +125,17 @@ define GPS_MAX_INSTANCES 1
 define GPS_MOVING_BASELINE 1
 define HAL_COMPASS_MAX_SENSORS 2
 
-# GPS+MAG+BARO
+# GPS+MAG+BARO+Buzzer+NeoPixels
 define HAL_PERIPH_ENABLE_GPS
 define HAL_PERIPH_ENABLE_MAG
 define HAL_PERIPH_ENABLE_BARO
+define HAL_PERIPH_ENABLE_RC_OUT
+define HAL_PERIPH_ENABLE_NOTIFY
+
+# use NCP5623 RGB LED on I2C1
+define DEFAULT_NTF_LED_TYPES 128
+
+define BARO_MAX_INSTANCES 1
 
 define HAL_PERIPH_GPS_PORT_DEFAULT 1
 
