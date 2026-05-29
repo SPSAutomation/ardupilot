@@ -124,7 +124,7 @@ void Copter::handle_battery_failsafe(const char *type_str, const int8_t action)
 
 void Copter::generator_failsafe_check(void)
 {
-    if (AP::generator()->get_type() != AP_Generator::Type::GX_7)
+    if (AP::generator()->get_type() != AP_Generator::Type::GX_7 && AP::generator()->get_type() != AP_Generator::Type::GX_16)
     {
         return;
     }

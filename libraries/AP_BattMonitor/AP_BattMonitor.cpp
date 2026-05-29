@@ -1181,8 +1181,8 @@ MAV_BATTERY_CHARGE_STATE AP_BattMonitor::get_mavlink_charge_state(const uint8_t 
     case Failsafe::Low:
         return MAV_BATTERY_CHARGE_STATE_LOW;
     
-    case Failsafe::Unhealthy:
-        return MAV_BATTERY_CHARGE_STATE_UNHEALTHY;
+    // case Failsafe::Unhealthy:
+    //     return MAV_BATTERY_CHARGE_STATE_UNHEALTHY;
 
     case Failsafe::Critical:
         return MAV_BATTERY_CHARGE_STATE_CRITICAL;

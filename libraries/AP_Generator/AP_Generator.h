@@ -88,6 +88,9 @@ public:
 #if AP_GENERATOR_GX_7_ENABLED
         GX_7 = 4,
 #endif
+#if AP_GENERATOR_GX_16_ENABLED
+        GX_16 = 5,
+#endif
     };
 
 

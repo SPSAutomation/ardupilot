@@ -129,7 +129,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Acro - fly vehicle in acrobatic mode
 #ifndef MODE_ACRO_ENABLED
-# define MODE_ACRO_ENABLED 1
+# define MODE_ACRO_ENABLED 0
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -166,7 +166,7 @@
 // Follow - follow another vehicle or GCS
 #ifndef MODE_FOLLOW_ENABLED
 #if AP_FOLLOW_ENABLED && AP_AVOIDANCE_ENABLED
-#define MODE_FOLLOW_ENABLED 1
+#define MODE_FOLLOW_ENABLED 0
 #else
 #define MODE_FOLLOW_ENABLED 0
 #endif
@@ -235,6 +235,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Turtle - allow vehicle to be flipped over after a crash
 #ifndef MODE_TURTLE_ENABLED
+# define MODE_TURTLE_ENABLED HAL_DSHOT_ENABLED && FRAME_CONFIG != HELI_FRAME
 # define MODE_TURTLE_ENABLED 0
 #endif
 

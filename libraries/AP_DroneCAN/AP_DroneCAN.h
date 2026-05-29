@@ -182,6 +182,9 @@ public:
 
     void send_gx_7_control();
     Canard::Publisher<com_aeronavics_ExtenderCtrl> extender_control{canard_iface};
+
+    void send_gx_16_control();
+    Canard::Publisher<com_aeronavics_GX16ExtenderCtrl> gx16_extender_control{canard_iface};
     
 #if AP_SCRIPTING_ENABLED
     bool get_FlexDebug(uint8_t node_id, uint16_t msg_id, uint32_t &timestamp_us, dronecan_protocol_FlexDebug &msg) const;
