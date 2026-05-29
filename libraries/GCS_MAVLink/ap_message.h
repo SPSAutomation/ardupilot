@@ -99,10 +99,10 @@ enum ap_message : uint8_t {
     MSG_HYGROMETER,
     MSG_AUTOPILOT_STATE_FOR_GIMBAL_DEVICE,
     MSG_RELAY_STATUS,
+    MSG_SPOT_SPRAY,
 #if AP_MAVLINK_MSG_HIGHRES_IMU_ENABLED
     MSG_HIGHRES_IMU,
 #endif
     MSG_AIRSPEED,
-    MSG_SPOT_SPRAY,
     MSG_LAST // MSG_LAST must be the last entry in this enum
 };

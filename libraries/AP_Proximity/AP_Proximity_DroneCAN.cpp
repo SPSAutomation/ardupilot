@@ -126,9 +126,9 @@ void AP_Proximity_DroneCAN::update(void)
         ObstacleItem object_item;
         WITH_SEMAPHORE(_sem);
         while (items.pop(object_item)) {
-            const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(object_item.pitch_deg, object_item.yaw_deg);
             if (!is_zero(object_item.distance_m) && !ignore_reading(object_item.pitch_deg, object_item.yaw_deg, object_item.distance_m, false)) {
                 // update boundary used for avoidance
+                const AP_Proximity_Boundary_3D::Face face = frontend.boundary.get_face(object_item.pitch_deg, object_item.yaw_deg);
                 frontend.boundary.set_face_attributes(face, object_item.pitch_deg, object_item.yaw_deg, object_item.distance_m, state.instance);
                 // update OA database
                 database_push(object_item.pitch_deg, object_item.yaw_deg, object_item.distance_m);

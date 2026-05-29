@@ -52,7 +52,15 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] = {
     // @Units: s
     // @Increment: 1
     // @User: Advanced
-    AP_GROUPINFO("CUR_TIME", 19, AP_BattMonitor, _current_draw_timeout, AP_BATT_MONITOR_CURRENT_DRAW_TIMEOUT),
+    AP_GROUPINFO("_CUR_TIME", 19, AP_BattMonitor, _current_draw_timeout, AP_BATT_MONITOR_CURRENT_DRAW_TIMEOUT),
+
+    // @Param: CUR_LIMIT
+    // @DisplayName: Current draw limit
+    // @Description: Sustained positive current draw to use for current draw warning.
+    // @Units: A
+    // @Increment: 0.1
+    // @User: Advanced
+    AP_GROUPINFO("_CUR_LIMIT", 20, AP_BattMonitor, _current_draw_limit, AP_BATT_MONITOR_CURRENT_DRAW_LIMIT),
 
     // Monitor 1
 
@@ -765,7 +773,7 @@ void AP_BattMonitor::check_current_draw()
             total_current += instance_current;
         }
     } 
-    if (total_current <= 0)
+    if (total_current < _current_draw_limit)
     {
         time_since_current_draw_start = 0;
     }
@@ -773,7 +781,7 @@ void AP_BattMonitor::check_current_draw()
     {
         time_since_current_draw_start = AP_HAL::millis();
     }
-    else if ((int64_t)AP_HAL::millis() - time_since_current_draw_start > _current_draw_timeout * 1000 && AP_HAL::millis() - time_since_current_draw_msg > 10000)
+    else if (AP_HAL::millis() - time_since_current_draw_start > (uint32_t)_current_draw_timeout * 1000 && AP_HAL::millis() - time_since_current_draw_msg > 10000)
     {
         time_since_current_draw_msg = AP_HAL::millis();
         gcs().send_text(MAV_SEVERITY_ERROR, "High Battery Draw, Aircraft over Weight");
@@ -1165,7 +1173,6 @@ MAV_BATTERY_CHARGE_STATE AP_BattMonitor::get_mavlink_charge_state(const uint8_t 
     switch (state[instance].failsafe) {
 
     case Failsafe::None:
-    case Failsafe::Unhealthy:
         if (get_mavlink_fault_bitmask(instance) != 0 || !healthy()) {
             return MAV_BATTERY_CHARGE_STATE_UNHEALTHY;
         }

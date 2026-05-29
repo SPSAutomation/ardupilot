@@ -78,6 +78,7 @@ public:
 
     void request_pulse();
     void queue_volume();
+    void reset_volume();
     uint16_t volume_queued();
 
     uint8_t get_mode() const { return (uint8_t) _mode; }
@@ -130,6 +131,7 @@ private:
 
     uint16_t    _volume_queued;
     bool        _pulse_queued;
+    uint32_t    _volume_queued_time;
 
     float       _reported_weight;
 

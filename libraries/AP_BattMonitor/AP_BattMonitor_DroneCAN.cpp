@@ -12,7 +12,6 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_DroneCAN/AP_DroneCAN.h>
 #include <AP_BoardConfig/AP_BoardConfig.h>
-#include <AP_Generator/AP_Generator_GX_16.h>
 
 #define LOG_TAG "BattMon"
 
@@ -40,7 +39,7 @@ AP_BattMonitor_DroneCAN::AP_BattMonitor_DroneCAN(AP_BattMonitor &mon, AP_BattMon
     _state.var_info = var_info;
 
     // starts with not healthy
-    _state.healthy = true;
+    _state.healthy = false;
 }
 
 void AP_BattMonitor_DroneCAN::subscribe_msgs(AP_DroneCAN* ap_dronecan)
@@ -59,13 +58,6 @@ void AP_BattMonitor_DroneCAN::subscribe_msgs(AP_DroneCAN* ap_dronecan)
 
     if (Canard::allocate_sub_arg_callback(ap_dronecan, &handle_mppt_stream_trampoline, ap_dronecan->get_driver_index()) == nullptr) {
         AP_BoardConfig::allocation_error("mppt_stream_sub");
-    }
-
-    if ((uint8_t)AP::generator()->get_type() == 5)
-    {
-        if (Canard::allocate_sub_arg_callback(ap_dronecan, &handle_gx16_trampoline, ap_dronecan->get_driver_index()) == nullptr) {
-            AP_BoardConfig::allocation_error("gx17_sub");
-        }
     }
 }
 
@@ -140,9 +132,7 @@ void AP_BattMonitor_DroneCAN::update_interim_state(const float voltage, const fl
     WITH_SEMAPHORE(_sem_battmon);
 
     _interim_state.voltage = voltage;
-    if ((uint8_t)AP::generator()->get_type() != 5) {
-        _interim_state.current_amps = _curr_mult * current;
-    }
+    _interim_state.current_amps = _curr_mult * current;
     _soc = soc;
 
     if (!isnan(temperature_K) && temperature_K > 0) {
@@ -172,7 +162,7 @@ void AP_BattMonitor_DroneCAN::update_interim_state(const float voltage, const fl
     
     if (status & UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATUS_FLAG_BAD_BATTERY)
     {
-        _interim_state.healthy = true;
+        _interim_state.healthy = false;
     }
     else
     {
@@ -238,11 +228,6 @@ void AP_BattMonitor_DroneCAN::handle_mppt_stream(const mppt_Stream &msg)
     _mppt.fault_flags = msg.fault_flags;
 }
 
-void AP_BattMonitor_DroneCAN::handle_gx16_info(const com_aeronavics_GX16ExtenderInfo &msg)
-{
-    _interim_state.current_amps = (((float)msg.BatteryCurrent) / 20) - 400;
-}
-
 void AP_BattMonitor_DroneCAN::handle_battery_info_trampoline(AP_DroneCAN *ap_dronecan, const CanardRxTransfer& transfer, const uavcan_equipment_power_BatteryInfo &msg)
 {
     AP_BattMonitor_DroneCAN* driver = get_dronecan_backend(ap_dronecan, transfer.source_node_id, msg.battery_id);
@@ -256,6 +241,7 @@ void AP_BattMonitor_DroneCAN::handle_battery_info_aux_trampoline(AP_DroneCAN *ap
 {
     const auto &batt = AP::battery();
     AP_BattMonitor_DroneCAN *driver = nullptr;
+
     /*
       check for a backend with AllowSplitAuxInfo set, allowing InfoAux
       from a different CAN node than the base battery information
@@ -265,7 +251,7 @@ void AP_BattMonitor_DroneCAN::handle_battery_info_aux_trampoline(AP_DroneCAN *ap
         if (drv != nullptr &&
             batt.allocated_type(i) == AP_BattMonitor::Type::UAVCAN_BatteryInfo &&
             drv->option_is_set(AP_BattMonitor_Params::Options::AllowSplitAuxInfo) &&
-            batt.get_serial_number(i) == int32_t(msg.battery_id)+1) {
+            batt.get_serial_number(i) == int32_t(msg.battery_id)) {
             driver = (AP_BattMonitor_DroneCAN *)batt.drivers[i];
             if (driver->_ap_dronecan == nullptr) {
                 /* we have not received the main battery information
@@ -278,7 +264,7 @@ void AP_BattMonitor_DroneCAN::handle_battery_info_aux_trampoline(AP_DroneCAN *ap
         }
     }
     if (driver == nullptr) {
-        driver = get_dronecan_backend(ap_dronecan, transfer.source_node_id, msg.battery_id+1);
+        driver = get_dronecan_backend(ap_dronecan, transfer.source_node_id, msg.battery_id);
     }
     if (driver == nullptr) {
         return;
@@ -323,7 +309,7 @@ void AP_BattMonitor_DroneCAN::read()
 
     // timeout after 5 seconds
     if ((tnow - _interim_state.last_time_micros) > AP_BATTMONITOR_UAVCAN_TIMEOUT_MICROS) {
-        _interim_state.healthy = true;
+        _interim_state.healthy = false;
     }
     // Copy over relevant states over to main state
     WITH_SEMAPHORE(_sem_battmon);

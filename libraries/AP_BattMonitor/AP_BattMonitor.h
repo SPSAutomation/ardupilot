@@ -24,6 +24,7 @@
 #define AP_BATT_MONITOR_TIMEOUT             5000
 
 #define AP_BATT_MONITOR_CURRENT_DRAW_TIMEOUT 10
+#define AP_BATT_MONITOR_CURRENT_DRAW_LIMIT   5.5f
 
 #define AP_BATT_MONITOR_RES_EST_TC_1        0.5f
 #define AP_BATT_MONITOR_RES_EST_TC_2        0.1f
@@ -299,6 +300,7 @@ public:
 #endif
 
     AP_Int8  _current_draw_timeout;     /// timeout in seconds before a current draw event will be triggered
+    AP_Float _current_draw_limit;
 
 protected:
 

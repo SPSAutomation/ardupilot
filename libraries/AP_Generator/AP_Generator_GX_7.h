@@ -109,9 +109,10 @@ private:
     int16_t         cylinder_temperature;           // Degree Celsius
     uint16_t        output_voltage;                 // Volts
     uint16_t        output_current;                 // Amps
-    uint16_t        total_run_time;                 // Minutes
+    uint32_t        total_run_time;                 // Seconds
     uint32_t        extender_error;                 // Bitmask of ExtenderErrors
     WorkingState    working_state; 
+    uint32_t        state_change_time;              // Time of last working state change
 
     struct fanStatus {
         uint8_t id;
@@ -132,19 +133,23 @@ private:
 
     uint32_t last_reading_ms;
 
-    const char* error_strings[12] = {
-        "Lock Time Expired",
-        "Maintenance Required",
-        "Low Oil",
-        "System Error",
-        "Communication Error",
-        "Coils Overs Temperature",
-        "Coolant Overs Temperature",
-        "Throttle Error",
-        "Over Speed",
-        "Over Current",
-        "Low Voltage Output",
-        "Over Voltage Output",
+    const char* error_strings[16] = {
+        "Lock Time Expired",        // 0
+        "Maintenance Required",     // 1
+        "Low Oil",                  // 2
+        "System Error",             // 3
+        "Communication Error",      // 4
+        "Unknown 1U<<5",            // 5
+        "Coils Overs Temperature",  // 6
+        "Coolant Overs Temperature",// 7
+        "Unknown 1U<<8",            // 8
+        "Throttle Error",           // 9
+        "Unknown 1U<<10",           // 10
+        "Unknown 1U<<11",           // 11
+        "Over Speed",               // 12
+        "Over Current",             // 13
+        "Low Voltage Output",       // 14
+        "Over Voltage Output",      // 15
     };
 
     // returns true if the generator should be allowed to move into

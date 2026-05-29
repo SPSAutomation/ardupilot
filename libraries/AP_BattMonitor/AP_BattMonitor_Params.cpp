@@ -180,6 +180,14 @@ const AP_Param::GroupInfo AP_BattMonitor_Params::var_info[] = {
     AP_GROUPINFO("ESC_INDEX", 22, AP_BattMonitor_Params, _esc_telem_outbound_index, 0),
 #endif
 
+    // @Param: ARM_CURR
+    // @DisplayName: Max Arm Current
+    // @Description: This sets The maximum charge current draw that the aircraft will arm at
+    // @Units: A
+    // @Increment: 0.1
+    // @User: Advanced
+    AP_GROUPINFO("ARM_CURR", 23, AP_BattMonitor_Params, _max_arm_charge_current, 5.0),
+
     AP_GROUPEND
 
 };

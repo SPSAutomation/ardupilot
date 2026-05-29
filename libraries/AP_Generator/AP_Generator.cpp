@@ -21,7 +21,6 @@
 #include "AP_Generator_IE_2400.h"
 #include "AP_Generator_RichenPower.h"
 #include "AP_Generator_GX_7.h"
-#include "AP_Generator_GX_16.h"
 
 #include <GCS_MAVLink/GCS.h>
 
@@ -97,13 +96,6 @@ const AP_Param::GroupInfo AP_Generator::var_info[] = {
     // Units: %
     // @User: Standard
     AP_GROUPINFO("MIN_ARM_LVL", 10, AP_Generator, _fuel_prearm_percent, 0),
-
-    // @Param:  TANK_SIZE
-    // @DisplayName: Generator Fuel Tank Size
-    // @Description: Fuel Tank size in Litres
-    // Units: L
-    // @User: Standard
-    AP_GROUPINFO("TANK_SIZE", 11, AP_Generator, _fuel_tank_size, 0),
 
     AP_GROUPEND
 };

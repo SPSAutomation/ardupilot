@@ -746,7 +746,7 @@ void AP_DroneCAN::handle_node_info_request(const CanardRxTransfer& transfer, con
 
 int16_t AP_DroneCAN::scale_esc_output(uint8_t idx){
     static const int16_t cmd_max = ((1<<13)-1);
-    float scaled = hal.rcout->scale_esc_to_unity(_SRV_conf[idx].pulse);
+    float scaled = hal.rcout->scale_esc_to_unity(_ESC_conf[idx].pulse);
     // Prevent invalid values (from misconfigured scaling parameters) from sending non-zero commands
     if (!isfinite(scaled)) {
         return 0;
@@ -965,7 +965,6 @@ void AP_DroneCAN::send_spot_spray_control()
 
     com_aeronavics_SprayCtrl spray_ctrl_msg;
     spray_ctrl_msg.flow_rate = 0;
-    spray_ctrl_msg.volume = 0;
     spray_ctrl_msg.pressure = AP::spot_sprayer()->get_pressure();
 
     if (AP::spot_sprayer()->spraying()) {
@@ -1055,18 +1054,12 @@ void AP_DroneCAN::SRV_push_servos()
 {
     WITH_SEMAPHORE(SRV_sem);
 
-    uint32_t non_zero_channels = 0;
     for (uint8_t i = 0; i < DRONECAN_SRV_NUMBER; i++) {
         // Check if this channels has any function assigned
         if (SRV_Channels::channel_function(i) >= SRV_Channel::k_none) {
             _SRV_conf[i].pulse = SRV_Channels::srv_channel(i)->get_output_pwm();
             _SRV_conf[i].esc_pending = true;
             _SRV_conf[i].servo_pending = true;
-
-            // Flag channels which are non zero
-            if (_SRV_conf[i].pulse > 0) {
-                non_zero_channels |= 1U << i;
-            }
         }
     }
 
@@ -1134,8 +1127,8 @@ void AP_DroneCAN::SRV_push_servos()
         }
     }
 
-    uint32_t servo_armed_mask = _servo_bm & non_zero_channels;
-    uint32_t esc_armed_mask = _esc_bm & non_zero_channels;
+    uint32_t servo_armed_mask = _servo_bm;
+    uint32_t esc_armed_mask = _esc_bm;
     const bool safety_off = hal.util->safety_switch_state() != AP_HAL::Util::SAFETY_DISARMED;
     if (!safety_off) {
         AP_BoardConfig *boardconfig = AP_BoardConfig::get_singleton();

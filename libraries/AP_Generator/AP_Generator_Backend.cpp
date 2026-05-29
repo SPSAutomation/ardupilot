@@ -34,5 +34,6 @@ void AP_Generator_Backend::update_frontend()
     _frontend._state = _state;
     _frontend._commanded_state = _commanded_state;
     _frontend._healthy = healthy();
+    _frontend._state_change_time = _state_change_time;
 }
 #endif

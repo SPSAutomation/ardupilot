@@ -96,8 +96,12 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
     driver->cylinder_temperature = msg.EngineCylinderTemperature - 40;
     driver->output_voltage = msg.OutputVoltage;
     driver->output_current = msg.OutputCurrent * 2;
-    driver->total_run_time = msg.total_run_minutes;
+    driver->total_run_time = msg.total_run_minutes * 60;
     driver->extender_error = msg.ExtenderAlarm;
+    if (driver->working_state != (WorkingState)msg.WorkingState)
+    {
+        driver->state_change_time = AP_HAL::millis();
+    }
     driver->working_state = (WorkingState)msg.WorkingState;
 }
 
@@ -196,12 +200,9 @@ void AP_Generator_GX_7::Log_Write()
     if (!AP::logger().should_log(MASK_LOG_ANY)) {
         return;
     }
-    if (last_logged_reading_ms == last_reading_ms) {
-        return;
-    }
-    last_logged_reading_ms = last_reading_ms;
 
     WITH_SEMAPHORE(_sem);
+
     AP::logger().WriteStreaming(
         "GEN",
         "TimeUS,MsgUS,Rpm,Thr,Fuel,GTemp,MTemp,Volt,Curr,Runtime,Err,State",
@@ -209,7 +210,7 @@ void AP_Generator_GX_7::Log_Write()
         "FC----------",
         "QIHHBBBHHIIB",
         AP_HAL::micros64(),
-        last_logged_reading_ms,
+        last_reading_ms,
         engine_speed,
         throttle_position,
         fuel_level,
@@ -217,26 +218,24 @@ void AP_Generator_GX_7::Log_Write()
         cylinder_temperature,
         output_voltage,
         output_current,
-        total_run_time*60,
+        total_run_time,
         extender_error,
         working_state
-        );
+    );
         
     for (uint8_t i = 0; i < fanInfo.size(); i++)
     {
-        char fan_log_name[4];
-        hal.util->snprintf(fan_log_name, 4, "FAN%d", i);
-        
         AP::logger().WriteStreaming(
-        fan_log_name,
-        "TimeUS,Rpm,Thr,Health",
-        "sq%-",
-        "F---",
-        "QHHB",
-        AP_HAL::micros64(),
-        fanInfo[i].rpm,
-        fanInfo[i].power_pct,
-        fanInfo[i].health
+            "FAN",
+            "TimeUS,Instance,Rpm,Thr,Health",
+            "s#q%-",
+            "F----",
+            "QBHHB",
+            AP_HAL::micros64(),
+            i,
+            fanInfo[i].rpm,
+            fanInfo[i].power_pct,
+            fanInfo[i].health
         );
     }
 }
@@ -259,7 +258,8 @@ bool AP_Generator_GX_7::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
     // maintenance is a prearm error, but we will ignore the built in 
     // maintenance error and use our own one as we cannot reset the
     // built in one after a service
-    errors &= ~(1U << uint32_t(ExtenderError::MAINTENANCE_TIME_ERROR));
+    errors &= ~(uint32_t)ExtenderError::MAINTENANCE_TIME_ERROR;
+    errors &= ~(uint32_t)ExtenderError::COMMUNICATION_ERROR;
 
     if (errors) {
 
@@ -305,6 +305,7 @@ void AP_Generator_GX_7::update_frontend_readings(void)
     _fuel_remaining = ((float)fuel_level) / 100;
     _state = (uint8_t)working_state;
     _commanded_state = (uint8_t)commanded_runstate;
+    _state_change_time = (uint32_t)state_change_time;
 
     update_frontend();
 }
@@ -320,56 +321,53 @@ bool AP_Generator_GX_7::healthy() const
         if (now - last_error_sent > 5000)
         {
             last_error_sent = now;
+            gcs().send_text(MAV_SEVERITY_CRITICAL, "Generator Lost Communication");
             gcs().send_text(MAV_SEVERITY_WARNING, "Time since last generator message: %lums", now - last_reading_ms);
         }
         return false;
     }
-    if (extender_error & (~(uint32_t)ExtenderError::COMMUNICATION_ERROR)) {
+
+    uint32_t errors = extender_error;
+    errors &= ~(uint32_t)ExtenderError::MAINTENANCE_TIME_ERROR;
+    errors &= ~(uint32_t)ExtenderError::COMMUNICATION_ERROR;
+
+    if (errors) {
         if (now - last_error_sent > 5000)
         {
             last_error_sent = now;
-            if (extender_error & (uint32_t)ExtenderError::MAINTENANCE_TIME_ERROR)
-            {
-                gcs().send_text(MAV_SEVERITY_WARNING, "Generator Requires Maintenance");
-            }
-            if (extender_error & (uint32_t)ExtenderError::SYSTEM_ERROR)
+            if (errors & (uint32_t)ExtenderError::SYSTEM_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator System Error");
             }
-            // if (extender_error & (uint32_t)ExtenderError::COMMUNICATION_ERROR)
-            // {
-            //     gcs().send_text(MAV_SEVERITY_WARNING, "Generator Communication Error");
-            // }
-            if (extender_error & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR)
+            if (errors & (uint32_t)ExtenderError::COIL_OVER_TEMP_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Coil Overtemp: %u°c", coil_temperature);
             }
-            if (extender_error & (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR)
+            if (errors & (uint32_t)ExtenderError::COOLANT_OVER_TEMP_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Motor Overtemp: %u°c", cylinder_temperature);
             }
-            if (extender_error & (uint32_t)ExtenderError::THROTTLE_ERROR)
+            if (errors & (uint32_t)ExtenderError::THROTTLE_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Throttle Error");
             }
-            if (extender_error & (uint32_t)ExtenderError::OVER_SPEED_ERROR)
+            if (errors & (uint32_t)ExtenderError::OVER_SPEED_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Speed Error");
             }
-            if (extender_error & (uint32_t)ExtenderError::OVER_CURRENT_ERROR)
+            if (errors & (uint32_t)ExtenderError::OVER_CURRENT_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Current Error");
             }
-            if (extender_error & (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR)
+            if (errors & (uint32_t)ExtenderError::LOW_VOLTAGE_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Low Voltage Error");
             }
-            if (extender_error & (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR)
+            if (errors & (uint32_t)ExtenderError::OVER_VOLTAGE_ERROR)
             {
                 gcs().send_text(MAV_SEVERITY_WARNING, "Generator Over Voltage Error");
             }
         }
-
         return false;
     }
     return true;
@@ -455,9 +453,9 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         status |= MAV_GENERATOR_STATUS_FLAG_MAINTENANCE_REQUIRED;
     }
 
-    if (extender_error & (uint8_t)ExtenderError::COMMUNICATION_ERROR) {
-        status |= MAV_GENERATOR_STATUS_FLAG_COMMUNICATION_WARNING;
-    }
+    // if (extender_error & (uint8_t)ExtenderError::COMMUNICATION_ERROR) {
+    //     status |= MAV_GENERATOR_STATUS_FLAG_COMMUNICATION_WARNING;
+    // }
 
     if (extender_error & (uint8_t)ExtenderError::COIL_OVER_TEMP_ERROR) {
         status |= MAV_GENERATOR_STATUS_FLAG_ELECTRONICS_OVERTEMP_WARNING;
@@ -482,8 +480,8 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
         coil_temperature, // rectifier_temperature
         std::numeric_limits<double>::quiet_NaN(), // bat_current_setpoint; The target battery current
         cylinder_temperature, // generator temperature
-        total_run_time * 60, // total runtime in seconds
-        (_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60) // Time till next service in seconds
+        total_run_time, // total runtime in seconds
+        (_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - total_run_time // Time till next service in seconds
         );
 
     mavlink_msg_fuel_status_send(
@@ -501,13 +499,13 @@ void AP_Generator_GX_7::send_generator_status(const GCS_MAVLINK &channel)
 
     const uint32_t now = AP_HAL::millis();
 
-    if (((_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - (total_run_time * 60) <= 0) && now - last_maintenance_warning_ms > 30000)
+    if (((_frontend.get_last_service_time() * 3600) + EXTENDER_MAINTAINANCE_SCHEDULE - total_run_time <= 0) && now - last_maintenance_warning_ms > 30000)
     {
         last_maintenance_warning_ms = now;
         gcs().send_text(MAV_SEVERITY_WARNING, "Aircraft Requires Service");
     }
 
-    // Check fan health
+     // Check fan health
     if (now - last_fan_warning_ms > 10000)
     {
         for (uint8_t i = 0; i < fanInfo.size(); i++)

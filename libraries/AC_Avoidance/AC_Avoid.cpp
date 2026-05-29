@@ -25,6 +25,7 @@
 #include <AP_Logger/AP_Logger.h>
 #include <AP_Vehicle/AP_Vehicle_Type.h>
 #include <stdio.h>
+#include <GCS_MAVLink/GCS.h>
 
 #if !APM_BUILD_TYPE(APM_BUILD_ArduPlane)
 
@@ -1526,6 +1527,17 @@ void AC_Avoid::get_proximity_roll_pitch_pct(float &roll_positive, float &roll_ne
         }
     }
 #endif // HAL_PROXIMITY_ENABLED
+}
+
+void AC_Avoid::proximity_avoidance_enable(bool on_off) 
+{ 
+    _proximity_enabled = on_off; 
+    if (_proximity_enabled) {
+        gcs().send_text(MAV_SEVERITY_WARNING, "Collision Avoidance Enabled");
+    }
+    else {
+        gcs().send_text(MAV_SEVERITY_WARNING, "Collision Avoidance Disabled");
+    }
 }
 
 // singleton instance

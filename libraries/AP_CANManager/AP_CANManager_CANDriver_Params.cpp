@@ -52,12 +52,10 @@ const AP_Param::GroupInfo AP_CANManager::CANDriver_Params::var_info[] = {
     // @Param: PROTOCOL2
     // @DisplayName: Secondary protocol with 11 bit CAN addressing
     // @Description: Secondary protocol with 11 bit CAN addressing
+    // @Values: 0:Disabled,7:USD1,10:Scripting,11:Benewake,12:Scripting2,13:TOFSenseP,14:RadarCAN
     // @SortValues: AlphabeticalZeroAtTop
-    // @Values: 0:Disabled,7:USD1,10:Scripting,11:Benewake,12:Scripting2,13:TOFSenseP,14:RadarCAN (NanoRadar/Hexsoon)
-    // @User: Advanced
     // @RebootRequired: True
     AP_GROUPINFO("PROTOCOL2", 6, AP_CANManager::CANDriver_Params, _driver_type_11bit, float(AP_CAN::Protocol::None)),
-    
     AP_GROUPEND
 };
 #endif

@@ -219,6 +219,7 @@ void AC_SpotSprayer::queue_volume()
 {
     if (_volume_queued == 0)
     {
+        _volume_queued_time = AP_HAL::millis();
         switch (_option)
         {
         case OPTION::LOW:
@@ -251,15 +252,24 @@ void AC_SpotSprayer::request_pulse()
 {
     if (_volume_queued == 0 && !_spraying)
     {
+        _volume_queued_time = AP_HAL::millis();
         _volume_queued = (uint16_t) _pulse;
     }
 }
 
-uint16_t  AC_SpotSprayer::volume_queued()
+void AC_SpotSprayer::reset_volume()
+{
+    _volume_queued = 0;
+}
+
+uint16_t AC_SpotSprayer::volume_queued()
 {
     uint16_t volume_to_send = _volume_queued;
     _volume_to_log = _volume_queued;
-    _volume_queued = 0;
+    if (AP_HAL::millis() - _volume_queued_time > 300)
+    {
+        reset_volume();
+    }
     return volume_to_send;
 }
 
@@ -300,26 +310,6 @@ void AC_SpotSprayer::update()
             {
                 gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Possible blockage");
             }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_2)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Nozzle 2 possible blockage");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_3)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Nozzle 3 possible blockage");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_FLOW_RATE_4)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Nozzle 4 possible blockage");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_LOW_PRESSURE)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: Low Spray Pressure");
-            }
-            if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_OVER_PRESSURE)
-            {
-                gcs().send_text(MAV_SEVERITY_NOTICE, "Sprayer: High Spray Pressure");
-            }
             if (error_flags & COM_AERONAVICS_SPRAYINFO_ERROR_NO_SPRAY)
             {
                 gcs().send_text(MAV_SEVERITY_INFO, "Sprayer: No spray remaining");
@@ -341,7 +331,7 @@ bool AC_SpotSprayer::pre_arm_check(char *failmsg, uint8_t failmsg_len) const
         return true;
     }
     if (_reported_weight > (float) _useful_load) {
-        hal.util->snprintf(failmsg, failmsg_len, "Overweight by %fkg", _reported_weight - (float) _useful_load);
+        hal.util->snprintf(failmsg, failmsg_len, "Overweight by %.2fkg", _reported_weight - (float) _useful_load);
         return false;
     }
     return true;
@@ -371,8 +361,9 @@ void AC_SpotSprayer::log_write()
     }
 
     WITH_SEMAPHORE(_sem);
+
     AP::logger().WriteStreaming(
-        "SPRAY",
+        "SPRY",
         "TimeUS,DFlow,MFlow,DVol,Pres,SLevel,Weight,SVol,Error",
         "syylP%?l-",
         "F--------",
@@ -412,6 +403,7 @@ void AC_SpotSprayer::send_spray_status(const mavlink_channel_t channel)
         channel,
         measured_flow_rate,
         desired_flow_rate,
+        get_flow_rate(),
         total_sprayed_volume,
         armed_sprayed_volume,
         last_tree_volume,
