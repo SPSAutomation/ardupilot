@@ -235,7 +235,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Turtle - allow vehicle to be flipped over after a crash
 #ifndef MODE_TURTLE_ENABLED
-# define MODE_TURTLE_ENABLED HAL_DSHOT_ENABLED && FRAME_CONFIG != HELI_FRAME
+// # define MODE_TURTLE_ENABLED HAL_DSHOT_ENABLED && FRAME_CONFIG != HELI_FRAME
 # define MODE_TURTLE_ENABLED 0
 #endif
 
