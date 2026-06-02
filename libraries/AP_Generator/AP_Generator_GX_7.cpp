@@ -86,11 +86,6 @@ void AP_Generator_GX_7::handle_measurement(AP_DroneCAN *ap_dronecan, const Canar
         return;
     }
 
-    if (transfer.source_node_id != 30)
-    {
-        return;
-    }
-
     WITH_SEMAPHORE(driver->_sem);
     //fetch the matching uavcan driver, node id and sensor id backend instance
     driver->last_reading_ms = AP_HAL::millis();
