@@ -161,6 +161,7 @@ private:
     bool _have_data;
 
     AP_Int8 mavlink_offset;
+    AP_Int16 max_temperature;
 
     static AP_ESC_Telem *_singleton;
 };

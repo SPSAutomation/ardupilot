@@ -35,6 +35,8 @@ public:
 
         //  return true if the requested type of data is available and not stale
         bool valid(const uint16_t type_mask) const volatile;
+
+        uint32_t last_error_time;   // Time of last error message sent
     };
 
     struct RpmData {

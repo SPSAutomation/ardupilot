@@ -41,6 +41,14 @@ const AP_Param::GroupInfo AP_ESC_Telem::var_info[] = {
     // @Range: 0 31
     // @User: Standard
     AP_GROUPINFO("_MAV_OFS", 1, AP_ESC_Telem, mavlink_offset, 0),
+
+    // @Param: _MAX_TEMP
+    // @DisplayName: ESC max temperature
+    // @Description: ESCs reporting above this temperature will report an error. If set to 0, no error will be reported.
+    // @Increment: 1
+    // @Range: 0 100
+    // @User: Standard
+    AP_GROUPINFO("_MAX_TEMP", 2, AP_ESC_Telem, max_temperature, 0),
     
     AP_GROUPEND
 };
@@ -700,6 +708,16 @@ void AP_ESC_Telem::update()
                 get_rpm(i, rpm);
                 float raw_rpm = AP::logger().quiet_nanf();
                 get_raw_rpm(i, raw_rpm);
+
+                // Check if ESC is over temp
+                if (max_temperature > 0 && telemdata.temperature_cdeg > max_temperature) {
+                    // Check if it is time to send an error message
+                    if (AP_HAL::millis() - telemdata.last_error_time > 5000)
+                    {
+                        telemdata.last_error_time = AP_HAL::millis();
+                        gcs().send_text(MAV_SEVERITY_WARNING, "ESC%u: Over Temperature %d°c", i, telemdata.temperature_cdeg);
+                    }
+                }
 
                 // Write ESC status messages
                 //   id starts from 0
