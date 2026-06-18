@@ -35,7 +35,6 @@ extern "C" {
 #endif
 
 #include "helpers.h"
-#include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
@@ -57,7 +56,7 @@ void set_flow_sensor_enabled(bool value, uint64_t timestamp);
 
 #ifdef __cplusplus
 
-class FlowSensor {
+class AP_SpraySystem_FlowSensor {
 private:
 
     float flow_rate_data[FLOW_RATE_DATA_BUF_SIZE];

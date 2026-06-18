@@ -1,16 +1,16 @@
-#include "flow_sense.hpp"
+#include "AP_SpraySystem_FlowSensor.hpp"
 
-static FlowSensor* flow_sensor_instance = nullptr;
+static AP_SpraySystem_FlowSensor* flow_sensor_instance = nullptr;
 
 static float flow_sensor_pulses_buffer[FLOW_RATE_DATA_BUF_SIZE];
 volatile uint16_t buffer_index = 0;
 
-uint16_t FlowSensor::get_instant_flow_rate_ml()
+uint16_t AP_SpraySystem_FlowSensor::get_instant_flow_rate_ml()
 {
     return instant_flow_rate_ml_min;
 }
 
-uint32_t FlowSensor::get_flow_amount_ul()
+uint32_t AP_SpraySystem_FlowSensor::get_flow_amount_ul()
 {
     // Critical section to prevent ISR from triggering and calling increment_flow_sensor_pulse - increments flow_amount_ul
     taskENTER_CRITICAL();
@@ -19,13 +19,13 @@ uint32_t FlowSensor::get_flow_amount_ul()
     return amount;
 }
 
-float FlowSensor::get_flow_amount_ml()
+float AP_SpraySystem_FlowSensor::get_flow_amount_ml()
 {
     float amount = ((float) get_flow_amount_ul()) / 1000.0f;
     return amount;
 }
 
-void FlowSensor::reset()
+void AP_SpraySystem_FlowSensor::reset()
 {
     flow_amount_ul = 0;
     prev_amount_ml = 0;
@@ -44,12 +44,12 @@ void FlowSensor::reset()
     }
 }
 
-void FlowSensor::reset_flow_amount()
+void AP_SpraySystem_FlowSensor::reset_flow_amount()
 {
     flow_amount_ul = 0;
 }
 
-uint16_t FlowSensor::get_flow_rate_ml()
+uint16_t AP_SpraySystem_FlowSensor::get_flow_rate_ml()
 {
     xSemaphoreTake(mutex_flow_rate, portMAX_DELAY);
     float rate = flow_rate_rolling_buffer.get_buf_avg();
@@ -57,32 +57,32 @@ uint16_t FlowSensor::get_flow_rate_ml()
     return (uint16_t) rate;
 }
 
-uint16_t FlowSensor::get_time_flow_ms()
+uint16_t AP_SpraySystem_FlowSensor::get_time_flow_ms()
 {
     return time_flow_ms;
 }
 
-uint16_t FlowSensor::get_total_time_flow_ms()
+uint16_t AP_SpraySystem_FlowSensor::get_total_time_flow_ms()
 {
     return total_time_flow_ms;
 }
 
-void FlowSensor::set_ul_per_pulse(uint16_t value)
+void AP_SpraySystem_FlowSensor::set_ul_per_pulse(uint16_t value)
 {
     ul_per_pulse = value;
 }
 
-uint16_t FlowSensor::get_ul_per_pulse()
+uint16_t AP_SpraySystem_FlowSensor::get_ul_per_pulse()
 {
     return ul_per_pulse;
 }
 
-void FlowSensor::set_wide_open(bool value)
+void AP_SpraySystem_FlowSensor::set_wide_open(bool value)
 {
     wide_open = value;
 }
 
-void FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
+void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
 {
     if (is_enabled())
     {
@@ -111,7 +111,7 @@ void FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
 
 }
 
-void FlowSensor::set_enabled(bool value, uint64_t timestamp)
+void AP_SpraySystem_FlowSensor::set_enabled(bool value, uint64_t timestamp)
 {
 
     if (value == enabled)
@@ -132,7 +132,7 @@ void FlowSensor::set_enabled(bool value, uint64_t timestamp)
     enabled = value;
 }
 
-bool FlowSensor::is_enabled()
+bool AP_SpraySystem_FlowSensor::is_enabled()
 {
 
     if (wide_open)
@@ -164,13 +164,13 @@ bool FlowSensor::is_enabled()
 }
 
 
-void FlowSensor::increment_time_flow(uint16_t time_ms)
+void AP_SpraySystem_FlowSensor::increment_time_flow(uint16_t time_ms)
 {
     time_flow_ms += time_ms;
     total_time_flow_ms += time_ms;
 }
 
-void set_flow_sensor_instance(FlowSensor* flow_sensor)
+void set_flow_sensor_instance(AP_SpraySystem_FlowSensor* flow_sensor)
 {
     flow_sensor_instance = flow_sensor;
 }
@@ -206,7 +206,7 @@ uint16_t calculate_flow_rate_ml_min(float amount_ml, uint16_t time_ms)
     return (uint16_t)((amount_ml / ((float)time_ms / 1000.0f)) * 60.0f);
 }
 
-void FlowSensor::set_closing_delay_ms(uint16_t delay_ms)
+void AP_SpraySystem_FlowSensor::set_closing_delay_ms(uint16_t delay_ms)
 {
     closing_delay_ms = delay_ms;
 }
