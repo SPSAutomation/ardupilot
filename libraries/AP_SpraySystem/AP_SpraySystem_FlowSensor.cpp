@@ -51,9 +51,9 @@ void AP_SpraySystem_FlowSensor::reset_flow_amount()
 
 uint16_t AP_SpraySystem_FlowSensor::get_flow_rate_ml()
 {
-    xSemaphoreTake(mutex_flow_rate, portMAX_DELAY);
-    float rate = flow_rate_rolling_buffer.get_buf_avg();
-    xSemaphoreGive(mutex_flow_rate);
+    chSysLock();
+    float rate = flow_rate_current_average;
+    chSysUnlock();
     return (uint16_t) rate;
 }
 
