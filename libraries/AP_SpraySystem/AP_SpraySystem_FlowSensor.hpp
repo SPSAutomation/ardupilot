@@ -93,10 +93,7 @@ private:
 
 public:
 
-    explicit AP_SpraySystem_FlowSensor()
-    {
-        flow_rate_rolling_buffer = new AverageFilter<float, float, FLOW_RATE_DATA_BUF_SIZE>();
-    };
+    explicit AP_SpraySystem_FlowSensor() = default;
 
     /**
      * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
