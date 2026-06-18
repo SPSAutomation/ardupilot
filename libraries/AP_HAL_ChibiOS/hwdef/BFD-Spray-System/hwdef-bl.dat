@@ -11,7 +11,7 @@ OSCILLATOR_HZ 0
 FLASH_RESERVE_START_KB 0
 
 # 32Kb for bootloader (16 pages) and 2 Kb for storage (1 page)
-FLASH_BOOTLOADER_LOAD_KB 64
+FLASH_BOOTLOADER_LOAD_KB 36
 
 # Flash size
 FLASH_SIZE_KB 256

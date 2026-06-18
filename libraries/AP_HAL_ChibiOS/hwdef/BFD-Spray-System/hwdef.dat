@@ -21,7 +21,7 @@ define CAN_APP_NODE_NAME "com.spsautomation.spraysystem"
 OSCILLATOR_HZ 0
 
 # bootloader is installed at zero offset
-FLASH_RESERVE_START_KB 64
+FLASH_RESERVE_START_KB 36
 
 # Flash size
 FLASH_SIZE_KB 256
