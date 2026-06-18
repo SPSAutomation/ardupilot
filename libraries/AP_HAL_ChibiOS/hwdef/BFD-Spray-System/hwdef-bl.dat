@@ -10,20 +10,38 @@ OSCILLATOR_HZ 0
 # bootloader is installed at zero offset
 FLASH_RESERVE_START_KB 0
 
-# Flash size
-FLASH_SIZE_KB 512
-
-# 2 sectors for bootloader, 2 for storage
+# 32Kb for bootloader (16 pages) and 2 Kb for storage (1 page)
 FLASH_BOOTLOADER_LOAD_KB 64
+
+# Flash size
+FLASH_SIZE_KB 256
+
+env AP_PERIPH 1
 
 # setup build for a peripheral firmware
 env AP_PERIPH 1
 
+# CAN Node device name
+define CAN_APP_NODE_NAME "com.spsautomation.spraysystem"
+
 define HAL_USE_SERIAL FALSE
 
-# CAN bus order
-CAN_ORDER 1 2
-
 # CAN buses
-PA11 CAN1_RX CAN1
-PA12 CAN1_TX CAN1
+PB12 CAN2_RX CAN2
+PB13 CAN2_TX CAN2
+
+# CAN bus order
+CAN_ORDER 2
+
+define HAL_LED_ON 0
+define HAL_LED_OFF 1
+
+PB1 LED_BOOTLOADER OUTPUT HIGH
+PA13 JTMS-SWDIO SWD
+PA14 JTCK-SWCLK SWD
+
+# Don't boot if no firmware is flashed
+define AP_CHECK_FIRMWARE_ENABLED 0
+
+define HAL_BOOTLOADER_TIMEOUT 1000
+define AP_FLASH_ECC_CHECK_ENABLED 0
