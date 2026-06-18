@@ -7,6 +7,7 @@
  */
 
 #include "rolling_buffer.h"
+#include <AP_HAL_ChibiOS.h>
 #include "stdint.h"
 #include "string.h"
 

@@ -13,9 +13,9 @@ uint16_t AP_SpraySystem_FlowSensor::get_instant_flow_rate_ml()
 uint32_t AP_SpraySystem_FlowSensor::get_flow_amount_ul()
 {
     // Critical section to prevent ISR from triggering and calling increment_flow_sensor_pulse - increments flow_amount_ul
-    taskENTER_CRITICAL();
+    chSysLock();
     uint32_t amount = flow_amount_ul;
-    taskEXIT_CRITICAL();
+    chSysUnlock();
     return amount;
 }
 
