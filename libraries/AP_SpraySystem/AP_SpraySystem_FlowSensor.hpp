@@ -6,7 +6,7 @@
  * The flowed amount can be reset externally if the flow should not be recorded.
  */
 
-#include "rolling_buffer.h"
+#include <Filter/AverageFilter.h>
 #include <AP_HAL_ChibiOS.h>
 #include "stdint.h"
 #include "string.h"
@@ -60,10 +60,6 @@ void set_flow_sensor_enabled(bool value, uint64_t timestamp);
 class AP_SpraySystem_FlowSensor {
 private:
 
-    float flow_rate_data[FLOW_RATE_DATA_BUF_SIZE];
-
-    SemaphoreHandle_t mutex_flow_rate;
-
     /**
      *  The current flow rate as it is calculated each iteration - NOT buffered / filtered
      */
@@ -101,17 +97,17 @@ private:
 
 public:
 
-    explicit FlowSensor() : flow_rate_rolling_buffer(flow_rate_data, FLOW_RATE_DATA_BUF_SIZE, 0)
+    explicit AP_SpraySystem_FlowSensor()
     {
-        mutex_flow_rate = xSemaphoreCreateMutex();
-        memset(flow_rate_data, 0, FLOW_RATE_DATA_BUF_SIZE * sizeof(uint16_t));
+        flow_rate_rolling_buffer = new AverageFilter<float, float, FLOW_RATE_DATA_BUF_SIZE>();
     };
 
     /**
      * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
      * Calculation of the flow rate is then done at a later time based on the rolling average of these values.
      */
-    rolling_buffer<float> flow_rate_rolling_buffer;
+    AverageFilter<float, float, FLOW_RATE_DATA_BUF_SIZE> flow_rate_rolling_buffer;
+    float flow_rate_current_average{0};
 
     /**
      * The number of pulses the flow sensor has seen, keeps track of amount that has flowed

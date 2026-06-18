@@ -33,7 +33,7 @@ void AP_SpraySystem_FlowSensor::reset()
     total_time_flow_ms = 0;
     instant_flow_rate_ml_min = 0;
     sensor_triggers_count = 0;
-    flow_rate_rolling_buffer.reset_buf_vals();
+    flow_rate_rolling_buffer.reset();
     enabled = false;
     last_pulse_time_us = 0;
     buffer_index = 0;
@@ -101,7 +101,7 @@ void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
 
             if (calculated_flow_rate_ml_min >= FLOW_RATE_ACCEPTABLE_MIN && calculated_flow_rate_ml_min <= FLOW_RATE_ACCEPTABLE_MAX)
             {
-                flow_rate_rolling_buffer.update_buf(calculated_flow_rate_ml_min);
+                flow_rate_current_average = flow_rate_rolling_buffer.apply(calculated_flow_rate_ml_min);
                 instant_flow_rate_ml_min = calculated_flow_rate_ml_min;
             }
         }
