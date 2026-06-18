@@ -1,0 +1,81 @@
+# hw definition file for processing by chibios_hwdef.py
+
+define AP_PERIPH_BFD_SPRAY_SYSTEM
+
+# MCU class and specific type
+MCU STM32G4xx STM32G474xx
+
+# setup build for a peripheral firmware
+env AP_PERIPH 1
+
+# Board ID
+APJ_BOARD_ID TARGET_HW_SPS_BFD_SPRAYSYSTEM
+
+# build ABIN for flash-from-bootloader support:
+env BUILD_ABIN True
+
+# CAN Node device name
+define CAN_APP_NODE_NAME "com.spsautomation.spraysystem"
+
+# 12MHz crystal
+OSCILLATOR_HZ 0
+
+# bootloader is installed at zero offset
+FLASH_RESERVE_START_KB 36
+
+# Flash size
+FLASH_SIZE_KB 256
+
+RAM_RESERVE_START 256
+
+# Storage area
+define HAL_STORAGE_SIZE 1024
+STORAGE_FLASH_PAGE 16
+
+# status LEDs
+PB0 STATUS_1 OUTPUT HIGH OPENDRAIN GPIO(1)
+PB1 STATUS_2 OUTPUT HIGH OPENDRAIN GPIO(2)
+PB2 STATUS_3 OUTPUT HIGH OPENDRAIN GPIO(3)
+PA6 ERR_0 OUTPUT HIGH OPENDRAIN GPIO(4)
+PA7 ERR_1 OUTPUT HIGH OPENDRAIN GPIO(5)
+
+define HAL_GPIO_PIN_LED HAL_GPIO_PIN_STATUS_1
+
+# Flow sensor input line
+PC0 FLOW_SENSE INPUT
+
+# Order of i2c buses
+I2C_ORDER I2C2
+
+# Pressure sensor I2C line (I2C2)
+PA8 I2C2_SDA I2C2
+PA9 I2C2_SCL I2C2
+
+# Order of UARTs
+SERIAL_ORDER USART1
+
+# UARTS
+PC4 USART1_TX USART1
+PC5 USART1_RX USART1
+
+# Pump control PWM output
+PB4 TIM3_CH1 TIM3 PWM(1) # PUMP
+PA5 TIM2_CH1 TIM2 PWM(2) # Spray Nozzle
+PA3 TIM2_CH4 TIM2 PWM(3) # Return line
+
+# Make sure timer utility uses timer 5 (TIM2 is used by PWM)
+define STM32_ST_USE_TIMER 5
+
+# CAN bus order
+CAN_ORDER 2 1
+
+# CAN buses
+PA11 CAN1_RX CAN1
+PA12 CAN1_TX CAN1
+
+PB12 CAN2_RX CAN2
+PB13 CAN2_TX CAN2
+
+# SWD lines
+PA13 SWDIO SWD
+PA14 SWCLK SWD
