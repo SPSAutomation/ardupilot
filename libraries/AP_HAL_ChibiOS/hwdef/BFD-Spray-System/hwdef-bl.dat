@@ -16,8 +16,6 @@ FLASH_BOOTLOADER_LOAD_KB 36
 # Flash size
 FLASH_SIZE_KB 256
 
-env AP_PERIPH 1
-
 # setup build for a peripheral firmware
 env AP_PERIPH 1
 
