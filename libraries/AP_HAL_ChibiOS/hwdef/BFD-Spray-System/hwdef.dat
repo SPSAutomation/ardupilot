@@ -70,6 +70,9 @@ PB4 TIM3_CH1 TIM3 PWM(1) # PUMP
 PA5 TIM2_CH1 TIM2 PWM(2) # Spray Nozzle
 PA3 TIM2_CH4 TIM2 PWM(3) # Return line
 
+# Make sure timer utility uses timer 5 (TIM2 is used by PWM)
+define STM32_ST_USE_TIMER 5
+
 # CAN bus order
 CAN_ORDER 2 1
 
