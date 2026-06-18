@@ -118,7 +118,7 @@ public:
      * Link a reference to the flow sensor to a static pointer
      * @param flow_sensor a pointer to the flow sensor instance
      */
-    void flow_sensor_link_local(FlowSensor* flow_sensor);
+    void flow_sensor_link_local(AP_SpraySystem_FlowSensor* flow_sensor);
 
     /**
      * Getters / setters
