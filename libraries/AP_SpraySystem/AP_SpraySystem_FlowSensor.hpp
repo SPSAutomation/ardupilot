@@ -7,7 +7,7 @@
  */
 
 #include <Filter/AverageFilter.h>
-#include <AP_HAL_ChibiOS.h>
+#include <AP_HAL_ChibiOS/AP_HAL_ChibiOS.h>
 #include "stdint.h"
 #include "string.h"
 
@@ -34,10 +34,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "helpers.h"
-#include "task.h"
-#include "semphr.h"
 
 /**
 * Increment the number of pulses the flow sensor has seen
