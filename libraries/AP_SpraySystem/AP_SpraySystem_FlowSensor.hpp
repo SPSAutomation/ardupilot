@@ -157,9 +157,9 @@ public:
 
 };
 
-void set_flow_sensor_instance(FlowSensor *flow_sensor);
+void set_flow_sensor_instance(AP_SpraySystem_FlowSensor *flow_sensor);
 
-FlowSensor* get_flow_sensor();
+AP_SpraySystem_FlowSensor* get_flow_sensor();
 
 float* get_flow_sensor_pulses_buffer();
 
