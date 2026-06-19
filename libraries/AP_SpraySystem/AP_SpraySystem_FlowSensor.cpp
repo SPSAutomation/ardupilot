@@ -5,6 +5,23 @@ static AP_SpraySystem_FlowSensor* flow_sensor_instance = nullptr;
 static float flow_sensor_pulses_buffer[FLOW_RATE_DATA_BUF_SIZE];
 volatile uint16_t buffer_index = 0;
 
+AP_SpraySystem_FlowSensor::AP_SpraySystem_FlowSensor()
+{
+    /* We can use the built-in SoftSigReaderInt class to manage the pulse counting.
+     * SoftSigReaderInt is a singleton, so no need to initialize */
+    sig_reader.attach_capture_timer(&FLOW_SENSE_ICU_TIMER, FLOW_SENSE_ICU_CHANNEL, STM32_FLOW_SENSE_DMA_STREAM, STM32_FLOW_SENSE_DMA_CHANNEL);
+}
+
+void AP_SpraySystem_FlowSensor::update()
+{
+    /* Read out any queued flow sensor pulses */
+    uint32_t width_s0, width_s1;
+
+    while (sig_reader.read(width_s0, width_s1)) {
+        increment_flow_sensor_pulse(width_s0 + width_s1);
+    }
+}
+
 uint16_t AP_SpraySystem_FlowSensor::get_instant_flow_rate_ml()
 {
     return instant_flow_rate_ml_min;

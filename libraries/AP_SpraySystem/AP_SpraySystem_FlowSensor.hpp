@@ -7,6 +7,9 @@
  */
 
 #include <Filter/AverageFilter.h>
+#include <hal.h>
+#include <AP_HAL_ChibiOS/SoftSigReaderInt.h>
+#include <AP_HAL/AP_HAL_Boards.h>
 #include <AP_HAL_ChibiOS/AP_HAL_ChibiOS.h>
 #include "stdint.h"
 #include "string.h"
@@ -91,9 +94,19 @@ private:
     uint16_t closing_delay_ms{0};
     float prev_amount_ml{0};
 
+    /*
+     * SoftSigReader used for counting pulses from flow meter
+     */
+    ChibiOS::SoftSigReaderInt sig_reader;
+
 public:
 
-    explicit AP_SpraySystem_FlowSensor() = default;
+    explicit AP_SpraySystem_FlowSensor();
+
+    /**
+     * This should be called regularly. Updates the current pulse count from the SoftSigReaderInstance
+     */
+    void update();
 
     /**
      * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
