@@ -1,6 +1,6 @@
 # hw definition file for processing by chibios_hwdef.py
 
-define AP_PERIPH_BFD_SPRAY_SYSTEM
+define AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED true
 
 # MCU class and specific type
 MCU STM32G4xx STM32G474xx
