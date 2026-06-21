@@ -9,7 +9,7 @@ AP_SpraySystem_FlowSensor::AP_SpraySystem_FlowSensor()
 {
     /* We can use the built-in SoftSigReaderInt class to manage the pulse counting.
      * SoftSigReaderInt is a singleton, so no need to initialize */
-    sig_reader.attach_capture_timer(&FLOW_SENSE_ICU_TIMER, FLOW_SENSE_ICU_CHANNEL, STM32_FLOW_SENSE_DMA_STREAM, STM32_FLOW_SENSE_DMA_CHANNEL);
+    sig_reader.init(&FLOW_SENSE_ICU_TIMER, FLOW_SENSE_ICU_CHANNEL);
 }
 
 void AP_SpraySystem_FlowSensor::update()
@@ -158,7 +158,7 @@ bool AP_SpraySystem_FlowSensor::is_enabled()
     }
 
     // Account for any delay in the sensor or real world components surrounding it in system
-    uint64_t timestamp = get_timestamp_ms();
+    uint64_t timestamp = AP_HAL::millis64();
     bool sensor_enabled = enabled;
 
     if (enabled)
