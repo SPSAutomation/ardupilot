@@ -19,6 +19,7 @@
 [submodule "modules/DroneCAN/DSDL"]
 	path = modules/DroneCAN/DSDL
 	url = git@gitlab.com:spsautomation/external/dsdl
+	branch = main
 [submodule "modules/CrashDebug"]
 	path = modules/CrashDebug
 	url = https://github.com/ardupilot/CrashDebug
