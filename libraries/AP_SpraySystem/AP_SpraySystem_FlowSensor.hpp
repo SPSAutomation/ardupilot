@@ -123,14 +123,6 @@ public:
     void reset_flow_amount();
 
     /**
-     * Increment the time that liquid has been flowing, used for flow rate calculations and reset when a calculation is done
-     * Called by an external function / task / loop
-     * @param time_ms the additional time that liquid has been flowing
-     */
-    void increment_time_flow(uint16_t time_ms);
-
-
-    /**
      * Increments the number of flow sensor pulses detected and calculates the
      * instantaneous and rolling average flow rate. This is generall called
      * from an ISR.
