@@ -10,7 +10,7 @@ void AP_SpraySystem::init() {
 }
 
 void AP_SpraySystem::update() {
-    flow_sensor->update();
+    // TODO: Implement PID control step here
 }
 
 uint32_t AP_SpraySystem::get_current_flow_rate_ml_min() {

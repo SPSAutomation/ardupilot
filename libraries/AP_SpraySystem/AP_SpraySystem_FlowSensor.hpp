@@ -110,11 +110,6 @@ public:
     void init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul);
 
     /**
-     * This should be called regularly. Updates the current pulse count from the SoftSigReaderInstance
-     */
-    void update();
-
-    /**
      * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
      * Calculation of the flow rate is then done at a later time based on the rolling average of these values.
      */

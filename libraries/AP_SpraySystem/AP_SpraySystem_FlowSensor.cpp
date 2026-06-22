@@ -27,10 +27,6 @@ void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel,
     _flow_ul_per_pulse = pulse_ul;
 }
 
-void AP_SpraySystem_FlowSensor::update()
-{
-}
-
 uint16_t AP_SpraySystem_FlowSensor::get_instant_flow_rate_ml()
 {
     return instant_flow_rate_ml_min;
