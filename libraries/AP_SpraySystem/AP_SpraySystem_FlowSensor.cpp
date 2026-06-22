@@ -82,7 +82,7 @@ void AP_SpraySystem_FlowSensor::set_ul_per_pulse(float value)
     ul_per_pulse = value;
 }
 
-uint16_t AP_SpraySystem_FlowSensor::get_ul_per_pulse()
+float AP_SpraySystem_FlowSensor::get_ul_per_pulse()
 {
     return ul_per_pulse;
 }
