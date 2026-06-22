@@ -72,6 +72,8 @@ private:
     AC_PID * pid_instance;
 
     AP_SpraySystem_FlowSensor * flow_sensor;
+
+    AP_Float _flow_sense_pulse_ul;
 };
 
 namespace AP {

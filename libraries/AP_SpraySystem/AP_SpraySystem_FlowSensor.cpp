@@ -5,7 +5,7 @@ AP_SpraySystem_FlowSensor::AP_SpraySystem_FlowSensor()
 {
 }
 
-void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel)
+void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul)
 {
     set_flow_sensor_instance(this);
 
@@ -23,6 +23,8 @@ void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel)
 
     eicuStart(_icu_drv, &icucfg);
     eicuEnable(_icu_drv);
+
+    _flow_ul_per_pulse = pulse_ul;
 }
 
 void AP_SpraySystem_FlowSensor::update()
@@ -122,7 +124,7 @@ void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
         if (last_pulse_time_us != 0)
         {
             pulse_time_us = time_us - last_pulse_time_us;
-            calculated_flow_rate_ml_min = FLOW_SENSE_UL_PER_PULSE * PULSE_TIME_TO_FLOW_ML_MIN / pulse_time_us;
+            calculated_flow_rate_ml_min = _flow_ul_per_pulse * PULSE_TIME_TO_FLOW_ML_MIN / pulse_time_us;
 
             flow_rate_current_average = flow_rate_rolling_buffer.apply(calculated_flow_rate_ml_min);
             instant_flow_rate_ml_min = calculated_flow_rate_ml_min;

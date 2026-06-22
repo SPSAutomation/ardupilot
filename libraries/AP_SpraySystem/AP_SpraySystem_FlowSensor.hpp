@@ -13,6 +13,7 @@
 #include <AP_HAL_ChibiOS/AP_HAL_ChibiOS.h>
 #include "stdint.h"
 #include "string.h"
+#include <AP_Param/AP_Param.h>
 
 /**
 * I found that the factor from the manufacturer was consistently off by about 12%, and adjusted this constant by that,
@@ -100,11 +101,13 @@ private:
     EICUDriver* _icu_drv = nullptr;
     uint16_t last_value;
 
+    float _flow_ul_per_pulse;
+
 public:
 
     explicit AP_SpraySystem_FlowSensor();
 
-    void init(EICUDriver *icu_drv, eicuchannel_t channel);
+    void init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul);
 
     /**
      * This should be called regularly. Updates the current pulse count from the SoftSigReaderInstance
@@ -144,6 +147,8 @@ public:
     void set_enabled(bool value, uint64_t timestamp);
     bool is_enabled();
     void set_closing_delay_ms(uint16_t delay_ms);
+
+    static const struct AP_Param::GroupInfo var_info[];
 
     /**
      * Reset the flow sensor data to its initial state
