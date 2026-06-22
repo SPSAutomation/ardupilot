@@ -57,47 +57,9 @@ void set_flow_sensor_enabled(bool value, uint64_t timestamp);
 
 #ifdef __cplusplus
 
-class AP_SpraySystem_FlowSensor {
-private:
-
-    /**
-     *  The current flow rate as it is calculated each iteration - NOT buffered / filtered
-     */
-    float instant_flow_rate_ml_min{0};
-
-    /*
-     * If the flow sensor is "enabled" - if data should be saved / we should listen to the sensor
-     */
-    bool enabled{true};
-    uint64_t timestamp_enabled{0};
-    uint64_t timestamp_disabled{0};
-
-    uint64_t last_pulse_rising_edge_timstamp{0};
-
-    /*
-     * How much fluid passes per pulse of the sensor
-     */
-    float ul_per_pulse{FLOW_SENSE_UL_PER_PULSE};
-
-    /*
-     * Track time at which pulses are received
-     */
-    uint32_t last_pulse_time_us{0};
-
-    uint16_t time_flow_ms{0};
-    uint16_t total_time_flow_ms{0};
-    uint32_t flow_amount_ul{0};
-    uint16_t closing_delay_ms{0};
-    float prev_amount_ml{0};
-
-    /* EICU driver used for accurate timestamping of pulses */
-    EICUConfig icucfg;
-    EICUChannelConfig channel_config;
-    EICUDriver* _icu_drv = nullptr;
-    uint16_t last_value;
-
+class AP_SpraySystem_FlowSensor
+{
 public:
-
     explicit AP_SpraySystem_FlowSensor();
 
     void init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul);
@@ -141,6 +103,10 @@ public:
      * Reset the flow sensor data to its initial state
      */
     void reset();
+
+    /**
+     * Resets the current total volume tracked by the flow sensor
+     */
     void reset_flow_amount();
 
     /**
@@ -156,25 +122,53 @@ public:
     void calculate_flow_rate();
 
     /**
-     * Increment the number of pulses the flow sensor has seen
+     * Increments the number of flow sensor pulses detected and calculates the
+     * instantaneous and rolling average flow rate. This is generall called
+     * from an ISR.
      */
     void increment_flow_sensor_pulse(uint32_t time_us);
 
+private:
+
+    /**
+     *  The current flow rate as it is calculated each iteration - NOT buffered / filtered
+     */
+    float instant_flow_rate_ml_min{0};
+
+    /*
+     * If the flow sensor is "enabled", i.e. if the EICU is currently running
+     */
+    bool enabled{true};
+
+    uint64_t timestamp_enabled{0};
+    uint64_t timestamp_disabled{0};
+
+    uint64_t last_pulse_rising_edge_timstamp{0};
+
+    /*
+     * How much fluid passes per pulse of the sensor
+     */
+    float ul_per_pulse{FLOW_SENSE_UL_PER_PULSE};
+
+    /*
+     * Track time at which pulses are received
+     */
+    uint32_t last_pulse_time_us{0};
+
+    uint16_t time_flow_ms{0};
+    uint16_t total_time_flow_ms{0};
+    uint32_t flow_amount_ul{0};
+    uint16_t closing_delay_ms{0};
+    float prev_amount_ml{0};
+
+    /* EICU driver used for accurate timestamping of pulses */
+    EICUConfig icucfg;
+    EICUChannelConfig channel_config;
+    EICUDriver* _icu_drv = nullptr;
+    uint16_t last_value;
 };
 
 void set_flow_sensor_instance(AP_SpraySystem_FlowSensor *flow_sensor);
-
-AP_SpraySystem_FlowSensor* get_flow_sensor();
-
-float* get_flow_sensor_pulses_buffer();
-
-/**
- * Calculate a flow rate based on a amount and time
- * @param amount_ml amount in mls
- * @param time_ms time in ms
- * @return the flow rate for the given amount over the time
- */
-uint16_t calculate_flow_rate_ml_min(float amount_ml, uint16_t time_ms);
 
 void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel);
 
