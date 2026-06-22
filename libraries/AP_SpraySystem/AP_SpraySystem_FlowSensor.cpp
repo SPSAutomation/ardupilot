@@ -1,25 +1,32 @@
 #include "AP_SpraySystem_FlowSensor.hpp"
 
 static AP_SpraySystem_FlowSensor* flow_sensor_instance = nullptr;
-
-static float flow_sensor_pulses_buffer[FLOW_RATE_DATA_BUF_SIZE];
-volatile uint16_t buffer_index = 0;
-
 AP_SpraySystem_FlowSensor::AP_SpraySystem_FlowSensor()
 {
-    /* We can use the built-in SoftSigReaderInt class to manage the pulse counting.
-     * SoftSigReaderInt is a singleton, so no need to initialize */
-    sig_reader.init(&FLOW_SENSE_ICU_TIMER, FLOW_SENSE_ICU_CHANNEL);
+}
+
+void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel)
+{
+    set_flow_sensor_instance(this);
+
+    last_value = 0;
+    _icu_drv = icu_drv;
+    icucfg.dier = 0;
+    icucfg.frequency = INPUT_CAPTURE_FREQUENCY;
+    for (int i=0; i< EICU_CHANNEL_ENUM_END; i++) {
+        icucfg.iccfgp[i]=nullptr;
+    }
+
+    icucfg.iccfgp[channel] = &channel_config;
+    channel_config.alvl = EICU_INPUT_ACTIVE_LOW;
+    channel_config.capture_cb = flow_sense_pulse_cb;
+
+    eicuStart(_icu_drv, &icucfg);
+    eicuEnable(_icu_drv);
 }
 
 void AP_SpraySystem_FlowSensor::update()
 {
-    /* Read out any queued flow sensor pulses */
-    uint32_t width_s0, width_s1;
-
-    while (sig_reader.read(width_s0, width_s1)) {
-        increment_flow_sensor_pulse(width_s0 + width_s1);
-    }
 }
 
 uint16_t AP_SpraySystem_FlowSensor::get_instant_flow_rate_ml()
@@ -53,12 +60,6 @@ void AP_SpraySystem_FlowSensor::reset()
     flow_rate_rolling_buffer.reset();
     enabled = false;
     last_pulse_time_us = 0;
-    buffer_index = 0;
-
-    for (float& i : flow_sensor_pulses_buffer)
-    {
-        i = 0;
-    }
 }
 
 void AP_SpraySystem_FlowSensor::reset_flow_amount()
@@ -99,9 +100,16 @@ void AP_SpraySystem_FlowSensor::set_wide_open(bool value)
     wide_open = value;
 }
 
+void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel)
+{
+    if (flow_sensor_instance != nullptr) {
+        flow_sensor_instance->increment_flow_sensor_pulse(eicup->tim->CCR[channel]);
+    }
+}
+
 void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
 {
-    if (is_enabled())
+//    if (is_enabled())
     {
         uint32_t pulse_time_us;
         float calculated_flow_rate_ml_min;
@@ -116,11 +124,8 @@ void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
             pulse_time_us = time_us - last_pulse_time_us;
             calculated_flow_rate_ml_min = FLOW_SENSE_UL_PER_PULSE * PULSE_TIME_TO_FLOW_ML_MIN / pulse_time_us;
 
-            if (calculated_flow_rate_ml_min >= FLOW_RATE_ACCEPTABLE_MIN && calculated_flow_rate_ml_min <= FLOW_RATE_ACCEPTABLE_MAX)
-            {
-                flow_rate_current_average = flow_rate_rolling_buffer.apply(calculated_flow_rate_ml_min);
-                instant_flow_rate_ml_min = calculated_flow_rate_ml_min;
-            }
+            flow_rate_current_average = flow_rate_rolling_buffer.apply(calculated_flow_rate_ml_min);
+            instant_flow_rate_ml_min = calculated_flow_rate_ml_min;
         }
 
         last_pulse_time_us = time_us;
@@ -130,21 +135,13 @@ void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
 
 void AP_SpraySystem_FlowSensor::set_enabled(bool value, uint64_t timestamp)
 {
-
-    if (value == enabled)
+    if (enabled)
     {
-        // Handle edge case where we keep enabling/disabling it, so it never gets enabled/disabled
-        return;
+        eicuEnable(_icu_drv);
     }
-
-    if (value)
+    else
     {
-        timestamp_enabled = timestamp;
-        timestamp_disabled = 0;
-    } else
-    {
-        timestamp_disabled = timestamp + closing_delay_ms;
-        timestamp_enabled = 0;
+        eicuDisable(_icu_drv);
     }
     enabled = value;
 }
@@ -199,20 +196,6 @@ void increment_flow_sensor_pulse(uint32_t time_us)
     {
         flow_sensor_instance->increment_flow_sensor_pulse(time_us);
     }
-}
-
-void set_flow_sensor_enabled(bool value, uint64_t timestamp)
-{
-    // c wrapper for interrupt to access
-    if (flow_sensor_instance)
-    {
-        flow_sensor_instance->set_enabled(value, timestamp);
-    }
-}
-
-float* get_flow_sensor_pulses_buffer()
-{
-    return flow_sensor_pulses_buffer;
 }
 
 uint16_t calculate_flow_rate_ml_min(float amount_ml, uint16_t time_ms)

@@ -94,14 +94,17 @@ private:
     uint16_t closing_delay_ms{0};
     float prev_amount_ml{0};
 
-    /*
-     * SoftSigReader used for counting pulses from flow meter
-     */
-    ChibiOS::SoftSigReaderInt sig_reader;
+    EICUConfig icucfg;
+    EICUChannelConfig channel_config;
+    EICUChannelConfig aux_channel_config;
+    EICUDriver* _icu_drv = nullptr;
+    uint16_t last_value;
 
 public:
 
     explicit AP_SpraySystem_FlowSensor();
+
+    void init(EICUDriver *icu_drv, eicuchannel_t channel);
 
     /**
      * This should be called regularly. Updates the current pulse count from the SoftSigReaderInstance
@@ -180,5 +183,7 @@ float* get_flow_sensor_pulses_buffer();
  * @return the flow rate for the given amount over the time
  */
 uint16_t calculate_flow_rate_ml_min(float amount_ml, uint16_t time_ms);
+
+void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel);
 
 #endif // __cplusplus

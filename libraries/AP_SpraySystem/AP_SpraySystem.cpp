@@ -4,6 +4,8 @@ uint8_t flow_sensor_data[sizeof(AP_SpraySystem_FlowSensor)];
 
 void AP_SpraySystem::init() {
     flow_sensor = new(flow_sensor_data)AP_SpraySystem_FlowSensor();
+    flow_sensor->init(&FLOW_SENSE_ICU_TIMER,FLOW_SENSE_ICU_CHANNEL);
+    flow_sensor->set_enabled(true, AP_HAL::millis64());
 }
 
 void AP_SpraySystem::update() {
