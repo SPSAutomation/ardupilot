@@ -129,22 +129,6 @@ public:
      */
     void increment_flow_sensor_pulse(uint32_t time_us);
 
-    /**
-     * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
-     * Calculation of the flow rate is then done at a later time based on the rolling average of these values.
-     */
-    AverageFilter<float, float, FLOW_RATE_DATA_BUF_SIZE> flow_rate_rolling_buffer;
-
-    /**
-     * Holder for current rolling average that can be read in a thread-safe manner.
-     */
-    float flow_rate_current_average{0};
-
-    /**
-     * The number of pulses the flow sensor has seen, keeps track of amount that has flowed
-     */
-    uint16_t sensor_triggers_count{0};
-
 private:
 
     /**
@@ -169,6 +153,22 @@ private:
     EICUConfig icucfg;
     EICUChannelConfig channel_config;
     EICUDriver* _icu_drv = nullptr;
+
+     /**
+     * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
+     * Calculation of the flow rate is then done at a later time based on the rolling average of these values.
+     */
+    AverageFilter<float, float, FLOW_RATE_DATA_BUF_SIZE> flow_rate_rolling_buffer;
+
+    /**
+     * Holder for current rolling average that can be read in a thread-safe manner.
+     */
+    float flow_rate_current_average{0};
+
+    /**
+     * The number of pulses the flow sensor has seen, keeps track of amount that has flowed
+     */
+    uint16_t sensor_triggers_count{0};
 };
 
 /**
