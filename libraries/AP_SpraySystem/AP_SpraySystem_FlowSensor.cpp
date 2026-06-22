@@ -141,12 +141,6 @@ bool AP_SpraySystem_FlowSensor::is_enabled()
     }
 }
 
-void AP_SpraySystem_FlowSensor::increment_time_flow(uint16_t time_ms)
-{
-    time_flow_ms += time_ms;
-    total_time_flow_ms += time_ms;
-}
-
 void set_flow_sensor_instance(AP_SpraySystem_FlowSensor* flow_sensor)
 {
     flow_sensor_instance = flow_sensor;
