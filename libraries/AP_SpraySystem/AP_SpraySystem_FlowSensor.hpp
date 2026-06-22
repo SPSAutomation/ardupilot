@@ -1,11 +1,5 @@
 #pragma once
 
-/**
- * This module keeps track of the amount of fluid that has flowed through the flow sensor. It also allows an external
- * task to calculate the flow rate by incrementing the flow time, and occasionally calling calculate_flow_rate_ml_min().
- * The flowed amount can be reset externally if the flow should not be recorded.
- */
-
 #include <Filter/AverageFilter.h>
 #include <hal.h>
 #include <AP_HAL_ChibiOS/SoftSigReaderInt.h>
@@ -15,24 +9,15 @@
 #include "string.h"
 #include <AP_Param/AP_Param.h>
 
-/**
-* I found that the factor from the manufacturer was consistently off by about 12%, and adjusted this constant by that,
-* and got extremely consistent results. ANNOYINGLY, this learned factor is wrong when doing pulsing using the nozzle,
-* but is perfectly correct when we just go full nozzle open ... This points to the opening/closing delays being wrong
-* potentially. For MVP just leaving nozzle open when spraying is fine, this needs some time on it to tune these numbers
-* in the future.
-*
-* Decent chance that this factor changes depending on its environment, e.g. test rig vs drone, so may need to be tuned.
-*
-* Original factor:  #define FLOW_SENSE_UL_PER_PULSE 145  // 1 rotation = 1 pulse = 144.99uL  https://docs.rs-online.com/7c18/0900766b8023e8dd.pdf
-*/
+/* This is specific to the GEMS 173936-C flow sensor,
+ * which is the default sensor used by the BFD spray system.
+ * This setting is the default, but can be overridden by parameter configuration */
+#define FLOW_SENSE_UL_PER_PULSE 145
 
-#define FLOW_SENSE_UL_PER_PULSE 145 // This is specific to the GEMS 173936-C flow sensor
 #define PULSE_TIME_TO_FLOW_ML_MIN 60000.0F
 
-#define FLOW_RATE_ACCEPTABLE_MIN 1000  // ml/min
-#define FLOW_RATE_ACCEPTABLE_MAX 6000  // ml/min
-
+/* Keep a rolling average of 5 samples for the flow rate buffer
+ * to mitigate jitter in the flow sensor pulse timing */
 #define FLOW_RATE_DATA_BUF_SIZE 5
 
 #ifdef __cplusplus
@@ -45,6 +30,9 @@ extern "C" {
 
 #ifdef __cplusplus
 
+/**
+ * @brief This class provides driver support for pulse-counter based turbine flow sensors.
+ */
 class AP_SpraySystem_FlowSensor
 {
 public:
