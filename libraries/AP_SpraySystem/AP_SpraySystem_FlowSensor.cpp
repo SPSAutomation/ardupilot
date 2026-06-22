@@ -24,7 +24,8 @@ void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel,
     eicuStart(_icu_drv, &icucfg);
     eicuEnable(_icu_drv);
 
-    _flow_ul_per_pulse = pulse_ul;
+    /* Apply flow sensor pulse volume configuration */
+    set_ul_per_pulse(pulse_ul);
 }
 
 uint16_t AP_SpraySystem_FlowSensor::get_instant_flow_rate_ml()
@@ -34,7 +35,7 @@ uint16_t AP_SpraySystem_FlowSensor::get_instant_flow_rate_ml()
 
 uint32_t AP_SpraySystem_FlowSensor::get_flow_amount_ul()
 {
-    // Critical section to prevent ISR from triggering and calling increment_flow_sensor_pulse - increments flow_amount_ul
+    /* Because this is incremented via interrupt, this must be a critical section */
     chSysLock();
     uint32_t amount = flow_amount_ul;
     chSysUnlock();
@@ -93,11 +94,6 @@ uint16_t AP_SpraySystem_FlowSensor::get_ul_per_pulse()
     return ul_per_pulse;
 }
 
-void AP_SpraySystem_FlowSensor::set_wide_open(bool value)
-{
-    wide_open = value;
-}
-
 void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel)
 {
     if (flow_sensor_instance != nullptr) {
@@ -107,32 +103,30 @@ void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel)
 
 void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
 {
-//    if (is_enabled())
+    uint32_t pulse_time_us;
+    float calculated_flow_rate_ml_min;
+
+    // increment pulse
+    flow_amount_ul += ul_per_pulse;
+    sensor_triggers_count++;
+
+    /* Calculate the time since the last pulse was detected */
+    if (last_pulse_time_us != 0)
     {
-        uint32_t pulse_time_us;
-        float calculated_flow_rate_ml_min;
+        pulse_time_us = time_us - last_pulse_time_us;
+        calculated_flow_rate_ml_min = ul_per_pulse * PULSE_TIME_TO_FLOW_ML_MIN / pulse_time_us;
 
-        // increment pulse
-        flow_amount_ul += ul_per_pulse;
-        sensor_triggers_count++;
-
-        /* Calculate the time since the last pulse was detected */
-        if (last_pulse_time_us != 0)
-        {
-            pulse_time_us = time_us - last_pulse_time_us;
-            calculated_flow_rate_ml_min = _flow_ul_per_pulse * PULSE_TIME_TO_FLOW_ML_MIN / pulse_time_us;
-
-            flow_rate_current_average = flow_rate_rolling_buffer.apply(calculated_flow_rate_ml_min);
-            instant_flow_rate_ml_min = calculated_flow_rate_ml_min;
-        }
-
-        last_pulse_time_us = time_us;
+        flow_rate_current_average = flow_rate_rolling_buffer.apply(calculated_flow_rate_ml_min);
+        instant_flow_rate_ml_min = calculated_flow_rate_ml_min;
     }
 
+    last_pulse_time_us = time_us;
 }
 
 void AP_SpraySystem_FlowSensor::set_enabled(bool value, uint64_t timestamp)
 {
+    enabled = value;
+
     if (enabled)
     {
         eicuEnable(_icu_drv);
@@ -141,40 +135,12 @@ void AP_SpraySystem_FlowSensor::set_enabled(bool value, uint64_t timestamp)
     {
         eicuDisable(_icu_drv);
     }
-    enabled = value;
 }
 
 bool AP_SpraySystem_FlowSensor::is_enabled()
 {
-
-    if (wide_open)
-    {
-        return true;
-    }
-
-    // Account for any delay in the sensor or real world components surrounding it in system
-    uint64_t timestamp = AP_HAL::millis64();
-    bool sensor_enabled = enabled;
-
-    if (enabled)
-    {
-        if (timestamp <= timestamp_enabled)
-        {
-            // The sensor should not be enabled just yet, there is a delay applied
-            sensor_enabled = false;
-        }
-    } else
-    {
-        if (timestamp <= timestamp_disabled)
-        {
-            // The sensor should not be disabled just yet, there is a delay applied
-            sensor_enabled = true;
-        }
-    }
-
-    return sensor_enabled;
+    return enabled;
 }
-
 
 void AP_SpraySystem_FlowSensor::increment_time_flow(uint16_t time_ms)
 {
@@ -194,14 +160,6 @@ void increment_flow_sensor_pulse(uint32_t time_us)
     {
         flow_sensor_instance->increment_flow_sensor_pulse(time_us);
     }
-}
-
-uint16_t calculate_flow_rate_ml_min(float amount_ml, uint16_t time_ms)
-{
-    if (time_ms == 0) return 0;
-    // Cast to double for accuracy, then cast to an integer as we want whole numbers for the flow rate
-
-    return (uint16_t)((amount_ml / ((float)time_ms / 1000.0f)) * 60.0f);
 }
 
 void AP_SpraySystem_FlowSensor::set_closing_delay_ms(uint16_t delay_ms)

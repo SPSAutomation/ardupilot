@@ -66,11 +66,6 @@ private:
     float instant_flow_rate_ml_min{0};
 
     /*
-     * If the sensor can be treated as "constantly open/enabled" - overrides the enabled flags
-     */
-    bool wide_open{false};
-
-    /*
      * If the flow sensor is "enabled" - if data should be saved / we should listen to the sensor
      */
     bool enabled{true};
@@ -82,7 +77,7 @@ private:
     /*
      * How much fluid passes per pulse of the sensor
      */
-    uint16_t ul_per_pulse{FLOW_SENSE_UL_PER_PULSE};
+    float ul_per_pulse{FLOW_SENSE_UL_PER_PULSE};
 
     /*
      * Track time at which pulses are received
@@ -95,13 +90,11 @@ private:
     uint16_t closing_delay_ms{0};
     float prev_amount_ml{0};
 
+    /* EICU driver used for accurate timestamping of pulses */
     EICUConfig icucfg;
     EICUChannelConfig channel_config;
-    EICUChannelConfig aux_channel_config;
     EICUDriver* _icu_drv = nullptr;
     uint16_t last_value;
-
-    float _flow_ul_per_pulse;
 
 public:
 
@@ -138,7 +131,6 @@ public:
     uint16_t get_total_time_flow_ms();
     void set_ul_per_pulse(uint16_t value);
     uint16_t get_ul_per_pulse();
-    void set_wide_open(bool value);
     void set_enabled(bool value, uint64_t timestamp);
     bool is_enabled();
     void set_closing_delay_ms(uint16_t delay_ms);
