@@ -39,18 +39,6 @@
 extern "C" {
 #endif
 
-/**
-* Increment the number of pulses the flow sensor has seen
-* User needs to set up interrupt to call this function when flow sensor triggers
-*/
-void increment_flow_sensor_pulse(uint32_t time_us);
-
-/**
- * Enable or disable the sensor, tells the sensor that it should or shouldn't save pulses
- * @param value If the sensor should be treated as enabled or not
- */
-void set_flow_sensor_enabled(bool value, uint64_t timestamp);
-
 #ifdef __cplusplus
 }
 #endif
@@ -60,52 +48,89 @@ void set_flow_sensor_enabled(bool value, uint64_t timestamp);
 class AP_SpraySystem_FlowSensor
 {
 public:
-    explicit AP_SpraySystem_FlowSensor();
+    explicit AP_SpraySystem_FlowSensor() = default;
 
+    /**
+     * @brief Initialises the flow sensor driver with given EICU driver
+     * and channel as well as flow sensor volume per pulse configuration
+     */
     void init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul);
 
     /**
-     * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
-     * Calculation of the flow rate is then done at a later time based on the rolling average of these values.
-     */
-    AverageFilter<float, float, FLOW_RATE_DATA_BUF_SIZE> flow_rate_rolling_buffer;
-    float flow_rate_current_average{0};
-
-    /**
-     * The number of pulses the flow sensor has seen, keeps track of amount that has flowed
-     */
-    uint16_t sensor_triggers_count{0};
-
-    /**
-     * Link a reference to the flow sensor to a static pointer
+     * @brief Link a reference to the flow sensor to a static pointer
      * @param flow_sensor a pointer to the flow sensor instance
      */
     void flow_sensor_link_local(AP_SpraySystem_FlowSensor* flow_sensor);
 
     /**
-     * Getters / setters
+     * @brief Gets the last non-averaged flow rate detected by the sensor.
+     *
+     * @return last detected flow rate in ml / minute
      */
     uint16_t get_instant_flow_rate_ml();
-    uint16_t get_flow_rate_ml();
-    uint32_t get_flow_amount_ul();
-    float get_flow_amount_ml();
-    uint16_t get_time_flow_ms();
-    uint16_t get_total_time_flow_ms();
-    void set_ul_per_pulse(uint16_t value);
-    uint16_t get_ul_per_pulse();
-    void set_enabled(bool value, uint64_t timestamp);
-    bool is_enabled();
-    void set_closing_delay_ms(uint16_t delay_ms);
-
-    static const struct AP_Param::GroupInfo var_info[];
 
     /**
-     * Reset the flow sensor data to its initial state
+     * @brief Gets the current filtered flow rate. This is preferred
+     * for general usage as it provides a generally more stable value
+     * that is more representative of the actual flow rate than the instantaneous
+     * flow rate value
+     *
+     * @return current filtered flow rate in ml / minute
+     */
+    uint16_t get_flow_rate_ml();
+
+    /**
+     * @brief Gets the total flow volume in ul detected by the flow sensor since
+     * the last flow volume reset.
+     *
+     * @return total flow volume in ul
+     */
+    uint32_t get_flow_amount_ul();
+
+    /**
+     * @brief Gets the total flow volume in ml since the last flow volume reset.
+     *
+     * @return total flow volume in ml
+     */
+    float get_flow_amount_ml();
+
+    /**
+     * @brief Sets the flow volume per pulse used to calculate the flow rate
+     * and volume.
+     *
+     * @param value ul per pulse of the flow sensor to be used
+     */
+    void set_ul_per_pulse(float value);
+
+    /**
+     * @brief Get the cuyrrent configuration for flow sensor
+     * volume per pulse
+     */
+    float get_ul_per_pulse();
+
+    /**
+     * @brief Enables or disables the EICU driver to turn
+     * pulse counting on or off
+     *
+     * @param enabled true to enable pulse counting, false to disable
+     */
+    void set_enabled(bool enabled);
+
+    /**
+     * @brief reads the current state of the EICU driver and determines
+     * whether the driver is enabled or disabled.
+     *
+     * @return true if currently enabled, false otherwise
+     */
+    bool is_enabled();
+
+    /**
+     * @brief Reset the flow sensor data to its initial state
      */
     void reset();
 
     /**
-     * Resets the current total volume tracked by the flow sensor
+     * @brief Resets the current total volume tracked by the flow sensor
      */
     void reset_flow_amount();
 
@@ -116,10 +141,6 @@ public:
      */
     void increment_time_flow(uint16_t time_ms);
 
-    /**
-     * Calculate the flow rate using the most recent data
-     */
-    void calculate_flow_rate();
 
     /**
      * Increments the number of flow sensor pulses detected and calculates the
@@ -128,22 +149,28 @@ public:
      */
     void increment_flow_sensor_pulse(uint32_t time_us);
 
+    /**
+     * When a pulse is detected from the flow sensor, the time since the last pulse is stored in this buffer.
+     * Calculation of the flow rate is then done at a later time based on the rolling average of these values.
+     */
+    AverageFilter<float, float, FLOW_RATE_DATA_BUF_SIZE> flow_rate_rolling_buffer;
+
+    /**
+     * Holder for current rolling average that can be read in a thread-safe manner.
+     */
+    float flow_rate_current_average{0};
+
+    /**
+     * The number of pulses the flow sensor has seen, keeps track of amount that has flowed
+     */
+    uint16_t sensor_triggers_count{0};
+
 private:
 
     /**
      *  The current flow rate as it is calculated each iteration - NOT buffered / filtered
      */
     float instant_flow_rate_ml_min{0};
-
-    /*
-     * If the flow sensor is "enabled", i.e. if the EICU is currently running
-     */
-    bool enabled{true};
-
-    uint64_t timestamp_enabled{0};
-    uint64_t timestamp_disabled{0};
-
-    uint64_t last_pulse_rising_edge_timstamp{0};
 
     /*
      * How much fluid passes per pulse of the sensor
@@ -155,21 +182,23 @@ private:
      */
     uint32_t last_pulse_time_us{0};
 
-    uint16_t time_flow_ms{0};
-    uint16_t total_time_flow_ms{0};
+    /* Track the total flow volume */
     uint32_t flow_amount_ul{0};
-    uint16_t closing_delay_ms{0};
-    float prev_amount_ml{0};
 
     /* EICU driver used for accurate timestamping of pulses */
     EICUConfig icucfg;
     EICUChannelConfig channel_config;
     EICUDriver* _icu_drv = nullptr;
-    uint16_t last_value;
 };
 
+/**
+ * @brief Sets the flow sensor instance to be called by the EICU IRQ
+ */
 void set_flow_sensor_instance(AP_SpraySystem_FlowSensor *flow_sensor);
 
+/**
+ * @brief IRQ callback
+ */
 void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel);
 
 #endif // __cplusplus
