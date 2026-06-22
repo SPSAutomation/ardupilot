@@ -6,7 +6,7 @@ void AP_SpraySystem::init() {
     AP_Param::setup_object_defaults(this, var_info);
     flow_sensor = new(flow_sensor_data)AP_SpraySystem_FlowSensor();
     flow_sensor->init(&FLOW_SENSE_ICU_TIMER,FLOW_SENSE_ICU_CHANNEL, _flow_sense_pulse_ul);
-    flow_sensor->set_enabled(true, AP_HAL::millis64());
+    flow_sensor->set_enabled(true);
 }
 
 void AP_SpraySystem::update() {
