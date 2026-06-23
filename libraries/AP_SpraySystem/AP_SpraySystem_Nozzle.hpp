@@ -4,8 +4,8 @@
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
 
-#define NOZZLE_UPDATE_RATE_HZ 1000
-#define NOZZLE_PWM_FREQUENCY_HZ 50
+#define NOZZLE_UPDATE_PERIOD_MS 1
+#define NOZZLE_PWM_FREQUENCY_HZ 200
 
 /**
  * @brief This class provides a driver for externally connected spray nozzle solenoids.
@@ -15,7 +15,7 @@
 class AP_SpraySystem_Nozzle
 {
 public:
-    AP_SpraySystem_Nozzle() = default;
+    explicit AP_SpraySystem_Nozzle() = default;
 
     /**
      * @brief Initialises the nozzle control driver, assigns an output and calculates
@@ -24,7 +24,7 @@ public:
      * @param nozzle_ctrl_output GPIO instance for controlling the connected nozzle
      * @param duty duty cycle at which to run the PWM
      */
-    void init(AP_HAL::HAL& hal, uint8_t ctrl_pin, uint32_t duty_percent);
+    void init(uint32_t ctrl_pin, uint32_t duty_percent);
 
     /**
      * @brief Iterates nozzle on/off timer counts and toggles the solenoid state if necessary.
@@ -80,11 +80,7 @@ private:
     uint32_t open_count_target{0};
     uint32_t close_count_target{0};
 
-    /**
-     * HAL reference for output pin control
-     */
-    AP_HAL::HAL& hal_ref;
-    uint8_t nozzle_ctrl_pin;
+    uint32_t nozzle_ctrl_pin;
 };
 
 #endif

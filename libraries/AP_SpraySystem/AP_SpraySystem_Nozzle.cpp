@@ -1,18 +1,18 @@
 #include "AP_SpraySystem_Nozzle.hpp"
 
-void AP_SpraySystem_Nozzle::init(AP_HAL::HAL& hal, uint8_t ctrl_pin, uint32_t duty_percent)
+const AP_HAL::HAL& hal_ref = AP_HAL::get_HAL();
+
+void AP_SpraySystem_Nozzle::init(uint32_t ctrl_pin, uint32_t duty_percent)
 {
-    hal_ref = hal;
     nozzle_ctrl_pin = ctrl_pin;
 
     /* Configure pin as an output */
     hal_ref.gpio->pinMode(nozzle_ctrl_pin, HAL_GPIO_OUTPUT);
     set_solenoid_open(false);
 
-    float nozzle_update_period_ms = 1.0f / NOZZLE_UPDATE_RATE_HZ;
-    float pwm_period_ms = 1.0f / NOZZLE_PWM_FREQUENCY_HZ;
+    float pwm_period_ms = (1.0f / NOZZLE_PWM_FREQUENCY_HZ) * 1000;
 
-    float total_pwm_period_ticks = pwm_period_ms / nozzle_update_period_ms;
+    float total_pwm_period_ticks = pwm_period_ms / NOZZLE_UPDATE_PERIOD_MS;
 
     /*
      * Calculate the number of ticks for each state of the nozzle to open/close
@@ -27,7 +27,7 @@ void AP_SpraySystem_Nozzle::update()
     if (nozzle_open)
     {
         /* PWM control is performed here */
-        if (solenoid_open)
+        if (hal_ref.gpio->read(nozzle_ctrl_pin))
         {
             /* Increment open count */
             open_count++;
@@ -36,6 +36,7 @@ void AP_SpraySystem_Nozzle::update()
             if (open_count >= open_count_target && close_count_target > 0)
             {
                 set_solenoid_open(false);
+                close_count = 0;
             }
         }
         else
@@ -46,7 +47,8 @@ void AP_SpraySystem_Nozzle::update()
             /* Only open the solenoid if the duty cycle is greater than 0 */
             if (close_count >= close_count_target && open_count_target > 0)
             {
-                set_solenoid_open(false);
+                set_solenoid_open(true);
+                open_count = 0;
             }
 
         }
