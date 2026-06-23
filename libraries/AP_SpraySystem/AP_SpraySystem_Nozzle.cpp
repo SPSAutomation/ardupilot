@@ -72,12 +72,17 @@ void AP_SpraySystem_Nozzle::open()
 
     /* Emable the PWM */
     nozzle_open = true;
+
+    /* Actuate nozzle immediately */
+    set_solenoid_open(true);
 }
 
 void AP_SpraySystem_Nozzle::close()
 {
     /* Disable the PWM, update() function will close the solenoid */
     nozzle_open = false;
+    /* Actuate solenoid immediately */
+    set_solenoid_open(false);
 }
 
 bool AP_SpraySystem_Nozzle::is_open()
