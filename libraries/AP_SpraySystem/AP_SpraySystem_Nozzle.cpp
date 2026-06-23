@@ -1,13 +1,13 @@
 #include "AP_SpraySystem_Nozzle.hpp"
 
-const AP_HAL::HAL& hal_ref = AP_HAL::get_HAL();
+extern const AP_HAL::HAL& hal;
 
 void AP_SpraySystem_Nozzle::init(uint32_t ctrl_pin, uint32_t duty_percent)
 {
     nozzle_ctrl_pin = ctrl_pin;
 
     /* Configure pin as an output */
-    hal_ref.gpio->pinMode(nozzle_ctrl_pin, HAL_GPIO_OUTPUT);
+    hal.gpio->pinMode(nozzle_ctrl_pin, HAL_GPIO_OUTPUT);
     set_solenoid_open(false);
 
     float pwm_period_ms = (1.0f / NOZZLE_PWM_FREQUENCY_HZ) * 1000;
@@ -27,7 +27,7 @@ void AP_SpraySystem_Nozzle::update()
     if (nozzle_open)
     {
         /* PWM control is performed here */
-        if (hal_ref.gpio->read(nozzle_ctrl_pin))
+        if (hal.gpio->read(nozzle_ctrl_pin))
         {
             /* Increment open count */
             open_count++;
@@ -57,7 +57,7 @@ void AP_SpraySystem_Nozzle::update()
     else
     {
         /* Nozzle is closed, ensure solenoid is shut */
-        if (hal_ref.gpio->read(nozzle_ctrl_pin))
+        if (hal.gpio->read(nozzle_ctrl_pin))
         {
             set_solenoid_open(false);
         }
@@ -92,5 +92,5 @@ bool AP_SpraySystem_Nozzle::is_open()
 
 inline void AP_SpraySystem_Nozzle::set_solenoid_open(bool open)
 {
-    hal_ref.gpio->write(nozzle_ctrl_pin, open ? 1 : 0);
+    hal.gpio->write(nozzle_ctrl_pin, open ? 1 : 0);
 }
