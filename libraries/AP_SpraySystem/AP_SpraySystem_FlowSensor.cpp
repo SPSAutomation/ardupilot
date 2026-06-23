@@ -106,6 +106,9 @@ void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
     /* Calculate the time since the last pulse was detected */
     if (last_pulse_time_us != 0)
     {
+        /* Because both time_us and last_pulse_time_us are both unsigned, this
+         * operation is unaffected if the clock wraps around between this pulse and
+         * the previous pulse */
         pulse_time_us = time_us - last_pulse_time_us;
         calculated_flow_rate_ml_min = ul_per_pulse * PULSE_TIME_TO_FLOW_ML_MIN / pulse_time_us;
 
