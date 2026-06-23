@@ -172,6 +172,10 @@ void AP_Periph_FW::init()
     baro.init();
 #endif
 
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    spray_system_init();
+#endif
+
 #if AP_PERIPH_IMU_ENABLED
     if (g.imu_sample_rate) {
         imu.init(g.imu_sample_rate);
@@ -534,6 +538,15 @@ void AP_Periph_FW::update()
     if (now - rpm_last_update_ms >= 100) {
         rpm_last_update_ms = now;
         rpm_sensor.update();
+    }
+#endif
+
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    spray_system_update();
+
+    if (now - last_spray_system_update_ms >= 100) {
+        last_spray_system_update_ms = now;
+        spray_system_send_status();
     }
 #endif
 

@@ -1,6 +1,6 @@
 # hw definition file for processing by chibios_hwdef.py
 
-define AP_PERIPH_BFD_SPRAY_SYSTEM
+define AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED true
 
 # MCU class and specific type
 MCU STM32G4xx STM32G474xx
@@ -39,6 +39,10 @@ PB2 STATUS_3 OUTPUT HIGH OPENDRAIN GPIO(3)
 PA6 ERR_0 OUTPUT HIGH OPENDRAIN GPIO(4)
 PA7 ERR_1 OUTPUT HIGH OPENDRAIN GPIO(5)
 
+# Nozzle outputs
+PA5 SPRAY_NOZZLE OUTPUT LOW GPIO(6) # Spray Nozzle
+PA3 RETURN_SOLENOID OUTPUT LOW GPIO(7) # Return line
+
 define HAL_GPIO_PIN_LED HAL_GPIO_PIN_STATUS_1
 
 # Flow sensor input line
@@ -58,12 +62,7 @@ SERIAL_ORDER USART1
 PC4 USART1_TX USART1
 PC5 USART1_RX USART1
 
-# Pump control PWM output
-PB4 TIM3_CH1 TIM3 PWM(1) # PUMP
-PA5 TIM2_CH1 TIM2 PWM(2) # Spray Nozzle
-PA3 TIM2_CH4 TIM2 PWM(3) # Return line
-
-# Make sure timer utility uses timer 5 (TIM2 is used by PWM)
+# Make sure timer utility uses timer 5 (TIM2 is used by EICU)
 define STM32_ST_USE_TIMER 5
 
 # CAN bus order
@@ -79,3 +78,23 @@ PB13 CAN2_TX CAN2
 # SWD lines
 PA13 SWDIO SWD
 PA14 SWCLK SWD
+
+define HAL_USE_ADC FALSE
+define STM32_ADC_USE_ADC1 FALSE
+define STM32_ADC_USE_ADC2 FALSE
+define STM32_ADC_USE_ADC3 FALSE
+
+# ICU Settings for pulse counting input
+# hwdef has handling for RCIN inputs
+
+# Input pin
+PA0 TIM2_CH1 TIM2 RCININT PULLDOWN LOW
+
+define FLOW_SENSE_ICU_TIMER EICUD2
+define FLOW_SENSE_ICU_CHANNEL EICU_CHANNEL_1
+
+# disable RC protocol
+define AP_RCPROTOCOL_ENABLED FALSE
+
+# Pump control PWM output
+PB4 TIM3_CH1 TIM3 PWM(2) GPIO(50) # PUMP

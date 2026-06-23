@@ -114,6 +114,10 @@
 #undef HAL_PERIPH_LISTEN_FOR_SERIAL_UART_REBOOT_CMD_PORT
 #endif
 
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+#include <AP_SpraySystem/AP_SpraySystem.hpp>
+#endif
+
 #include "Parameters.h"
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
@@ -236,6 +240,11 @@ public:
     AP_Baro baro;
 #endif
 
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    AP_SpraySystem spray_system;
+    uint32_t last_spray_system_update_ms;
+#endif
+
 #if AP_PERIPH_IMU_ENABLED
     AP_InertialSensor imu;
 #endif
@@ -293,6 +302,12 @@ public:
         mavlink_status_t status;
         uint32_t last_heartbeat_ms;
     } adsb;
+#endif
+
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    void spray_system_init();
+    void spray_system_update();
+    void spray_system_send_status();
 #endif
 
 #if AP_PERIPH_AIRSPEED_ENABLED

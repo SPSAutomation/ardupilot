@@ -709,6 +709,9 @@ const AP_Param::Info AP_Periph_FW::var_info[] = {
     GSCALAR(esc_extended_telem_rate, "ESC_EXT_TLM_RATE", AP_PERIPH_ESC_TELEM_RATE_DEFAULT / 10),
 #endif
 
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    GOBJECT(spray_system, "SPRAY_", AP_SpraySystem),
+#endif
 
 #if AP_PERIPH_IMU_ENABLED
     // @Param: IMU_SAMPLE_RATE
