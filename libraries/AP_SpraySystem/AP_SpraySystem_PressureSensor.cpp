@@ -64,7 +64,7 @@ uint32_t AP_SpraySystem_PressureSensor::get_pressure_mbar()
     return last_read_pressure_mbar;
 }
 
-uint32_t AP_SpraySystem_PressureSensor::get_temperature_c()
+float AP_SpraySystem_PressureSensor::get_temperature_c()
 {
     return last_read_temperature_c;
 }
@@ -87,8 +87,9 @@ uint32_t AP_SpraySystem_PressureSensor::get_converted_pressure_value_mbar(uint16
     return output;
 }
 
-uint32_t AP_SpraySystem_PressureSensor::get_converted_temperature_value_c(uint16_t raw_temp_data)
+float AP_SpraySystem_PressureSensor::get_converted_temperature_value_c(uint16_t raw_temp_data)
 {
-    uint16_t output = raw_temp_data * TEMP_DATA_MULTIPLIER - TEMP_DATA_OFFSET;
+    /* Formula given by datasheet gives degrees C * 10 */
+    float output = static_cast<float>(raw_temp_data * TEMP_DATA_MULTIPLIER - TEMP_DATA_OFFSET) / 10.0f;
     return output;
 }

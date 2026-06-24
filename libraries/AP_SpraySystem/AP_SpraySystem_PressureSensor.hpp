@@ -44,7 +44,7 @@ public:
     /**
      * Get the last read temperature value in degrees celsius
      */
-    uint32_t get_temperature_c();
+    float get_temperature_c();
 
     /**
      * @brief Returns whether the sensor is currently connected
@@ -67,7 +67,7 @@ private:
      * @brief Converts the raw numerical value provided by the sensor into a
      * readable temperature value in degrees c
      */
-    uint32_t get_converted_temperature_value_c(uint16_t raw_temp_data);
+    float get_converted_temperature_value_c(uint16_t raw_temp_data);
 
     /* Flag to check whether the sensor is actually connected */
     bool device_connected{false};

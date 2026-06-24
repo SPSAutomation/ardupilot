@@ -118,7 +118,7 @@ public:
      *
      * @return current temperature value in degrees c
      */
-    uint32_t get_current_temperature_c();
+    float get_current_temperature_c();
 
     /**
      * @brief reads out the current flow sensor filtered rate
