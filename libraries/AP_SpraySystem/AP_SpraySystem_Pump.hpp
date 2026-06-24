@@ -33,8 +33,10 @@ public:
      * @brief Sets the current pump throttle value used by PWM control
      *
      * @param throttle_us throttle PWM width to be used
+     *
+     * @return true on success, false if throttle value is outside allowed range
      */
-    void set_speed(uint16_t throttle_us);
+    bool set_speed(uint16_t throttle_us);
 
     /**
      * @brief Checks whether the pump is currently running

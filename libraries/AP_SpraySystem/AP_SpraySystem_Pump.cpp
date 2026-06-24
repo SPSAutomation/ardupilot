@@ -45,16 +45,18 @@ void AP_SpraySystem_Pump::disable()
     set_pwm_output(0);
 }
 
-void AP_SpraySystem_Pump::set_speed(uint16_t throttle_us)
+bool AP_SpraySystem_Pump::set_speed(uint16_t throttle_us)
 {
     /* Sanity check throttle value, must be between 1050 - 1950 us */
     if (throttle_us < PUMP_MIN_THROTTLE_PERIOD || throttle_us > PUMP_MAX_THROTTLE_PERIOD)
     {
-        return;
+        return false;
     }
 
     current_throttle_value = throttle_us;
     set_pwm_output(current_throttle_value);
+
+    return true;
 }
 
 inline void AP_SpraySystem_Pump::set_pwm_output(uint16_t throttle)
