@@ -29,8 +29,6 @@ void AP_SpraySystem::init()
 
     /* Initialise pump */
     pump = new(pump_data)(&PWMD3, 0);
-    pump.set_speed(1500);
-    pump.enable();
 }
 
 void AP_SpraySystem::update()
