@@ -3,6 +3,7 @@
 #include <AP_SpraySystem/AP_SpraySystem_FlowSensor.hpp>
 #include <AP_SpraySystem/AP_SpraySystem_Nozzle.hpp>
 #include <AP_SpraySystem/AP_SpraySystem_Pump.hpp>
+#include <AP_SpraySystem/AP_SpraySystem_PressureSensor.hpp>
 #include <AC_PID/AC_PID.h>
 #include <dronecan_msgs.h>
 
