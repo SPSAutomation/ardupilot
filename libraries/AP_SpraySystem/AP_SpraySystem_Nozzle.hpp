@@ -1,6 +1,7 @@
 #include <AP_HAL/AP_HAL_Boards.h>
 #include <AP_HAL_ChibiOS/AP_HAL_ChibiOS.h>
 #include <AP_Scheduler/AP_Scheduler.h>
+#include <hal.h>
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
 
@@ -15,16 +16,7 @@
 class AP_SpraySystem_Nozzle
 {
 public:
-    explicit AP_SpraySystem_Nozzle() = default;
-
-    /**
-     * @brief Initialises the nozzle control driver, assigns an output and calculates
-     * the number of on and off ticks based on the active duty cycle.
-     *
-     * @param nozzle_ctrl_output GPIO instance for controlling the connected nozzle
-     * @param duty duty cycle at which to run the PWM
-     */
-    void init(uint32_t ctrl_pin, uint32_t duty_percent);
+    explicit AP_SpraySystem_Nozzle(uint32_t ctrl_pin, uint32_t duty_percent);
 
     /**
      * @brief Iterates nozzle on/off timer counts and toggles the solenoid state if necessary.
