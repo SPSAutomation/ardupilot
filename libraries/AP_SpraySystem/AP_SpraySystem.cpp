@@ -47,6 +47,16 @@ uint32_t AP_SpraySystem::get_current_flow_rate_ml_min() {
     return flow_sensor->get_flow_rate_ml();
 }
 
+uint32_t AP_SpraySystem::get_current_pressure_mbar()
+{
+    return pressure_sensor->get_pressure_mbar();
+}
+
+uint32_t AP_SpraySystem::get_current_temperature_c()
+{
+    return pressure_sensor->get_temperature_c();
+}
+
 /* Parameters */
 const AP_Param::GroupInfo AP_SpraySystem::var_info[] = {
         // @Param: FLOW_SENSE_PULSE_UL
