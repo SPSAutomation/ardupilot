@@ -9,9 +9,13 @@
 #define PRESSURE_SENSOR_I2C_ADDRESS         (0x28)
 #define READ_RETRY_LIMIT                    3
 
+/* These values are provided by the datasheet for the sensor
+ * https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English */
 #define PRESSURE_SENSOR_MIN_MBAR 0
 #define PRESSURE_SENSOR_MAX_MBAR 6894
 
+/* Theses multiplier and offset values are provided by the datasheet
+ * https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English */
 #define PRESSURE_DATA_MULTIPLIER    (PRESSURE_SENSOR_MAX_MBAR - PRESSURE_SENSOR_MIN_MBAR) / (14000)
 #define PRESSURE_DATA_OFFSET        1000
 
