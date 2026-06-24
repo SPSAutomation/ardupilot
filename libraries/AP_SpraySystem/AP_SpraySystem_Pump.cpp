@@ -1,6 +1,6 @@
 #include "AP_SpraySystem_Pump.hpp"
 
-void AP_SpraySystem_Pump::init(PWMDriver *driver, uint8_t pwm_channel)
+void AP_SpraySystem_Pump::AP_SpraySystem_Pump(PWMDriver *driver, uint8_t pwm_channel)
 {
     pwm_driver = driver;
     pump_pwm_channel = pwm_channel;

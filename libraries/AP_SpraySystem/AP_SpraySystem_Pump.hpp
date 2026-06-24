@@ -16,13 +16,8 @@
 class AP_SpraySystem_Pump
 {
 public:
-    AP_SpraySystem_Pump() = default;
+    AP_SpraySystem_Pump(PWMDriver *driver, uint8_t pwm_channel);
     ~AP_SpraySystem_Pump() = default;
-
-    /**
-     * @brief Initialises the pump PWM
-     */
-    void init(PWMDriver *driver, uint8_t pwm_channel);
 
     /**
      * @brief Turns on the pump with the currently configured speed
