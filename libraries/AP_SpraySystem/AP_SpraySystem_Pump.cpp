@@ -49,5 +49,5 @@ void AP_SpraySystem_Pump::set_speed(uint16_t throttle_us)
 
 inline void AP_SpraySystem_Pump::set_pwm_output(uint16_t throttle)
 {
-    pwmEnableChannel(pump_pwm_channel, index, throttle);
+    pwmEnableChannel(pwm_driver, pump_pwm_channel, throttle);
 }
