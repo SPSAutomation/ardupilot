@@ -3,6 +3,7 @@
 uint8_t flow_sensor_data[sizeof(AP_SpraySystem_FlowSensor)];
 uint8_t spray_nozzle_data[sizeof(AP_SpraySystem_Nozzle)];
 uint8_t pump_data[sizeof(AP_SpraySystem_Pump)];
+uint8_t pressure_sensor_data[sizeof(AP_SpraySystem_PressureSensor)];
 
 AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
 
