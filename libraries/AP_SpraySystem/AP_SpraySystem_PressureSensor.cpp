@@ -56,6 +56,21 @@ void AP_SpraySystem_PressureSensor::update()
     last_read_temperature_c = get_converted_temperature_value_c(raw_temp_data);
 }
 
+uint32_t AP_SpraySystem_PressureSensor::get_pressure_mbar()
+{
+    return last_read_pressure_mbar;
+}
+
+uint32_t AP_SpraySystem_PressureSensor::get_temperature_c()
+{
+    return last_read_temperature_c;
+}
+
+bool AP_SpraySystem_PressureSensor::sensor_connected()
+{
+    return device_connected;
+}
+
 uint32_t AP_SpraySystem_PressureSensor::get_converted_pressure_value_mbar(uint16_t raw_pressure_data)
 {
     // See datasheet for this formula - https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English
