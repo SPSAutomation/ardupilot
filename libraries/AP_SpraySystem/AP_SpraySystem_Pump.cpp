@@ -27,12 +27,12 @@ AP_SpraySystem_Pump::AP_SpraySystem_Pump(PWMDriver *driver, uint8_t pwm_channel)
 
 void AP_SpraySystem_Pump::enable()
 {
-    set_pwm_output(pump_pwm_channel, current_throttle_value);
+    set_pwm_output(current_throttle_value);
 }
 
 void AP_SpraySystem_Pump::disable()
 {
-    set_pwm_output(pump_pwm_channel, 0);
+    set_pwm_output(0);
 }
 
 void AP_SpraySystem_Pump::set_speed(uint16_t throttle_us)
@@ -44,7 +44,7 @@ void AP_SpraySystem_Pump::set_speed(uint16_t throttle_us)
     }
 
     current_throttle_value = throttle_us;
-    set_pwm_output(pump_pwm_channel, current_throttle_value);
+    set_pwm_output(current_throttle_value);
 }
 
 inline void AP_SpraySystem_Pump::set_pwm_output(uint16_t throttle)
