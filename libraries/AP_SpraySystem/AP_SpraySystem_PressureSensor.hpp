@@ -18,7 +18,10 @@
 #define TEMP_DATA_MULTIPLIER (200 / 2048)
 #define TEMP_DATA_OFFSET 50
 
-
+/**
+ * This class provides a driver for the I2C temperature and pressure sensor
+ * used by the BFD spray system.
+ */
 class AP_SpraySystem_PressureSensor
 {
 public:
@@ -36,7 +39,7 @@ public:
      *
      * @return pressure value in bar
      */
-    float get_pressure_mbar();
+    uint32_t get_pressure_mbar();
 
     /**
      * Get the last read temperature value in degrees celsius
@@ -69,9 +72,11 @@ private:
     /* Flag to check whether the sensor is actually connected */
     bool device_connected{false};
 
+    /* Holders for calculated values */
     uint32_t last_read_pressure_mbar{0};
     uint32_t last_read_temperature_c{0};
 
+    /* I2C device provided by the AP device manager */
     AP_HAL::OwnPtr<AP_HAL::I2CDevice> pressure_device;
 };
 
