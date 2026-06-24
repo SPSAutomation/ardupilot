@@ -23,6 +23,9 @@ void AP_SpraySystem_PressureSensor::update()
     uint16_t raw_temp_data;
     uint16_t raw_pressure_data;
 
+    /* I2C transfers require getting the semaphore for the device first */
+    WITH_SEMAPHORE(pressure_device->get_semaphore());
+
     /* First, check that the device is present to be read */
     if (!device_connected)
     {
@@ -30,7 +33,7 @@ void AP_SpraySystem_PressureSensor::update()
     }
 
     /* Attempt to read out data from sensor */
-    if (!pressure_device->read_registers(0, rx_buffer, PRESSURE_SENSOR_PACKET_SIZE_BYTES))
+    if (!pressure_device->transfer(nullptr, 0, rx_buffer, PRESSURE_SENSOR_PACKET_SIZE_BYTES))
     {
         /* Failed to read device */
         return;
