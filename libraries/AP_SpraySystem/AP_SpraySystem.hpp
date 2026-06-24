@@ -138,7 +138,7 @@ private:
 
     AP_SpraySystem_Nozzle * spray_nozzle;
 
-    AP_SpraySystem_Pump pump;
+    AP_SpraySystem_Pump * pump;
 
     AP_Float _flow_sense_pulse_ul;
 };
