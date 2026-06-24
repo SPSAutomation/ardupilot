@@ -2,6 +2,7 @@
 
 uint8_t flow_sensor_data[sizeof(AP_SpraySystem_FlowSensor)];
 uint8_t spray_nozzle_data[sizeof(AP_SpraySystem_Nozzle)];
+uint8_t pump_data[sizeof(AP_SpraySystem_Pump)];
 
 AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
 
@@ -25,7 +26,11 @@ void AP_SpraySystem::init()
 
     /* Initialise spray nozzle */
     spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(6, 50);
-    spray_nozzle.open();
+
+    /* Initialise pump */
+    pump.init(&PWMD3, 0);
+    pump.set_speed(1500);
+    pump.enable();
 }
 
 void AP_SpraySystem::update()
@@ -33,7 +38,7 @@ void AP_SpraySystem::update()
     uint32_t now = AP_HAL::millis();
 
     if (now - nozzle_last_update_ms >= NOZZLE_UPDATE_PERIOD_MS) {
-        spray_nozzle.update();
+        spray_nozzle->update();
         nozzle_last_update_ms = now;
     }
 
