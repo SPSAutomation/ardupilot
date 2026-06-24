@@ -3,6 +3,7 @@
 #include <AP_SpraySystem/AP_SpraySystem_FlowSensor.hpp>
 #include <AP_SpraySystem/AP_SpraySystem_Nozzle.hpp>
 #include <AP_SpraySystem/AP_SpraySystem_Pump.hpp>
+#include <AP_SpraySystem/AP_SpraySystem_PressureSensor.hpp>
 #include <AC_PID/AC_PID.h>
 #include <dronecan_msgs.h>
 
@@ -108,9 +109,16 @@ public:
     /**
      * @brief returns the most recent pressure reading from the sensor
      *
-     * @return pressure value in psi
+     * @return pressure value in mbar
      */
-    uint32_t get_current_pressure_psi();
+    uint32_t get_current_pressure_mbar();
+
+    /**
+     * @brief returns the most recent temperature reading from the sensor
+     *
+     * @return current temperature value in degrees c
+     */
+    float get_current_temperature_c();
 
     /**
      * @brief reads out the current flow sensor filtered rate
@@ -139,6 +147,8 @@ private:
     AP_SpraySystem_Nozzle * spray_nozzle;
 
     AP_SpraySystem_Pump * pump;
+
+    AP_SpraySystem_PressureSensor * pressure_sensor;
 
     AP_Float _flow_sense_pulse_ul;
 };
