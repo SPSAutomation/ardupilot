@@ -2,7 +2,7 @@
 
 extern const AP_HAL::HAL& hal;
 
-void AP_SpraySystem_Nozzle::init(uint32_t ctrl_pin, uint32_t duty_percent)
+AP_SpraySystem_Nozzle::AP_SpraySystem_Nozzle(uint32_t ctrl_pin, uint32_t duty_percent)
 {
     nozzle_ctrl_pin = ctrl_pin;
 

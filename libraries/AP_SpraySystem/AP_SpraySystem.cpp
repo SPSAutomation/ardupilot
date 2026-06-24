@@ -1,6 +1,7 @@
 #include "AP_SpraySystem.hpp"
 
 uint8_t flow_sensor_data[sizeof(AP_SpraySystem_FlowSensor)];
+uint8_t spray_nozzle_data[sizeof(AP_SpraySystem_Nozzle)];
 
 AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
 
@@ -23,7 +24,7 @@ void AP_SpraySystem::init()
     flow_sensor->set_enabled(true);
 
     /* Initialise spray nozzle */
-    spray_nozzle.init(6, 50);
+    spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(6, 50);
     spray_nozzle.open();
 }
 
