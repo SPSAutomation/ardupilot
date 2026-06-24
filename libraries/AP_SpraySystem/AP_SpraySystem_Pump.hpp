@@ -44,7 +44,12 @@ public:
     bool get_enabled();
 
 private:
-    inline void set_pwm_output(uint16_t index, uint16_t throttle);
+    /**
+     * @brief Directly sets the PWM pulse width
+     *
+     * @param throttle pulse width to be used for throttle
+     */
+    inline void set_pwm_output(uint16_t throttle);
 
     /* Current throttle value to be used by the output PWM */
     uint16_t current_throttle_value;
