@@ -19,33 +19,31 @@ void AP_SpraySystem_PressureSensor::update()
 {
     uint8_t rx_buffer[PRESSURE_SENSOR_PACKET_SIZE_BYTES];
     uint16_t raw_value;
-    uint8_t status_bitmap;
     uint16_t raw_temp_data;
     uint16_t raw_pressure_data;
 
     /* I2C transfers require getting the semaphore for the device first */
     WITH_SEMAPHORE(pressure_device->get_semaphore());
 
-    /* First, check that the device is present to be read */
-    if (!device_connected)
-    {
-        return;
-    }
-
     /* Attempt to read out data from sensor */
     if (!pressure_device->transfer(nullptr, 0, rx_buffer, PRESSURE_SENSOR_PACKET_SIZE_BYTES))
     {
         /* Failed to read device */
+        device_connected = false;
         return;
     }
 
+    /* Read was successful, set connected flag */
+    device_connected = true;
+
     /* Parse out data */
     raw_value = (rx_buffer[0] << 8) | rx_buffer[1];
-    status_bitmap = (raw_value >> 14) & 0x03;
+    last_read_status = static_cast<AP_SpraySystem_PressureSensor_Status>((raw_value >> 14) & 0x03);
 
-    /* Check status bits */
-    if (status_bitmap != 0b00)
+    /* Check status */
+    if (last_read_status != AP_SpraySystem_PressureSensor_Status::OK)
     {
+        /* Either a fault has occurred with the sensor, or the data is stale */
         return;
     }
 
@@ -72,6 +70,11 @@ float AP_SpraySystem_PressureSensor::get_temperature_c()
 bool AP_SpraySystem_PressureSensor::sensor_connected()
 {
     return device_connected;
+}
+
+AP_SpraySystem_PressureSensor_Status AP_SpraySystem_PressureSensor::get_current_status()
+{
+    return last_read_status;
 }
 
 uint32_t AP_SpraySystem_PressureSensor::get_converted_pressure_value_mbar(uint16_t raw_pressure_data)

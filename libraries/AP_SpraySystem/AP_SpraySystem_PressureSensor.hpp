@@ -18,6 +18,14 @@
 #define TEMP_DATA_MULTIPLIER (200 / 2048)
 #define TEMP_DATA_OFFSET 50
 
+/* Represents possible status bit conditions from the sensor */
+typedef enum {
+    OK = 0, /* Status 0b00 */
+    UNKNOWN,/* Status 0b01 - reserved according to datasheet */
+    STALE,  /* Status 0b10 - data was not updated since last read */
+    FAULT   /* Status 0b11 - a fault has occurred with the sensor */
+} AP_SpraySystem_PressureSensor_Status;
+
 /**
  * This class provides a driver for the I2C temperature and pressure sensor
  * used by the BFD spray system.
@@ -53,6 +61,11 @@ public:
      */
     bool sensor_connected();
 
+    /**
+     * @brief Returns the last read status from the pressure sensor
+     */
+    AP_SpraySystem_PressureSensor_Status get_current_status();
+
 private:
 
     /**
@@ -78,6 +91,9 @@ private:
 
     /* I2C device provided by the AP device manager */
     AP_HAL::OwnPtr<AP_HAL::I2CDevice> pressure_device;
+
+    /* Most recently read status of the sensor */
+    AP_SpraySystem_PressureSensor_Status last_read_status{AP_SpraySystem_PressureSensor_Status::UNKNOWN};
 };
 
 
