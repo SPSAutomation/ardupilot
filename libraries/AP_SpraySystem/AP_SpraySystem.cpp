@@ -1,15 +1,42 @@
 #include "AP_SpraySystem.hpp"
 
 uint8_t flow_sensor_data[sizeof(AP_SpraySystem_FlowSensor)];
+uint8_t spray_nozzle_data[sizeof(AP_SpraySystem_Nozzle)];
 
-void AP_SpraySystem::init() {
+AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
+
+AP_SpraySystem::AP_SpraySystem()
+{
+    if (_singleton != nullptr) {
+        AP_HAL::panic("AP_SpraySystem must be singleton");
+    }
+    _singleton = this;
+}
+
+void AP_SpraySystem::init()
+{
+    /* Initialise default parameters */
     AP_Param::setup_object_defaults(this, var_info);
+
+    /* Initialise flow sensor */
     flow_sensor = new(flow_sensor_data)AP_SpraySystem_FlowSensor();
     flow_sensor->init(&FLOW_SENSE_ICU_TIMER,FLOW_SENSE_ICU_CHANNEL, _flow_sense_pulse_ul);
     flow_sensor->set_enabled(true);
+
+    /* Initialise spray nozzle */
+    spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(6, 50);
+    spray_nozzle.open();
 }
 
-void AP_SpraySystem::update() {
+void AP_SpraySystem::update()
+{
+    uint32_t now = AP_HAL::millis();
+
+    if (now - nozzle_last_update_ms >= NOZZLE_UPDATE_PERIOD_MS) {
+        spray_nozzle.update();
+        nozzle_last_update_ms = now;
+    }
+
     // TODO: Implement PID control step here
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AP_SpraySystem/AP_SpraySystem_FlowSensor.hpp>
+#include <AP_SpraySystem/AP_SpraySystem_Nozzle.hpp>
 #include <AC_PID/AC_PID.h>
 #include <dronecan_msgs.h>
 
@@ -35,7 +36,7 @@ enum class SpraySchedulerState
 class AP_SpraySystem
 {
 public:
-    AP_SpraySystem() = default;
+    AP_SpraySystem();
     ~AP_SpraySystem() = default;
 
     /* Do not allow copies */
@@ -45,7 +46,6 @@ public:
      * @brief Gets the singleton instance of this class
      */
     static AP_SpraySystem *get_singleton();
-    static AP_SpraySystem *_singleton;
 
     /**
      * @brief initialises the spray system
@@ -122,20 +122,26 @@ public:
 
 private:
 
+    static AP_SpraySystem *_singleton;
+
     /**
      * @brief increments the flow rate PID controller
      */
     void flow_pid_step();
 
+    uint32_t nozzle_last_update_ms{0};
+
     AC_PID * pid_instance;
 
     AP_SpraySystem_FlowSensor * flow_sensor;
+
+    AP_SpraySystem_Nozzle spray_nozzle;
 
     AP_Float _flow_sense_pulse_ul;
 };
 
 namespace AP {
-    AP_SpraySystem &spray_system();
+    AP_SpraySystem *spray_system();
 };
 
 
