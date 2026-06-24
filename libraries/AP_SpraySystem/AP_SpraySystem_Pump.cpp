@@ -5,21 +5,31 @@ AP_SpraySystem_Pump::AP_SpraySystem_Pump(PWMDriver *driver, uint8_t pwm_channel)
     pwm_driver = driver;
     pump_pwm_channel = pwm_channel;
 
-    static const PWMConfig cfg = {
-            PWM_TIMER_CLOCK_HZ,
-            PWM_TIMER_PERIOD,
-            nullptr,
-            {
-                    {PWM_OUTPUT_ACTIVE_HIGH, nullptr}, // TIM3_CH1 / PB4
-                    {PWM_OUTPUT_DISABLED, nullptr},
-                    {PWM_OUTPUT_DISABLED, nullptr},
-                    {PWM_OUTPUT_DISABLED, nullptr},
-            },
-            0,
-            0
-    };
+    if (pwm_channel >= PWM_CHANNELS)
+    {
+        /* Channel out of bounds */
+        return;
+    }
 
-    pwmStart(pwm_driver, &cfg);
+    pwm_cfg.frequency = PWM_TIMER_CLOCK_HZ;
+    pwm_cfg.period = PWM_TIMER_PERIOD_TICKS;
+    pwm_cfg.callback = nullptr;
+
+    /* Only apply the active configuration to the channel we are using */
+    for (int i = 0; i < PWM_CHANNELS; i++) {
+        if (i == pwm_channel)
+        {
+            pwm_cfg.channels[i].mode = PWM_OUTPUT_ACTIVE_HIGH;
+            pwm_cfg.channels[i].callback = nullptr;
+        }
+        else
+        {
+            pwm_cfg.channels[i].mode = PWM_OUTPUT_DISABLED;
+            pwm_cfg.channels[i].callback = nullptr;
+        }
+    }
+
+    pwmStart(pwm_driver, &pwm_cfg);
 
     /* Always start with pump disabled */
     disable();

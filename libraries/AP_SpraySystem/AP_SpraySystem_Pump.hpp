@@ -57,6 +57,8 @@ private:
     uint8_t pump_pwm_channel;
 
     PWMDriver * pwm_driver;
+
+    PWMConfig pwm_cfg;
 };
 
 
