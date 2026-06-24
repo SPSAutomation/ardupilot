@@ -11,7 +11,7 @@
 #define PWM_TIMER_CLOCK_HZ 1000000
 
 /* 100 Hz */
-#define PWM_TIMER_PERIOD 5000
+#define PWM_TIMER_PERIOD_TICKS 5000
 
 class AP_SpraySystem_Pump
 {
