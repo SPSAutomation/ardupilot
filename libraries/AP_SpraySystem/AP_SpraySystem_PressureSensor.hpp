@@ -7,6 +7,17 @@
 
 #define PRESSURE_SENSOR_PACKET_SIZE_BYTES   4
 #define PRESSURE_SENSOR_I2C_ADDRESS         (0x28 << 1)
+#define READ_RETRY_LIMIT                    3
+
+#define PRESSURE_SENSOR_MIN_MBAR 0
+#define PRESSURE_SENSOR_MAX_MBAR 6894
+
+#define PRESSURE_DATA_MULTIPLIER    (PRESSURE_SENSOR_MAX_MBAR - PRESSURE_SENSOR_MIN_MBAR) / (14000)
+#define PRESSURE_DATA_OFFSET        1000
+
+#define TEMP_DATA_MULTIPLIER (200 / 2048)
+#define TEMP_DATA_OFFSET 50
+
 
 class AP_SpraySystem_PressureSensor
 {
@@ -21,18 +32,11 @@ public:
     void update();
 
     /**
-     * @brief Get the last pressure psi value read from the sensor
-     *
-     * @return pressure value in psi
-     */
-    uint32_t get_pressure_psi();
-
-    /**
      * @brief Get the last pressure bar value read from the sensor
      *
      * @return pressure value in bar
      */
-    float get_pressure_bar();
+    float get_pressure_mbar();
 
     /**
      * Get the last read temperature value in degrees celsius
@@ -47,10 +51,25 @@ public:
     bool sensor_connected();
 
 private:
+
+    /**
+     * @brief Converts the raw numerical value provided by the sensor into
+     * a readable mBar value
+     *
+     * @return pressure value in mBar
+     */
+    uint32_t get_converted_pressure_value_mbar(uint16_t raw_pressure_data);
+
+    /**
+     * @brief Converts the raw numerical value provided by the sensor into a
+     * readable temperature value in degrees c
+     */
+    uint32_t get_converted_temperature_value_c(uint16_t raw_temp_data);
+
     /* Flag to check whether the sensor is actually connected */
     bool device_connected{false};
 
-    uint32_t last_read_pressure_psi{0};
+    uint32_t last_read_pressure_mbar{0};
     uint32_t last_read_temperature_c{0};
 
     AP_HAL::OwnPtr<AP_HAL::I2CDevice> pressure_device;
