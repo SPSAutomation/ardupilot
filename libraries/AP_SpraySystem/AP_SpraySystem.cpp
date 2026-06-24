@@ -28,7 +28,7 @@ void AP_SpraySystem::init()
     spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(6, 50);
 
     /* Initialise pump */
-    pump = new(pump_data)(&PWMD3, 0);
+    pump = new(pump_data)AP_SpraySystem_Pump(&PWMD3, 0);
 }
 
 void AP_SpraySystem::update()
