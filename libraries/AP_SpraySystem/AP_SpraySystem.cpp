@@ -29,6 +29,9 @@ void AP_SpraySystem::init()
 
     /* Initialise pump */
     pump = new(pump_data)AP_SpraySystem_Pump(&PWMD3, 0);
+
+    /* Initialise pressure sensor */
+    pressure_sensor = new(pressure_sensor_data)AP_SpraySystem_PressureSensor(0);
 }
 
 void AP_SpraySystem::update()
