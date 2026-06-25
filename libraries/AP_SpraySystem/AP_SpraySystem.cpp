@@ -206,8 +206,6 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
     // Done spraying, tidy up, run PID controller
     if (time_spraying_ms >= current_spray_routine.time_allowed_ms)
     {
-
-        double actual_flow_closing = flow_sensor->get_flow_amount_ml();
         if (flow_sensor->is_enabled())
         {
             // Close it ASAP so we can wait our delay period to ensure we have collected all flow sensor data,
