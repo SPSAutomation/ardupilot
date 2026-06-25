@@ -238,6 +238,16 @@ void AP_SpraySystem::set_time_offset(int64_t offset_us)
     montonic_clock_offset = (offset_us / 1000);
 }
 
+void AP_SpraySystem::set_spray_nozzle_open(bool open)
+{
+    (open) ? spray_nozzle->open() : spray_nozzle->close();
+}
+
+void AP_SpraySystem::set_return_line_open(bool open)
+{
+    (open) ? return_line->open() : return_line->close();
+}
+
 bool AP_SpraySystem::set_pump_speed(uint32_t pump_throttle_value)
 {
     return pump->set_speed(pump_throttle_value);
