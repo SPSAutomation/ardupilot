@@ -7,6 +7,8 @@ uint8_t pressure_sensor_data[sizeof(AP_SpraySystem_PressureSensor)];
 
 AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
 
+extern const AP_HAL::hal& hal;
+
 AP_SpraySystem::AP_SpraySystem()
 {
     if (_singleton != nullptr) {
@@ -210,9 +212,8 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
             // Close it ASAP so we can wait our delay period to ensure we have collected all flow sensor data,
             // closed by default in end_routine()
             spray_nozzle->close();
-
+            hal.scheduler->delay(spray_nozzle->get_closing_delay_ms());
         }
-        actual_flow_closing = flow_sensor->get_flow_amount_ml() - actual_flow_closing;
 
         end_routine();
     }
