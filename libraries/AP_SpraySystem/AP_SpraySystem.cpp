@@ -48,18 +48,19 @@ void AP_SpraySystem::update()
         return;
     }
 
-    /* Check for changes in the PID settings and update controller accordingly */
-    if (_p_gain != last_p_gain) {
+    /* Check for changes in the PID settings and update controller accordingly
+     * Use a difference threshold because we are working with floats */
+    if (fabsf(_p_gain - last_p_gain) > 0.0001) {
         pid_instance->set_kP(_p_gain);
         last_p_gain = _p_gain;
     }
 
-    if (_i_gain != last_i_gain) {
+    if (fabsf(_i_gain - last_i_gain) > 0.0001) {
         pid_instance->set_kI(_i_gain);
         last_i_gain = _i_gain;
     }
 
-    if (_d_gain != last_d_gain) {
+    if (fabsf(_d_gain - last_d_gain) > 0.0001) {
         pid_instance->set_kD(_d_gain);
         last_d_gain = _d_gain;
     }
