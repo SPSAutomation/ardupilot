@@ -914,8 +914,20 @@ void AP_Periph_FW::onTransferReceived(CanardInstance* canard_instance,
 #endif
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    case DRONECAN_PROTOCOL_GLOBALTIME_ID:
+        spray_system_handle_global_timesync_message(canard_instance, transfer);
+        break;
+
     case COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_ID:
         spray_system_handle_pump_control_message(canard_instance, transfer);
+        break;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_REQUEST_ID:
+        spray_system_handle_nozzle_control_message(canard_instance, transfer);
+        break;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_ID:
+        spray_system_handle_schedule_routine_message(canard_instance, transfer);
         break;
 #endif
 
