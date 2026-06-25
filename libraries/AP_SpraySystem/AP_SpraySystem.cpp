@@ -40,9 +40,9 @@ void AP_SpraySystem::update()
     uint32_t now = AP_HAL::millis();
     static uint32_t last_update_time = 0;
 
-    uint32_t dt = now - last_update_time;
+    uint32_t dt_ms = now - last_update_time;
 
-    if (dt < FLOW_CONTROLLER_UPDATE_PERIOD_MS) {
+    if (dt_ms < FLOW_CONTROLLER_UPDATE_PERIOD_MS) {
         return;
     }
 
@@ -67,34 +67,20 @@ void AP_SpraySystem::update()
             break;
 
         case SpraySchedulerState::RUNNING:
-            iterate_flow_control(dt_ms);
+            flow_pid_step(dt_ms);
             break;
     }
 }
 
 SprayScheduleResult AP_SpraySystem::enqueue_spray_routine(SprayRoutine routine)
 {
-    SprayRoutine routine;
-
-    // Set the desired amounts, rate, amount, time
-    desired_flow_rate_ml_min = rate_ml_min;
-    time_allowed_ms = time_ms;
-    time_spraying_ms = 0;
-
     /* Add the routine to the queue if there is room. */
-    if (spray_routine_queue.is_full())
+    if (spray_routine_queue.space() == 0)
     {
         return SprayScheduleResult::QUEUE_FULL;
     }
 
-    /* If a routine is not currently scheduled, set the pump speed to prepare */
-    routine.desired_flow_rate_ml_min = desired_flow_rate_ml_min;
-    routine.desired_spray_ml = amount_ml;
-    routine.time_allowed_ms = time_allowed_ms;
-    routine.time_spraying_ms = time_spraying_ms;
-    routine.start_time_ms = start_time_utc_ms;
-
-    if (spray_routine_queue.enqueue(routine))
+    if (spray_routine_queue.push(routine))
     {
         return SprayScheduleResult::SUCCESS;
     }
@@ -111,7 +97,7 @@ SprayScheduleResult AP_SpraySystem::schedule_next_spray_routine()
     }
 
     /* Get the next queued spray routine */
-    if (!spray_routine_queue.dequeue(&current_spray_routine))
+    if (!spray_routine_queue.pop(current_spray_routine))
     {
         return SprayScheduleResult::QUEUE_EMPTY;
     }
@@ -120,7 +106,7 @@ SprayScheduleResult AP_SpraySystem::schedule_next_spray_routine()
     pid_instance->reset_filter();
 
     /* Ensure pump is at it's agitation speed */
-    pump_speed_us = PUMP_AGITATION_SPEED;
+    current_pump_speed_us = PUMP_AGITATION_SPEED;
     return_line->open();
     pump->set_speed(PUMP_AGITATION_SPEED);
     pump->enable();
@@ -132,7 +118,7 @@ SprayScheduleResult AP_SpraySystem::schedule_next_spray_routine()
     return SprayScheduleResult::SUCCESS;
 }
 
-SprayScheduleResult AP_SpraySystem::time_to_start_routine()
+bool AP_SpraySystem::time_to_start_routine()
 {
     if (current_state != SpraySchedulerState::SCHEDULED)
     {
@@ -190,7 +176,6 @@ void AP_SpraySystem::end_routine()
     }
 
     time_spraying_ms = 0;
-    last_desired_flow_rate_ml_min = current_spray_routine.desired_flow_rate_ml_min;
     flow_sensor->reset();
     current_state = SpraySchedulerState::IDLE;
 }
@@ -198,14 +183,6 @@ void AP_SpraySystem::end_routine()
 void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
 {
     time_spraying_ms += dt_ms;
-    time_since_last_adjustment += dt_ms;
-
-    // Attempt to compensate for the extra liquid due to the delay of closing the nozzle - this is only ever going to be ~ 1 - 4 ml
-    double estimated_flow_closing = 0;
-    if (flow_sensor->is_enabled())
-    {
-        estimated_flow_closing = spray_nozzle->get_closing_delay_ms() * ((float) flow_sensor->get_flow_rate_ml() / (60 * 1000.0f));
-    }
 
     // Done spraying, tidy up, run PID controller
     if (time_spraying_ms >= current_spray_routine.time_allowed_ms)
@@ -225,23 +202,14 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
     }
     else
     {
-        if (time_since_last_adjustment > PID_LOOP_PERIOD_MS)
-        {
-            // Use a PID to try to keep a constant flow rate
-            double integral_time_iter = time_since_last_adjustment;
+        // Use a PID to try to keep a constant flow rate;
+        float correction = pid_instance->update_all(current_spray_routine.desired_flow_rate_ml_min,
+                                                          flow_sensor->get_flow_rate_ml(),
+                                                          dt_ms);
 
-            pid_instance->update_all(current_spray_routine.desired_flow_rate_ml_min,
-                                                              flow_sensor->get_flow_rate_ml(),
-                                                              integral_time_iter);
+        current_pump_speed_us *= correction;
 
-            current_pump_speed_us *= pid_instance->get_p();
-            current_pump_speed_us *= pid_instance->get_d();
-            current_pump_speed_us *= pid_instance->get_i();
-
-            pump->set_speed(current_pump_speed_us);
-
-            time_since_last_adjustment = 0;
-        }
+        pump->set_speed(current_pump_speed_us);
     }
 }
 

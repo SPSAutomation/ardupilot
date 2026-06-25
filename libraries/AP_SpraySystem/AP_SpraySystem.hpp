@@ -11,7 +11,9 @@
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
 
-#define SPRAY_ROUTINE_MAX_QUEUE_LENGTH
+#define SPRAY_ROUTINE_MAX_QUEUE_LENGTH      3
+#define FLOW_CONTROLLER_UPDATE_PERIOD_MS    10
+#define AMOUNT_THRESHOLD_PROPORTION         0.1    // 10% threshold
 
 typedef struct
 {
@@ -88,19 +90,6 @@ public:
      * @param open true to open solenoid, false to close
      */
     void set_return_line_open(bool open);
-
-    /**
-     * @brief sets the spray system to spray at a constant flow rate
-     * indefinitely until stopped manually
-     *
-     * @param flow_rate_ml_min target flow rate in ml / minute
-     */
-    void set_constant_flow_rate(uint32_t flow_rate_ml_min);
-
-    /**
-     * @brief closes nozzle and return line and shuts down pump
-     */
-    void stop_flow();
 
     /**
      * @brief sets the current pump throttle value
@@ -186,6 +175,12 @@ private:
     AP_SpraySystem_PressureSensor * pressure_sensor;
 
     AP_Float _flow_sense_pulse_ul;
+
+    /* Currently executed spray routine */
+    SprayRoutine current_spray_routine;
+
+    /* Amount of time the current routine has been actively spraying */
+    uint32_t time_spraying_ms;
 
     /* Variables used for time synchronisation with controller */
     int64_t montonic_clock_offset{0};
