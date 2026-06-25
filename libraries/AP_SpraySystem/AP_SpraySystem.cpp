@@ -302,7 +302,7 @@ const AP_Param::GroupInfo AP_SpraySystem::var_info[] = {
         // @Description: D gain for flow controller PID
         // @User Standard
         // @RebootRequired: False
-        AP_GROUPINFO("P_GAIN", 2, AP_SpraySystem, _d_gain, 0.2),
+        AP_GROUPINFO("P_GAIN", 4, AP_SpraySystem, _d_gain, 0.2),
 
         AP_GROUPEND
 };
