@@ -318,6 +318,9 @@ public:
 
     void spray_system_handle_schedule_routine_message(CanardInstance * canard_instance,
                                                       CanardRxTransfer * transfer);
+
+    void spray_system_handle_global_timesync_message(CanardInstance * canard_instance,
+                                                     CanardRxTransfer * transfer);
 #endif
 
 #if AP_PERIPH_AIRSPEED_ENABLED
