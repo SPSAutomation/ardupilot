@@ -7,7 +7,7 @@ uint8_t pressure_sensor_data[sizeof(AP_SpraySystem_PressureSensor)];
 
 AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
 
-extern const AP_HAL::hal& hal;
+extern const AP_HAL::HAL& hal;
 
 AP_SpraySystem::AP_SpraySystem()
 {
