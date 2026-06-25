@@ -5,9 +5,13 @@
 #include <AP_SpraySystem/AP_SpraySystem_Pump.hpp>
 #include <AP_SpraySystem/AP_SpraySystem_PressureSensor.hpp>
 #include <AC_PID/AC_PID.h>
+#include <AP_Scheduler/AP_Scheduler.h>
+#include <AP_HAL/utility/RingBuffer.h>
 #include <dronecan_msgs.h>
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+
+#define SPRAY_ROUTINE_MAX_QUEUE_LENGTH
 
 typedef struct
 {
@@ -127,6 +131,15 @@ public:
      */
     uint32_t get_current_flow_rate_ml_min();
 
+    /**
+     * @brief handler for incoming global time sync broadcasts.
+     * Updates the offset applied to the monotonic timestamp to
+     * get a time matching that of the controller.
+     *
+     * @param timestamp timestamp provided by time sync message
+     */
+    void handle_time_sync_message(uint32_t timestamp);
+
     static const struct AP_Param::GroupInfo     var_info[];
 
 private:
@@ -135,22 +148,60 @@ private:
 
     /**
      * @brief increments the flow rate PID controller
+     *
+     * @param dt_ms time since last PID step in ms
      */
-    void flow_pid_step();
+    void flow_pid_step(uint32_t dt_ms);
 
-    uint32_t nozzle_last_update_ms{0};
+    /**
+     * @brief Pulls the next spray routine from the queue
+     * and prepares to spray at designated time
+     */
+    SprayScheduleResult schedule_next_spray_routine();
+
+    /**
+     * @brief checks whether it is time to start the next
+     * scheduled routine
+     */
+    bool time_to_start_routine();
+
+    /**
+     * @brief starts the next spray routine
+     */
+    void start_routine();
+
+    void end_routine();
+
+    uint64_t get_current_time_millis();
 
     AC_PID * pid_instance;
 
     AP_SpraySystem_FlowSensor * flow_sensor;
 
     AP_SpraySystem_Nozzle * spray_nozzle;
+    AP_SpraySystem_Nozzle * return_line;
 
     AP_SpraySystem_Pump * pump;
 
     AP_SpraySystem_PressureSensor * pressure_sensor;
 
     AP_Float _flow_sense_pulse_ul;
+
+    /* Variables used for time synchronisation with controller */
+    int64_t montonic_clock_offset{0};
+    uint64_t last_sync_rx_timestamp{0};
+
+    /* Current state of the spray system */
+    SpraySchedulerState current_state{SpraySchedulerState::IDLE};
+
+    /* Callback for when routines are complete */
+    void (*routine_complete_cb)(float, uint32_t, bool){nullptr};
+
+    /* Current pump speed used by PID */
+    uint16_t current_pump_speed_us;
+
+    /* Queue for scheduled spray routines */
+    ObjectBuffer<SprayRoutine> spray_routine_queue{SPRAY_ROUTINE_MAX_QUEUE_LENGTH};
 };
 
 namespace AP {

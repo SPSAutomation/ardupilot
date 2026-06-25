@@ -8,6 +8,8 @@
 #define NOZZLE_UPDATE_PERIOD_MS 1
 #define NOZZLE_PWM_FREQUENCY_HZ 200
 
+#define NOZZLE_CLOSING_DELAY_MS 45
+
 /**
  * @brief This class provides a driver for externally connected spray nozzle solenoids.
  * Solenoids are controlled using a manual PWM. This is primarily to prevent overheating
@@ -39,6 +41,11 @@ public:
      * @return true if the nozzle is open (i.e. the PWM is running), false otherwise
      */
     bool is_open();
+
+    /**
+     * @brief Gets the time in ms for the nozzle to close
+     */
+    uint32_t get_closing_delay_ms();
 
 private:
 

@@ -94,3 +94,8 @@ inline void AP_SpraySystem_Nozzle::set_solenoid_open(bool open)
 {
     hal.gpio->write(nozzle_ctrl_pin, open ? 1 : 0);
 }
+
+uint32_t AP_SpraySystem_Nozzle::get_closing_delay_ms()
+{
+    return NOZZLE_CLOSING_DELAY_MS;
+}

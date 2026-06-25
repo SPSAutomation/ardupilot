@@ -13,6 +13,9 @@
 /* 100 Hz */
 #define PWM_TIMER_PERIOD_TICKS 5000
 
+/* Pump speed to be used when agitating the spray tank */
+#define PUMP_AGITATION_SPEED 1600
+
 class AP_SpraySystem_Pump
 {
 public:
