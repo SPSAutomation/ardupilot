@@ -2,6 +2,7 @@
 
 uint8_t flow_sensor_data[sizeof(AP_SpraySystem_FlowSensor)];
 uint8_t spray_nozzle_data[sizeof(AP_SpraySystem_Nozzle)];
+uint8_t return_line_data[sizeof(AP_SpraySystem_Nozzle)];
 uint8_t pump_data[sizeof(AP_SpraySystem_Pump)];
 uint8_t pressure_sensor_data[sizeof(AP_SpraySystem_PressureSensor)];
 
@@ -28,13 +29,14 @@ void AP_SpraySystem::init()
     flow_sensor->set_enabled(true);
 
     /* Initialise spray nozzle */
-    spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(6, 50);
+    spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(NOZZLE_CTRL_GPIO, NOZZLE_DUTY);
+    return_line = new(return_line_data)AP_SpraySystem_Nozzle(RETURN_LINE_CTRL_GPIO, RETURN_LINE_DUTY);
 
     /* Initialise pump */
-    pump = new(pump_data)AP_SpraySystem_Pump(&PWMD3, 0);
+    pump = new(pump_data)AP_SpraySystem_Pump(&PUMP_PWM_DRIVER, PUMP_PWM_CHANNEL);
 
     /* Initialise pressure sensor */
-    pressure_sensor = new(pressure_sensor_data)AP_SpraySystem_PressureSensor(0);
+    pressure_sensor = new(pressure_sensor_data)AP_SpraySystem_PressureSensor(PRESSURE_SENSOR_I2C_BUS);
 }
 
 void AP_SpraySystem::update()
