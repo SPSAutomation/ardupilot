@@ -59,7 +59,7 @@ public:
     /**
      * @brief initialises the spray system
      */
-    void init();
+    void init(void (*routine_complete_cb)(float, uint32_t, bool));
 
     /**
      * @brief update function to be called regularly
