@@ -46,6 +46,22 @@ void AP_SpraySystem::update()
         return;
     }
 
+    /* Check for changes in the PID settings and update controller accordingly */
+    if (_p_gain != last_p_gain) {
+        pid_instance->set_kP(_p_gain);
+        last_p_gain = _p_gain;
+    }
+
+    if (_i_gain != last_i_gain) {
+        pid_instance->set_kI(_i_gain);
+        last_i_gain = _i_gain;
+    }
+
+    if (_d_gain != last_d_gain) {
+        pid_instance->set_kD(_d_gain);
+        last_d_gain = _d_gain;
+    }
+
     /* Update all sensors */
     pressure_sensor->update();
 
@@ -240,6 +256,27 @@ const AP_Param::GroupInfo AP_SpraySystem::var_info[] = {
         // @User Standard
         // @RebootRequired: True
         AP_GROUPINFO("PULSE_UL", 1, AP_SpraySystem, _flow_sense_pulse_ul, FLOW_SENSE_UL_PER_PULSE),
+
+        // @Param: FLOW_P_GAIN
+        // @DisplayName: Flow Controller P Gain
+        // @Description: P gain for flow controller PID
+        // @User Standard
+        // @RebootRequired: False
+        AP_GROUPINFO("P_GAIN", 2, AP_SpraySystem, _p_gain, 0.8);
+
+        // @Param: FLOW_I_GAIN
+        // @DisplayName: Flow Controller I Gain
+        // @Description: I gain for flow controller PID
+        // @User Standard
+        // @RebootRequired: False
+        AP_GROUPINFO("I_GAIN", 3, AP_SpraySystem, _i_gain, 0.1);
+
+        // @Param: FLOW_D_GAIN
+        // @DisplayName: Flow Controller D Gain
+        // @Description: D gain for flow controller PID
+        // @User Standard
+        // @RebootRequired: False
+        AP_GROUPINFO("P_GAIN", 2, AP_SpraySystem, _d_gain, 0.2);
 
         AP_GROUPEND
 };
