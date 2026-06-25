@@ -65,6 +65,7 @@ void AP_Periph_FW::spray_system_send_status()
     flow_status.amount_flowed_ml = spray_system.get_amount_flowed_ml();
     flow_status.time_spraying_ms = spray_system.get_current_spray_time_ms();
     flow_status.nozzle_state = spray_system.get_spray_nozzle_state();
+    flow_status.source_node_id = 0; // Not required for message
 
     total_size = com_spsautomation_spraysystem_FlowNozStatus_encode(
             &flow_status,
@@ -82,6 +83,7 @@ void AP_Periph_FW::spray_system_send_status()
     com_spsautomation_spraysystem_PumpStatus pump_status;
     pump_status.speed = spray_system.get_current_pump_speed();
     pump_status.pump_state = spray_system.get_pump_enabled();
+    pump_status.source_node_id = 0; // Not required for message
 
     total_size = com_spsautomation_spraysystem_PumpStatus_encode(
             &pump_status,
@@ -141,4 +143,92 @@ void AP_Periph_FW::spray_system_handle_pump_control_message(CanardInstance * can
                    response_buffer,
                    total_size);
 }
+
+void AP_Periph_FW::spray_system_handle_nozzle_control_message(CanardInstance * canard_instance,
+                                                    CanardRxTransfer * transfer)
+{
+    uint8_t response_buffer[COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_RESPONSE_MAX_SIZE];
+    com_spsautomation_spraysystem_NozzleManualControlRequest msg;
+    com_spsautomation_spraysystem_NozzleManualControlResponse response;
+
+    /* Decode request message */
+    if (com_spsautomation_spraysystem_NozzleManualControlRequest_decode(transfer, &msg))
+    {
+        /* Failed to decode message */
+        return;
+    }
+
+    /* Frequency and duty cycle fields are deprecated, only care about actuate_nozzle */
+    if (msg.actuate_nozzle) {
+        /* Open spray nozzle, close return line */
+        spray_system.set_spray_nozzle_open(true);
+        spray_system.set_return_line_open(false);
+    }
+    else
+    {
+        /* Close spray nozzle, open return line */
+        spray_system.set_spray_nozzle_open(false);
+        spray_system.set_return_line_open(true);
+    }
+
+    /* Encode and send response */
+    response.success = true;
+
+    uint16_t total_size = com_spsautomation_spraysystem_NozzleManualControlResponse_encode(
+            &response,
+            response_buffer,
+            !periph.canfdout());
+
+    canard_respond(canard_instance,
+                   transfer,
+                   COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_RESPONSE_SIGNATURE,
+                   COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_RESPONSE_ID,
+                   response_buffer,
+                   total_size);
+}
+
+void AP_Periph_FW::spray_system_handle_schedule_routine_message(CanardInstance * canard_instance,
+                                                  CanardRxTransfer * transfer)
+{
+    uint8_t response_buffer[COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_RESPONSE_MAX_SIZE];
+    com_spsautomation_spraysystem_FlowNozControlRequest msg;
+    com_spsautomation_spraysystem_FlowNozControlResponse response;
+
+    /* Decode incoming mesage */
+    if (com_spsautomation_spraysystem_FlowNozControlRequest_decode(transfer, &msg))
+    {
+        /* Failed to decode message */
+        return;
+    }
+
+    SprayRoutine new_routine = {
+            .desired_spray_ml = msg.desired_spray_ml,
+            .desired_flow_rate_ml_min = msg.desired_flow_rate_ml_min,
+            .time_allowed_ms = msg.time_allowed_ms,
+            .start_time_ms = msg.start_time_utc_ms
+    };
+
+    bool success = true;
+
+    if (spray_system.enqueue_spray_routine(new_routine) != SprayScheduleResult::SUCCESS)
+    {
+        success = false;
+    }
+
+    /* Encode and send response */
+    response.success = success;
+
+    uint16_t total_size = com_spsautomation_spraysystem_FlowNozControlResponse_encode(
+            &response,
+            response_buffer,
+            !periph.canfdout());
+
+    canard_respond(canard_instance,
+                   transfer,
+                   COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_RESPONSE_SIGNATURE,
+                   COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_RESPONSE_ID,
+                   response_buffer,
+                   total_size);
+}
+
 #endif
