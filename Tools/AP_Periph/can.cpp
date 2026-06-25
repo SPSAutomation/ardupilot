@@ -913,6 +913,12 @@ void AP_Periph_FW::onTransferReceived(CanardInstance* canard_instance,
         break;
 #endif
 
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_ID:
+        spray_system_handle_pump_control_message(canard_instance, transfer);
+        break;
+#endif
+
     }
 }
 
@@ -1030,6 +1036,11 @@ bool AP_Periph_FW::shouldAcceptTransfer(const CanardInstance* canard_instance,
 #if AP_PERIPH_RTC_GLOBALTIME_ENABLED
     case DRONECAN_PROTOCOL_GLOBALTIME_ID:
         *out_data_type_signature = DRONECAN_PROTOCOL_GLOBALTIME_SIGNATURE;
+        return true;
+#endif
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_ID:
+        *out_data_type_signature = COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_SIGNATURE;
         return true;
 #endif
     default:
