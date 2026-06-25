@@ -21,8 +21,25 @@ AP_SpraySystem_Nozzle::AP_SpraySystem_Nozzle(uint32_t ctrl_pin, uint32_t duty_pe
     close_count_target = static_cast<uint32_t>(total_pwm_period_ticks) - open_count_target;
 }
 
-void AP_SpraySystem_Nozzle::update()
+void AP_SpraySystem_Nozzle::init()
 {
+    /* Register soft timer update */
+    hal.scheduler->register_timer_process(
+            FUNCTOR_BIND_MEMBER(&AP_SpraySystem_Nozzle::iterate_pwm, void)
+    );
+}
+
+void AP_SpraySystem_Nozzle::iterate_pwm()
+{
+    /* Check how much time has passed in this period */
+    const uint32_t now = AP_HAL::millis();
+
+    if (now - last_tick_time_ms < NOZZLE_UPDATE_PERIOD_MS) {
+        return;
+    }
+
+    last_tick_time_ms = now;
+
     /* If the solenoid is open, run the PWM */
     if (nozzle_open)
     {

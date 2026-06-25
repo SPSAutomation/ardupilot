@@ -21,9 +21,9 @@ public:
     explicit AP_SpraySystem_Nozzle(uint32_t ctrl_pin, uint32_t duty_percent);
 
     /**
-     * @brief Iterates nozzle on/off timer counts and toggles the solenoid state if necessary.
+     *
      */
-    void update();
+    void init();
 
     /**
      * @brief Sets the nozzle to be open using the configured frequency and duty cycle
@@ -57,6 +57,11 @@ private:
     void set_solenoid_open(bool open);
 
     /**
+     * @brief Iterates nozzle on/off timer counts and toggles the solenoid state if necessary.
+     */
+    void iterate_pwm();
+
+    /**
      * Current state of the nozzle
      */
     bool nozzle_open{false};
@@ -78,6 +83,9 @@ private:
      */
     uint32_t open_count_target{0};
     uint32_t close_count_target{0};
+
+    /* Keep track of when the last PWM update was performed */
+    uint32_t last_tick_time_ms{0};
 
     uint32_t nozzle_ctrl_pin;
 };

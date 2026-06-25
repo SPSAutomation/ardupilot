@@ -35,6 +35,9 @@ void AP_SpraySystem::init(void (*cb)(float, uint32_t, bool))
     spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(NOZZLE_CTRL_GPIO, NOZZLE_DUTY);
     return_line = new(return_line_data)AP_SpraySystem_Nozzle(RETURN_LINE_CTRL_GPIO, RETURN_LINE_DUTY);
 
+    spray_nozzle->init();
+    return_line->init();
+
     /* Initialise pump */
     pump = new(pump_data)AP_SpraySystem_Pump(&PUMP_PWM_DRIVER, PUMP_PWM_CHANNEL);
 
