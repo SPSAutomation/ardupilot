@@ -164,13 +164,12 @@ public:
     bool get_pump_enabled();
 
     /**
-     * @brief handler for incoming global time sync broadcasts.
-     * Updates the offset applied to the monotonic timestamp to
-     * get a time matching that of the controller.
+     * @brief Sets the offset to be applied to the monotonic clock
+     * to get a time synchronised with the controller
      *
-     * @param timestamp timestamp provided by time sync message
+     * @param offset_us offset to be applied in us
      */
-    void handle_time_sync_message(uint32_t timestamp);
+    void set_time_offset(int64_t offset_us);
 
     static const struct AP_Param::GroupInfo     var_info[];
 
@@ -234,7 +233,6 @@ private:
 
     /* Variables used for time synchronisation with controller */
     int64_t montonic_clock_offset{0};
-    uint64_t last_sync_rx_timestamp{0};
 
     /* Current state of the spray system */
     SpraySchedulerState current_state{SpraySchedulerState::IDLE};

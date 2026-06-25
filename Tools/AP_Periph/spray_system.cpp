@@ -97,6 +97,31 @@ void AP_Periph_FW::spray_system_send_status()
                      total_size);
 }
 
+void AP_Periph_FW::spray_system_handle_global_timesync_message(CanardInstance * canard_instance,
+                                                     CanardRxTransfer * transfer)
+{
+    uavcan_protocol_GlobalTimeSync msg;
+    static uint64_t last_sync_rx_timestamp = 0;
+    int64_t time_offset_us = 0;
+    uint64_t rx_timestamp;
+
+    if (uavcan_protocol_GlobalTimeSync_decode(transfer, &msg))
+    {
+        /* Failed to decode message */
+        return;
+    }
+
+    rx_timestamp = transfer->timestamp_usec;
+
+    /* If the timestamp is 0, this is the first time sync message we've received */
+    if (msg.previous_transmission_timestamp_usec != 0) {
+        time_offset_us = last_sync_rx_timestamp - msg.previous_transmission_timestamp_usec;
+        spray_system.set_time_offset(time_offset_us);
+    }
+
+    last_sync_rx_timestamp = rx_timestamp - time_offset_us;
+}
+
 void AP_Periph_FW::spray_system_handle_pump_control_message(CanardInstance * canard_instance,
                                               CanardRxTransfer * transfer)
 {
