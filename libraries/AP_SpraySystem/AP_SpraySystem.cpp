@@ -262,21 +262,21 @@ const AP_Param::GroupInfo AP_SpraySystem::var_info[] = {
         // @Description: P gain for flow controller PID
         // @User Standard
         // @RebootRequired: False
-        AP_GROUPINFO("P_GAIN", 2, AP_SpraySystem, _p_gain, 0.8);
+        AP_GROUPINFO("P_GAIN", 2, AP_SpraySystem, _p_gain, 0.8),
 
         // @Param: FLOW_I_GAIN
         // @DisplayName: Flow Controller I Gain
         // @Description: I gain for flow controller PID
         // @User Standard
         // @RebootRequired: False
-        AP_GROUPINFO("I_GAIN", 3, AP_SpraySystem, _i_gain, 0.1);
+        AP_GROUPINFO("I_GAIN", 3, AP_SpraySystem, _i_gain, 0.1),
 
         // @Param: FLOW_D_GAIN
         // @DisplayName: Flow Controller D Gain
         // @Description: D gain for flow controller PID
         // @User Standard
         // @RebootRequired: False
-        AP_GROUPINFO("P_GAIN", 2, AP_SpraySystem, _d_gain, 0.2);
+        AP_GROUPINFO("P_GAIN", 2, AP_SpraySystem, _d_gain, 0.2),
 
         AP_GROUPEND
 };
