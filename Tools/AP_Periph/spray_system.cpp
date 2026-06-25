@@ -3,12 +3,39 @@
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
 
-void AP_Periph_FW::spray_system_init() {
-    spray_system.init();
+void AP_Periph_FW::spray_system_init()
+{
+    spray_system.init(spray_system_send_routine_complete_message);
 }
 
-void AP_Periph_FW::spray_system_update() {
+void AP_Periph_FW::spray_system_update()
+{
     spray_system.update();
+}
+
+void AP_Periph_FW::spray_system_send_routine_complete_message(float amount_sprayed_ml,
+                                                              uint32_t time_taken_ms,
+                                                              bool within_range)
+{
+    uint8_t routine_complete_buffer[COM_SPSAUTOMATION_SPRAYSYSTEM_SPRAYROUTINECOMPLETE_MAX_SIZE];
+    com_spsautomation_spraysystem_SprayRoutineComplete routine_complete_msg;
+    routine_complete_msg.avg_flow_rate_ml_min = static_cast<uint16_t>(amount_sprayed_ml * 60000 / (time_taken_ms));
+    routine_complete_msg.amount_sprayed_ml = amount_sprayed_ml;
+    routine_complete_msg.time_taken_ms = time_taken_ms;
+    routine_complete_msg.routine_within_threshold = within_range;
+    routine_complete_msg.source_node_id = 0; // Not required for message
+
+    uint16_t total_size = com_spsautomation_spraysystem_SprayRoutineComplete_encode(
+            &routine_complete_msg,
+            routine_complete_buffer,
+            !periph.canfdout());
+
+    periph.canard_broadcast(
+            COM_SPSAUTOMATION_SPRAYSYSTEM_SPRAYROUTINECOMPLETE_SIGNATURE,
+            COM_SPSAUTOMATION_SPRAYSYSTEM_SPRAYROUTINECOMPLETE_ID,
+            CANARD_TRANSFER_PRIORITY_LOW,
+            routine_complete_buffer,
+            total_size);
 }
 
 void AP_Periph_FW::spray_system_send_status()
