@@ -122,6 +122,41 @@ public:
     uint32_t get_current_flow_rate_ml_min();
 
     /**
+     * @brief Returns the current spray routine
+     * active spraying time
+     *
+     * @return current routine spray time in ms
+     */
+    uint32_t get_current_spray_time_ms();
+
+    /**
+     * @brief Returns the current spray nozzle status
+     *
+     * @return 1 if the nozzle is open, 0 if it is closed
+     */
+    uint8_t get_spray_nozzle_state();
+
+    /**
+     * @brief Returns the total amount of fluid flowed so far
+     * during the current spray routine
+     */
+    float get_amount_flowed_ml();
+
+    /**
+     * @brief Returns the current pump speed
+     *
+     * @return pump throttle period in us
+     */
+    uint16_t get_current_pump_speed();
+
+    /**
+     * @brief Returns the current pump enabled status
+     *
+     * @return true if pump is running, false otherwise
+     */
+    bool get_pump_enabled();
+
+    /**
      * @brief handler for incoming global time sync broadcasts.
      * Updates the offset applied to the monotonic timestamp to
      * get a time matching that of the controller.
@@ -199,9 +234,6 @@ private:
 
     /* Callback for when routines are complete */
     void (*routine_complete_cb)(float, uint32_t, bool){nullptr};
-
-    /* Current pump speed used by PID */
-    uint16_t current_pump_speed_us;
 
     /* Queue for scheduled spray routines */
     ObjectBuffer<SprayRoutine> spray_routine_queue{SPRAY_ROUTINE_MAX_QUEUE_LENGTH};

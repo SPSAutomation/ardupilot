@@ -127,7 +127,6 @@ SprayScheduleResult AP_SpraySystem::schedule_next_spray_routine()
     pid_instance->reset_filter();
 
     /* Ensure pump is at it's agitation speed */
-    current_pump_speed_us = PUMP_AGITATION_SPEED;
     return_line->open();
     pump->set_speed(PUMP_AGITATION_SPEED);
     pump->enable();
@@ -225,9 +224,9 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
                                                           flow_sensor->get_flow_rate_ml(),
                                                           dt_ms);
 
-        current_pump_speed_us *= correction;
+        uint32_t new_pump_speed_us = pump->get_speed() * correction;
 
-        pump->set_speed(current_pump_speed_us);
+        pump->set_speed(new_pump_speed_us);
     }
 }
 
@@ -248,6 +247,31 @@ uint32_t AP_SpraySystem::get_current_pressure_mbar()
 float AP_SpraySystem::get_current_temperature_c()
 {
     return pressure_sensor->get_temperature_c();
+}
+
+uint32_t AP_SpraySystem::get_current_spray_time_ms()
+{
+    return time_spraying_ms;
+}
+
+uint8_t AP_SpraySystem::get_spray_nozzle_state()
+{
+    return (spray_nozzle->is_open() ? 1 : 0);
+}
+
+float AP_SpraySystem::get_amount_flowed_ml()
+{
+    return flow_sensor->get_flow_amount_ml();
+}
+
+uint16_t AP_SpraySystem::get_current_pump_speed()
+{
+    return pump->get_speed();
+}
+
+bool AP_SpraySystem::get_pump_enabled()
+{
+    return pump->get_enabled();
 }
 
 /* Parameters */

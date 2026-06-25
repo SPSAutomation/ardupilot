@@ -42,6 +42,13 @@ public:
     bool set_speed(uint16_t throttle_us);
 
     /**
+     * @brief Gets the current speed setting for the pump
+     *
+     * @return current pump throttle width in us
+     */
+    uint16_t get_speed();
+
+    /**
      * @brief Checks whether the pump is currently running
      *
      * @return true if currently running, false otherwise
@@ -58,6 +65,9 @@ private:
 
     /* Current throttle value to be used by the output PWM */
     uint16_t current_throttle_value;
+
+    /* Is the pump currently running */
+    bool enabled{false};
 
     uint8_t pump_pwm_channel;
 
