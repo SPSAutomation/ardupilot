@@ -95,4 +95,50 @@ void AP_Periph_FW::spray_system_send_status()
                      total_size);
 }
 
+void AP_Periph_FW::spray_system_handle_pump_control_message(CanardInstance * canard_instance,
+                                              CanardRxTransfer * transfer)
+{
+    uint8_t response_buffer[COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_RESPONSE_MAX_SIZE];
+    com_spsautomation_spraysystem_PumpControlRequest msg;
+    com_spsautomation_spraysystem_PumpControlResponse response_msg;
+
+    if (com_spsautomation_spraysystem_PumpControlRequest_decode(transfer, &msg)) {
+        /* Unable to decode message */
+        return;
+    }
+
+    response_msg.success = true;
+
+    if (!msg.pump_active)
+    {
+        /* Ignore speed if disabling the pump */
+        spray_system.set_pump_enabled(false);
+    }
+    else
+    {
+        if (!spray_system.set_pump_speed(msg.speed))
+        {
+            /* Invalid speed setting */
+            response_msg.success = false;
+        }
+        else
+        {
+            /* Speed setting was accepted, turn on pump */
+            spray_system.set_pump_enabled(true);
+        }
+    }
+
+    /* Encode and send response */
+    uint16_t total_size = com_spsautomation_spraysystem_PumpControlResponse_encode(
+            &response_msg,
+            response_buffer,
+            !periph.canfdout());
+
+    canard_respond(canard_instance,
+                   transfer,
+                   COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_RESPONSE_SIGNATURE,
+                   COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_RESPONSE_ID,
+                   response_buffer,
+                   total_size);
+}
 #endif

@@ -230,6 +230,16 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
     }
 }
 
+bool AP_SpraySystem::set_pump_speed(uint32_t pump_throttle_value)
+{
+    return pump->set_speed(pump_throttle_value);
+}
+
+void AP_SpraySystem::set_pump_enabled(bool enabled)
+{
+    (enabled) ? pump->enable() : pump->disable();
+}
+
 uint64_t AP_SpraySystem::get_current_time_millis()
 {
     return AP_HAL::millis64() + montonic_clock_offset;

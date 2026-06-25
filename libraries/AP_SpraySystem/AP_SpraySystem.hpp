@@ -98,7 +98,14 @@ public:
      * @param pump_throttle_value pump PWM throttle pulse width
      * between 1040 - 1950 us
      */
-    void set_pump_speed(uint32_t pump_throttle_value);
+    bool set_pump_speed(uint32_t pump_throttle_value);
+
+    /**
+     * @brief Enables or disables the pump
+     *
+     * @param enabled true to enable pump, false to disable
+     */
+    void set_pump_enabled(bool enabled);
 
     /**
      * @brief returns the most recent pressure reading from the sensor
