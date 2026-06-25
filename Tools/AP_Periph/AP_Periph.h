@@ -308,6 +308,16 @@ public:
     void spray_system_init();
     void spray_system_update();
     void spray_system_send_status();
+    static void spray_system_send_routine_complete_message(float amount_sprayed_ml, uint32_t time_taken_ms, bool within_range);
+
+    void spray_system_handle_pump_control_message(CanardInstance * canard_instance,
+                                                  CanardRxTransfer * transfer);
+
+    void spray_system_handle_nozzle_control_message(CanardInstance * canard_instance,
+                                                    CanardRxTransfer * transfer);
+
+    void spray_system_handle_schedule_routine_message(CanardInstance * canard_instance,
+                                                      CanardRxTransfer * transfer);
 #endif
 
 #if AP_PERIPH_AIRSPEED_ENABLED
