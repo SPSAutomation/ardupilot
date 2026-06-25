@@ -34,6 +34,8 @@ CAN_ORDER 2
 define HAL_LED_ON 0
 define HAL_LED_OFF 1
 
+# These aren't actively used, but declaring them here ensures nozzles are not
+# opened on startup
 PA5 SPRAY_NOZZLE OUTPUT LOW GPIO(6) # Spray Nozzle
 PA3 RETURN_SOLENOID OUTPUT LOW GPIO(7) # Return line
 
