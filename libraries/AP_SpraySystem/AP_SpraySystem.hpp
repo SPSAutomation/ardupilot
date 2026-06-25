@@ -175,6 +175,13 @@ private:
     AP_SpraySystem_PressureSensor * pressure_sensor;
 
     AP_Float _flow_sense_pulse_ul;
+    AP_Float _p_gain;
+    AP_Float _i_gain;
+    AP_Float _d_gain;
+
+    float last_p_gain{0};
+    float last_i_gain{0};
+    float last_d_gain{0};
 
     /* Currently executed spray routine */
     SprayRoutine current_spray_routine;
