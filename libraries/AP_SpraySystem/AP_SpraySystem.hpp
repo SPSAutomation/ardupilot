@@ -8,6 +8,7 @@
 #include <AP_Scheduler/AP_Scheduler.h>
 #include <AP_HAL/utility/RingBuffer.h>
 #include <dronecan_msgs.h>
+#include <AP_Math/AP_Math.h>
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
 
