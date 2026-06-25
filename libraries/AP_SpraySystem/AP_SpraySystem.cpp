@@ -16,13 +16,13 @@ AP_SpraySystem::AP_SpraySystem()
         AP_HAL::panic("AP_SpraySystem must be singleton");
     }
     _singleton = this;
+
+    /* Initialise default parameters */
+    AP_Param::setup_object_defaults(this, var_info);
 }
 
 void AP_SpraySystem::init(void (*cb)(float, uint32_t, bool))
 {
-    /* Initialise default parameters */
-    AP_Param::setup_object_defaults(this, var_info);
-
     /* Assign routine complete callback */
     routine_complete_cb = cb;
 
