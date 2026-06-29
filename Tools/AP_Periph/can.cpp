@@ -1064,7 +1064,7 @@ bool AP_Periph_FW::shouldAcceptTransfer(const CanardInstance* canard_instance,
          return true;
 
     case COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_ID:
-         *out_data_type_signature = COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_REQUEST_SIGNATURE;
+         *out_data_type_signature = COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_SIGNATURE;
          return true;
 #endif
     default:
