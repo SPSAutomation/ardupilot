@@ -116,7 +116,7 @@ void AP_Periph_FW::spray_system_handle_global_timesync_message(CanardInstance * 
     /* If the timestamp is 0, this is the first time sync message we've received */
     if (msg.previous_transmission_timestamp_usec != 0) {
         time_offset_us = last_sync_rx_timestamp - msg.previous_transmission_timestamp_usec;
-        spray_system.set_time_offset(time_offset_us);
+        spray_system.set_time_offset(-time_offset_us);
     }
 
     last_sync_rx_timestamp = rx_timestamp - time_offset_us;

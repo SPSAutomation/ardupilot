@@ -240,7 +240,7 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
 
 void AP_SpraySystem::set_time_offset(int64_t offset_us)
 {
-    montonic_clock_offset = (offset_us / 1000);
+    montonic_clock_offset += (offset_us / 1000);
 }
 
 void AP_SpraySystem::set_spray_nozzle_open(bool open)
