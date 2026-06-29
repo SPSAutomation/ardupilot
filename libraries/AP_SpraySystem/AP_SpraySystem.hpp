@@ -171,6 +171,13 @@ public:
      */
     void set_time_offset(int64_t offset_us);
 
+    /**
+     * @brief Gets the current value used by the monotonic clock offset
+     *
+     * @return clock offset in ms
+     */
+    int64_t get_time_offset_ms();
+
     static const struct AP_Param::GroupInfo     var_info[];
 
 private:
@@ -215,6 +222,8 @@ private:
     AP_SpraySystem_Pump * pump;
 
     AP_SpraySystem_PressureSensor * pressure_sensor;
+
+    uint32_t last_update_ms{0};
 
     AP_Float _flow_sense_pulse_ul;
     AP_Float _p_gain;

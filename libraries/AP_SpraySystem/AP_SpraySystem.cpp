@@ -244,7 +244,12 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
 
 void AP_SpraySystem::set_time_offset(int64_t offset_us)
 {
-    montonic_clock_offset += (offset_us / 1000);
+    monotonic_clock_offset = offset_us;
+}
+
+int64_t AP_SpraySystem::get_time_offset_ms()
+{
+    return monotonic_clock_offset;
 }
 
 void AP_SpraySystem::set_spray_nozzle_open(bool open)
@@ -269,7 +274,7 @@ void AP_SpraySystem::set_pump_enabled(bool enabled)
 
 uint64_t AP_SpraySystem::get_current_time_millis()
 {
-    return AP_HAL::millis64() + montonic_clock_offset;
+    return (AP_HAL::micros64() + monotonic_clock_offset) / 1000;
 }
 
 uint32_t AP_SpraySystem::get_current_flow_rate_ml_min() {

@@ -914,7 +914,7 @@ void AP_Periph_FW::onTransferReceived(CanardInstance* canard_instance,
 #endif
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
-    case DRONECAN_PROTOCOL_GLOBALTIME_ID:
+    case UAVCAN_PROTOCOL_GLOBALTIMESYNC_ID:
         spray_system_handle_global_timesync_message(canard_instance, transfer);
         break;
 
@@ -1051,8 +1051,8 @@ bool AP_Periph_FW::shouldAcceptTransfer(const CanardInstance* canard_instance,
         return true;
 #endif
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
-    case DRONECAN_PROTOCOL_GLOBALTIME_ID:
-        *out_data_type_signature = DRONECAN_PROTOCOL_GLOBALTIME_SIGNATURE;
+    case UAVCAN_PROTOCOL_GLOBALTIMESYNC_ID:
+        *out_data_type_signature = UAVCAN_PROTOCOL_GLOBALTIMESYNC_SIGNATURE;
         return true;
 
     case COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_ID:
