@@ -52,13 +52,14 @@ void AP_SpraySystem::init(void (*cb)(float, uint32_t, bool))
 void AP_SpraySystem::update()
 {
     uint32_t now = AP_HAL::millis();
-    static uint32_t last_update_time = 0;
 
-    uint32_t dt_ms = now - last_update_time;
+    uint32_t dt_ms = now - last_update_ms;
 
     if (dt_ms < FLOW_CONTROLLER_UPDATE_PERIOD_MS) {
         return;
     }
+
+    last_update_ms = now;
 
     /* Check for changes in the PID settings and update controller accordingly
      * Use a difference threshold because we are working with floats */
