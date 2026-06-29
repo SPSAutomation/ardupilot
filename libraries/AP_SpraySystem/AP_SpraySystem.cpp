@@ -5,6 +5,7 @@ uint8_t spray_nozzle_data[sizeof(AP_SpraySystem_Nozzle)];
 uint8_t return_line_data[sizeof(AP_SpraySystem_Nozzle)];
 uint8_t pump_data[sizeof(AP_SpraySystem_Pump)];
 uint8_t pressure_sensor_data[sizeof(AP_SpraySystem_PressureSensor)];
+uint8_t pid_data[sizeof(AC_PID)];
 
 AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
 
@@ -43,6 +44,9 @@ void AP_SpraySystem::init(void (*cb)(float, uint32_t, bool))
 
     /* Initialise pressure sensor */
     pressure_sensor = new(pressure_sensor_data)AP_SpraySystem_PressureSensor(PRESSURE_SENSOR_I2C_BUS);
+
+    /* Initialise PID controller */
+    pid_instance = new(pid_data)AC_PID(_p_gain, _i_gain, _d_gain, 0, 10.0f, 0, 0, 0);
 }
 
 void AP_SpraySystem::update()
