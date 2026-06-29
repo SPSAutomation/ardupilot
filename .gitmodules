@@ -31,7 +31,7 @@
 	url = https://github.com/DroneCAN/dronecan_dsdlc
 [submodule "modules/DroneCAN/libcanard"]
 	path = modules/DroneCAN/libcanard
-	url = https://github.com/DroneCAN/libcanard
+	url = git@gitlab.com:spsautomation/external/libcanard
 [submodule "modules/Micro-XRCE-DDS-Client"]
 	path = modules/Micro-XRCE-DDS-Client
 	url = https://github.com/ardupilot/Micro-XRCE-DDS-Client.git
