@@ -44,7 +44,7 @@ void AP_SpraySystem_Pump::enable()
 void AP_SpraySystem_Pump::disable()
 {
     enabled = false;
-    set_pwm_output(0);
+    set_pwm_output(PUMP_OFF_THROTTLE_PERIOD);
 }
 
 bool AP_SpraySystem_Pump::set_speed(uint16_t throttle_us)
