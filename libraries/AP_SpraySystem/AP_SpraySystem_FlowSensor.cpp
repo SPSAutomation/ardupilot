@@ -100,7 +100,7 @@ float AP_SpraySystem_FlowSensor::get_ul_per_pulse()
 void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel)
 {
     if (flow_sensor_instance != nullptr) {
-        flow_sensor_instance->increment_flow_sensor_pulse(eicup->tim->CCR[channel]);
+        flow_sensor_instance->increment_flow_sensor_pulse(eicup);
     }
 }
 
