@@ -8,6 +8,7 @@
 #define NOZZLE_UPDATE_PERIOD_MS 1
 #define NOZZLE_PWM_FREQUENCY_HZ 200
 
+#define NOZZLE_OPENING_DELAY_MS 15
 #define NOZZLE_CLOSING_DELAY_MS 45
 
 /**
@@ -43,7 +44,16 @@ public:
     bool is_open();
 
     /**
+     * @brief Gets the time in ms for the nozzle to open
+     *
+     * @return nozzle opening time in ms
+     */
+    uint32_t get_opening_delay_ms();
+
+    /**
      * @brief Gets the time in ms for the nozzle to close
+     *
+     * @return nozzle closing time in ms
      */
     uint32_t get_closing_delay_ms();
 

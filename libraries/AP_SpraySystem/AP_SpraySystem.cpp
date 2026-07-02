@@ -215,6 +215,12 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
 {
     time_spraying_ms += dt_ms;
 
+    // Don't run the PID while the nozzle is still opening
+    if (time_spraying_ms < spray_nozzle->get_opening_delay_ms())
+    {
+        return;
+    }
+
     // Done spraying, tidy up, run PID controller
     if (time_spraying_ms >= current_spray_routine.time_allowed_ms)
     {
