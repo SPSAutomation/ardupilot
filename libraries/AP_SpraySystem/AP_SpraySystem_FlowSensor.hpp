@@ -42,7 +42,7 @@ public:
      * @brief Initialises the flow sensor driver with given EICU driver
      * and channel as well as flow sensor volume per pulse configuration
      */
-    void init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul);
+    void init(EICUDriver *icu_drv, eicuchannel_t channel, eicuchannel_t aux_channel, float pulse_ul, uint32_t debounce_time_us);
 
     /**
      * @brief Link a reference to the flow sensor to a static pointer
