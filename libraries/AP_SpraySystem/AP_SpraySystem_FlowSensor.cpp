@@ -32,7 +32,8 @@ void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel,
     eicuStart(_icu_drv, &icucfg);
 
     //sets input filtering to 4 timer clock
-    stm32_timer_set_input_filter(_icu_drv->tim, rising_edge_channel, 2);
+    stm32_timer_set_input_filter(_icu_drv->tim, rising_edge_channel, 8);
+    stm32_timer_set_input_filter(_icu_drv->tim, falling_edge_channel, 8);
     stm32_timer_set_channel_input(_icu_drv->tim, falling_edge_channel, 2);
 
     /* Apply flow sensor pulse volume configuration */
