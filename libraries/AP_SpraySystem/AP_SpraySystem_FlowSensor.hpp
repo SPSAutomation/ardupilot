@@ -16,6 +16,8 @@
 
 #define PULSE_TIME_TO_FLOW_ML_MIN 60000.0F
 
+#define FLOW_SENSOR_PULSE_DEBOUNCE_TIME_US  70
+
 /* Keep a rolling average of 5 samples for the flow rate buffer
  * to mitigate jitter in the flow sensor pulse timing */
 #define FLOW_RATE_DATA_BUF_SIZE 5
@@ -175,8 +177,6 @@ private:
      * The number of pulses the flow sensor has seen, keeps track of amount that has flowed
      */
     uint16_t sensor_triggers_count{0};
-
-    uint16_t debounce_us{0};
 };
 
 /**

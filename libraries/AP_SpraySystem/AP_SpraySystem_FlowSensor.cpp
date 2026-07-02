@@ -10,8 +10,6 @@ void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel,
     rising_edge_channel = channel;
     falling_edge_channel = aux_channel;
 
-    debounce_us = debounce_time_us;
-
     /* Configure the ChibiOS EICU driver for accurate timestamping of flow pulses */
     _icu_drv = icu_drv;
     icucfg.dier = 0;
@@ -118,7 +116,7 @@ void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(EICUDriver *eicup)
 
     /* Run debouncing. If a previous falling edge was detected, this
      * rising edge should not have occurred for a minimum amount of time */
-    if (debounce_time_us < debounce_us)
+    if (debounce_time_us < FLOW_SENSOR_PULSE_DEBOUNCE_TIME_US)
     {
         /* Filter this pulse */
         return;
