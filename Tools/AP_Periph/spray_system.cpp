@@ -101,7 +101,6 @@ void AP_Periph_FW::spray_system_handle_global_timesync_message(CanardInstance * 
                                                      CanardRxTransfer * transfer)
 {
     uavcan_protocol_GlobalTimeSync msg;
-    static uint64_t last_sync_rx_timestamp = 0;
     int64_t time_offset_us = 0;
     uint64_t rx_timestamp;
 
