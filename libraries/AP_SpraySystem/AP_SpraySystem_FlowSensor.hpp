@@ -123,11 +123,13 @@ public:
     void reset_flow_amount();
 
     /**
-     * Increments the number of flow sensor pulses detected and calculates the
+     * @brief Increments the number of flow sensor pulses detected and calculates the
      * instantaneous and rolling average flow rate. This is generall called
      * from an ISR.
+     *
+     * @param eicup pointer to driver instance from which pulse times can be read
      */
-    void increment_flow_sensor_pulse(uint32_t time_us);
+    void increment_flow_sensor_pulse(EICUDriver *eicup);
 
 private:
 
@@ -144,14 +146,18 @@ private:
     /*
      * Track time at which pulses are received
      */
-    uint32_t last_pulse_time_us{0};
+    uint32_t last_rising_edge_time{0};
+    uint32_t last_falling_edge_time_us{0};
 
     /* Track the total flow volume */
     uint32_t flow_amount_ul{0};
 
     /* EICU driver used for accurate timestamping of pulses */
     EICUConfig icucfg;
+    eicuchannel_t rising_edge_channel;
+    eicuchannel_t falling_edge_channel;
     EICUChannelConfig channel_config;
+    EICUChannelConfig aux_config;
     EICUDriver* _icu_drv = nullptr;
 
      /**
@@ -169,6 +175,8 @@ private:
      * The number of pulses the flow sensor has seen, keeps track of amount that has flowed
      */
     uint16_t sensor_triggers_count{0};
+
+    uint16_t debounce_us{0};
 };
 
 /**

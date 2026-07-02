@@ -7,6 +7,11 @@ void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel,
     /* Set the local flow sensor instance to this */
     set_flow_sensor_instance(this);
 
+    rising_edge_channel = channel;
+    falling_edge_channel = aux_channel;
+
+    debounce_us = debounce_time_us;
+
     /* Configure the ChibiOS EICU driver for accurate timestamping of flow pulses */
     _icu_drv = icu_drv;
     icucfg.dier = 0;
@@ -15,16 +20,22 @@ void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel,
         icucfg.iccfgp[i]=nullptr;
     }
 
-    icucfg.iccfgp[channel] = &channel_config;
+    icucfg.iccfgp[rising_edge_channel] = &channel_config;
+    icucfg.iccfgp[falling_edge_channel] = &aux_config;
 
-    /* Rising or falling edge generally doesn't matter, we are only
-     * interested in the total time between pulses. This is configured for
-     * falling-edge */
-    channel_config.alvl = EICU_INPUT_ACTIVE_LOW;
+    /* Main pulse counting is performed on the rising edge, while
+     * the falling edge is used for debouncing */
+    channel_config.alvl = EICU_INPUT_ACTIVE_HIGH;
     channel_config.capture_cb = flow_sense_pulse_cb;
+    aux_config.alvl = EICU_INPUT_ACTIVE_LOW;
+    aux_config.capture_cb = nullptr;
 
     /* Start EICU */
     eicuStart(_icu_drv, &icucfg);
+
+    //sets input filtering to 4 timer clock
+    stm32_timer_set_input_filter(_icu_drv->tim, rising_edge_channel, 2);
+    stm32_timer_set_channel_input(_icu_drv->tim, falling_edge_channel, 2);
 
     /* Apply flow sensor pulse volume configuration */
     set_ul_per_pulse(pulse_ul);
@@ -59,9 +70,10 @@ void AP_SpraySystem_FlowSensor::reset()
     /* Reset flow rates */
     instant_flow_rate_ml_min = 0;
     flow_rate_rolling_buffer.reset();
+    flow_rate_current_average = 0;
 
     /* Reset last pulse time */
-    last_pulse_time_us = 0;
+    last_rising_edge_time = 0;
 }
 
 void AP_SpraySystem_FlowSensor::reset_flow_amount()
@@ -94,29 +106,48 @@ void flow_sense_pulse_cb(EICUDriver *eicup, eicuchannel_t channel)
     }
 }
 
-void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(uint32_t time_us)
+void AP_SpraySystem_FlowSensor::increment_flow_sensor_pulse(EICUDriver *eicup)
 {
     uint32_t pulse_time_us;
     float calculated_flow_rate_ml_min;
 
-    // increment pulse
-    flow_amount_ul += ul_per_pulse;
-    sensor_triggers_count++;
+    uint32_t rising_timestamp_us = eicup->tim->CCR[rising_edge_channel];
+    uint32_t falling_timestamp_us = eicup->tim->CCR[falling_edge_channel];
+
+    uint32_t debounce_time_us = rising_timestamp_us - falling_timestamp_us;
+
+    /* Run debouncing. If a previous falling edge was detected, this
+     * rising edge should not have occurred for a minimum amount of time */
+    if (debounce_time_us < debounce_us)
+    {
+        /* Filter this pulse */
+        return;
+    }
 
     /* Calculate the time since the last pulse was detected */
-    if (last_pulse_time_us != 0)
+    if (last_rising_edge_time != 0)
     {
         /* Because both time_us and last_pulse_time_us are both unsigned, this
          * operation is unaffected if the clock wraps around between this pulse and
          * the previous pulse */
-        pulse_time_us = time_us - last_pulse_time_us;
-        calculated_flow_rate_ml_min = ul_per_pulse * PULSE_TIME_TO_FLOW_ML_MIN / pulse_time_us;
+        pulse_time_us = rising_timestamp_us - last_rising_edge_time;;
+
+        /* Handle zero case */
+        if (pulse_time_us == 0)
+        {
+            return;
+        }
+        calculated_flow_rate_ml_min = (ul_per_pulse * PULSE_TIME_TO_FLOW_ML_MIN) / pulse_time_us;
 
         flow_rate_current_average = flow_rate_rolling_buffer.apply(calculated_flow_rate_ml_min);
         instant_flow_rate_ml_min = calculated_flow_rate_ml_min;
     }
 
-    last_pulse_time_us = time_us;
+    // increment pulse
+    flow_amount_ul += ul_per_pulse;
+    sensor_triggers_count++;
+
+    last_rising_edge_time = rising_timestamp_us;
 }
 
 void AP_SpraySystem_FlowSensor::set_enabled(bool value)
