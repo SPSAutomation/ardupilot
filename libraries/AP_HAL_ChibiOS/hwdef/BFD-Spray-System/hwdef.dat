@@ -18,7 +18,7 @@ env BUILD_ABIN True
 define CAN_APP_NODE_NAME "com.spsautomation.spraysystem"
 
 # 12MHz crystal
-OSCILLATOR_HZ 0
+OSCILLATOR_HZ 16000000
 
 # bootloader is installed at zero offset
 FLASH_RESERVE_START_KB 36
