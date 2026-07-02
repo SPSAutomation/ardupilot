@@ -229,6 +229,7 @@ private:
     AP_Float _p_gain;
     AP_Float _i_gain;
     AP_Float _d_gain;
+    AP_Int16 _pump_idle;
 
     float last_p_gain{0};
     float last_i_gain{0};
