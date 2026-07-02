@@ -207,6 +207,7 @@ void AP_SpraySystem::end_routine()
     }
 
     time_spraying_ms = 0;
+    flow_sensor->set_enabled(false);
     flow_sensor->reset();
     current_state = SpraySchedulerState::IDLE;
 }
