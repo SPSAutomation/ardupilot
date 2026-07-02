@@ -139,7 +139,7 @@ SprayScheduleResult AP_SpraySystem::schedule_next_spray_routine()
 
     /* Ensure pump is at it's agitation speed */
     return_line->open();
-    pump->set_speed(PUMP_AGITATION_SPEED);
+    pump->set_speed(_pump_idle);
     pump->enable();
 
     // Set pump rate for this desired flow rate
@@ -185,7 +185,7 @@ void AP_SpraySystem::end_routine()
     /* Return to agitation */
     return_line->open();
     spray_nozzle->close();
-    pump->set_speed(PUMP_AGITATION_SPEED);
+    pump->set_speed(_pump_idle);
 
     /* Tell the flow sensor to stop reading since the nozzle is now closed */
     flow_sensor->set_enabled(false);
@@ -345,7 +345,13 @@ const AP_Param::GroupInfo AP_SpraySystem::var_info[] = {
         // @Description: D gain for flow controller PID
         // @User Standard
         // @RebootRequired: False
-        AP_GROUPINFO("P_GAIN", 4, AP_SpraySystem, _d_gain, 0.2),
+        AP_GROUPINFO("D_GAIN", 4, AP_SpraySystem, _d_gain, 0.2),
+
+        // @Param: PUMP_IDLE
+        // @DisplayName: Pump Idle Throttle
+        // @Description: Throttle value used when agitating tank between sprays
+        // @RebootRequired: True
+        AP_GROUPINFO("PUMP_IDLE", 5, AP_SpraySystem, _pump_idle, 1600),
 
         AP_GROUPEND
 };
