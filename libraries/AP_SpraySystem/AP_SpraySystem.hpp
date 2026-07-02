@@ -242,7 +242,7 @@ private:
     uint32_t time_spraying_ms;
 
     /* Variables used for time synchronisation with controller */
-    int64_t montonic_clock_offset{0};
+    int64_t monotonic_clock_offset{0};
 
     /* Current state of the spray system */
     SpraySchedulerState current_state{SpraySchedulerState::IDLE};
