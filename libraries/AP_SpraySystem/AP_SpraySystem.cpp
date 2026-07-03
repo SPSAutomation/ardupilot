@@ -196,7 +196,7 @@ bool AP_SpraySystem::time_to_prime_pump()
         return false;
     }
 
-    if ((get_current_time_millis() >= current_spray_routine.start_time_ms - PRESSURE_BLEED_TIME_MS) && current_spray_routine.start_time_ms > 0)
+    if ((get_current_time_millis() >= current_spray_routine.start_time_ms - PUMP_PRIME_TIME_MS) && current_spray_routine.start_time_ms > 0)
     {
         return true;
     }
