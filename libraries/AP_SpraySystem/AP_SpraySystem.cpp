@@ -26,6 +26,7 @@ void AP_SpraySystem::init(void (*cb)(float, uint32_t, bool))
 {
     /* Assign routine complete callback */
     routine_complete_cb = cb;
+    last_routine_pump_speed = PUMP_DEFAULT_PRIME_THROTTLE_PERIOD;
 
     /* Initialise flow sensor */
     flow_sensor = new(flow_sensor_data)AP_SpraySystem_FlowSensor();
@@ -92,6 +93,17 @@ void AP_SpraySystem::update()
             break;
 
         case SpraySchedulerState::SCHEDULED:
+            if (time_to_prime_pump())
+            {
+                pump->set_speed(last_routine_pump_speed);
+            }
+            else
+            {
+                pump->set_speed(PUMP_AGITATION_SPEED);
+            }
+
+            return_line->open();
+
             if (time_to_start_routine())
             {
                 start_routine();
@@ -170,12 +182,34 @@ bool AP_SpraySystem::time_to_start_routine()
     return false;
 }
 
+bool AP_SpraySystem::time_to_prime_pump()
+{
+    if (current_state != SpraySchedulerState::SCHEDULED)
+    {
+        /* No spray routine currently scheduled */
+        return false;
+    }
+
+    if (current_spray_routine.start_time_ms == 0)
+    {
+        /* Spray routine is not loaded */
+        return false;
+    }
+
+    if ((get_current_time_millis() >= current_spray_routine.start_time_ms - PRESSURE_BLEED_TIME_MS) && current_spray_routine.start_time_ms > 0)
+    {
+        return true;
+    }
+    return false;
+}
+
 void AP_SpraySystem::start_routine()
 {
     current_state = SpraySchedulerState::RUNNING;
     flow_sensor->reset();
-    return_line->close();
+    pump->enable();
     spray_nozzle->open();
+    return_line->close();
     flow_sensor->reset();
     flow_sensor->set_enabled(true);
 }
@@ -225,6 +259,8 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
     // Done spraying, tidy up, run PID controller
     if (time_spraying_ms >= current_spray_routine.time_allowed_ms)
     {
+        last_routine_pump_speed = get_current_pump_speed();
+
         if (flow_sensor->is_enabled())
         {
             // Close it ASAP so we can wait our delay period to ensure we have collected all flow sensor data,
@@ -277,7 +313,16 @@ bool AP_SpraySystem::set_pump_speed(uint32_t pump_throttle_value)
 
 void AP_SpraySystem::set_pump_enabled(bool enabled)
 {
-    (enabled) ? pump->enable() : pump->disable();
+    if (enabled)
+    {
+        pump->enable();
+    }
+    else
+    {
+        /* When disabling the pump, there is no need to keep the return line open */
+        pump->disable();
+        return_line->close();
+    }
 }
 
 uint64_t AP_SpraySystem::get_current_time_millis()
