@@ -16,6 +16,8 @@
 #define FLOW_CONTROLLER_UPDATE_PERIOD_MS    10
 #define AMOUNT_THRESHOLD_PROPORTION         0.1    // 10% threshold
 
+#define PUMP_PRIME_TIME_MS              100
+
 typedef struct
 {
     uint16_t desired_spray_ml;
@@ -204,6 +206,15 @@ private:
     bool time_to_start_routine();
 
     /**
+     * @brief checks whether it is time to set the pump speed in preparation for a spray routine
+     * beginning a spray routine. This prevents large spikes in the flow rate
+     * when the nozzle is first opened
+     *
+     * @return true if time to prime pump, false otherwise
+     */
+    bool time_to_prime_pump();
+
+    /**
      * @brief starts the next spray routine
      */
     void start_routine();
@@ -243,6 +254,8 @@ private:
 
     /* Variables used for time synchronisation with controller */
     int64_t monotonic_clock_offset{0};
+
+    uint16_t last_routine_pump_speed{0};
 
     /* Current state of the spray system */
     SpraySchedulerState current_state{SpraySchedulerState::IDLE};
