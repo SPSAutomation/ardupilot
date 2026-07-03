@@ -11,12 +11,14 @@
 
 /* These values are provided by the datasheet for the sensor
  * https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English */
-#define PRESSURE_SENSOR_MIN_MBAR 0
-#define PRESSURE_SENSOR_MAX_MBAR 6894
+#define PRESSURE_SENSOR_MIN_PSI 0
+#define PRESSURE_SENSOR_MAX_PSI 100
+
+#define PSI_TO_MBAR 68.94757
 
 /* Theses multiplier and offset values are provided by the datasheet
  * https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English */
-#define PRESSURE_DATA_MULTIPLIER    (PRESSURE_SENSOR_MAX_MBAR - PRESSURE_SENSOR_MIN_MBAR) / (14000)
+#define PRESSURE_DATA_MULTIPLIER    (PRESSURE_SENSOR_MAX_PSI - PRESSURE_SENSOR_MIN_PSI) / (14000)
 #define PRESSURE_DATA_OFFSET        1000
 
 #define TEMP_DATA_MULTIPLIER (200 / 2048)

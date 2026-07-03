@@ -87,6 +87,8 @@ uint32_t AP_SpraySystem_PressureSensor::get_converted_pressure_value_mbar(uint16
 
     uint16_t output = (raw_pressure_data - PRESSURE_DATA_OFFSET) * PRESSURE_DATA_MULTIPLIER;
 
+    output *= PSI_TO_MBAR;
+
     return output;
 }
 
