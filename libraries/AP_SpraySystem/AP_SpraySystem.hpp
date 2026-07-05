@@ -12,14 +12,16 @@
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
 
-#define SPRAY_ROUTINE_MAX_QUEUE_LENGTH      3
-#define FLOW_CONTROLLER_UPDATE_PERIOD_MS    10
-#define AMOUNT_THRESHOLD_PROPORTION         0.1    // 10% threshold
+#define SPRAY_ROUTINE_MAX_QUEUE_LENGTH          10
+#define FLOW_CONTROLLER_UPDATE_PERIOD_MS        1
+#define FLOW_CONTROLLER_PID_UPDATE_PERIOD_MS    10
+#define FLOW_CONTROLLER_SENSOR_UPDATE_PERIOD_MS 20
+#define AMOUNT_THRESHOLD_PROPORTION             0.1    // 10% threshold
 
 #define PUMP_PRIME_TIME_MS              100
 
 #define PID_HOLDOFF_MS  50
-#define LAST_PUMP_SPEED_PRIME_MULTIPLIER 0.8
+#define LAST_PUMP_SPEED_PRIME_MULTIPLIER 1.0
 
 typedef struct
 {
@@ -238,6 +240,8 @@ private:
     AP_SpraySystem_PressureSensor * pressure_sensor;
 
     uint32_t last_update_ms{0};
+    uint32_t last_sensor_update_ms{0};
+    uint32_t last_pid_update_ms{0};
 
     AP_Float _flow_sense_pulse_ul;
     AP_Float _p_gain;

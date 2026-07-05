@@ -56,6 +56,8 @@ void AP_SpraySystem::update()
 
     uint32_t dt_ms = now - last_update_ms;
 
+    /* Flow controller state machine is updated at a high rate
+     * to ensure that nozzle opening/closing is responsive */
     if (dt_ms < FLOW_CONTROLLER_UPDATE_PERIOD_MS) {
         return;
     }
@@ -80,7 +82,14 @@ void AP_SpraySystem::update()
     }
 
     /* Update all sensors */
-    pressure_sensor->update();
+    uint32_t dt_sensor_ms = now - last_sensor_update_ms;
+
+    if (dt_sensor_ms >= FLOW_CONTROLLER_SENSOR_UPDATE_PERIOD_MS)
+    {
+        pressure_sensor->update();
+
+        last_sensor_update_ms = now;
+    }
 
     switch (current_state)
     {
@@ -212,6 +221,9 @@ void AP_SpraySystem::start_routine()
     return_line->close();
     flow_sensor->reset();
     flow_sensor->set_enabled(true);
+
+    /* Set the starting point for the PID dt_ms */
+    last_pid_update_ms = AP_HAL::millis();
 }
 
 void AP_SpraySystem::end_routine()
@@ -250,6 +262,8 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
 {
     time_spraying_ms += dt_ms;
 
+    uint32_t now = AP_HAL::millis();
+
     // Don't run the PID while the nozzle is still opening
     if (time_spraying_ms < PID_HOLDOFF_MS)
     {
@@ -276,10 +290,20 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
     }
     else
     {
+        /* PID loops at a slower rate than the general execution of the flow controller */
+        uint32_t dt_pid_ms = now - last_pid_update_ms;
+
+        if (dt_pid_ms < FLOW_CONTROLLER_PID_UPDATE_PERIOD_MS)
+        {
+            return;
+        }
+
+        last_pid_update_ms = now;
+
         // Use a PID to try to keep a constant flow rate;
         float correction = pid_instance->update_all(current_spray_routine.desired_flow_rate_ml_min,
                                                           flow_sensor->get_flow_rate_ml(),
-                                                          dt_ms);
+                                                        dt_pid_ms);
 
         uint32_t new_pump_speed_us = pump->get_speed() + static_cast<int32_t>(correction);
 
