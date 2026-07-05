@@ -337,9 +337,9 @@ uint32_t AP_SpraySystem::get_current_flow_rate_ml_min() {
     return flow_sensor->get_flow_rate_ml();
 }
 
-uint32_t AP_SpraySystem::get_current_pressure_mbar()
+uint32_t AP_SpraySystem::get_current_pressure_psi()
 {
-    return pressure_sensor->get_pressure_mbar();
+    return pressure_sensor->get_pressure_psi();
 }
 
 float AP_SpraySystem::get_current_temperature_c()

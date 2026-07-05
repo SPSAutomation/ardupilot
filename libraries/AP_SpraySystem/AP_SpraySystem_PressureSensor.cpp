@@ -53,13 +53,13 @@ void AP_SpraySystem_PressureSensor::update()
     /* Get temperature data */
     raw_temp_data = static_cast<uint32_t>(((rx_buffer[2] << 3) | (rx_buffer[3] >> 5)) & 0x07FF);
 
-    last_read_pressure_mbar = get_converted_pressure_value_mbar(raw_pressure_data);
+    last_read_pressure_psi = get_converted_pressure_value_psi(raw_pressure_data);
     last_read_temperature_c = get_converted_temperature_value_c(raw_temp_data);
 }
 
-uint32_t AP_SpraySystem_PressureSensor::get_pressure_mbar()
+uint32_t AP_SpraySystem_PressureSensor::get_pressure_psi()
 {
-    return last_read_pressure_mbar;
+    return last_read_pressure_psi;
 }
 
 float AP_SpraySystem_PressureSensor::get_temperature_c()
@@ -77,7 +77,7 @@ AP_SpraySystem_PressureSensor_Status AP_SpraySystem_PressureSensor::get_current_
     return last_read_status;
 }
 
-uint32_t AP_SpraySystem_PressureSensor::get_converted_pressure_value_mbar(uint16_t raw_pressure_data)
+uint32_t AP_SpraySystem_PressureSensor::get_converted_pressure_value_psi(uint16_t raw_pressure_data)
 {
     // See datasheet for this formula - https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English
     if (raw_pressure_data <= PRESSURE_DATA_OFFSET)
@@ -86,8 +86,6 @@ uint32_t AP_SpraySystem_PressureSensor::get_converted_pressure_value_mbar(uint16
     }
 
     uint16_t output = (raw_pressure_data - PRESSURE_DATA_OFFSET) * PRESSURE_DATA_MULTIPLIER;
-
-    output *= PSI_TO_MBAR;
 
     return output;
 }

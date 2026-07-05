@@ -115,9 +115,9 @@ public:
     /**
      * @brief returns the most recent pressure reading from the sensor
      *
-     * @return pressure value in mbar
+     * @return pressure value in psi
      */
-    uint32_t get_current_pressure_mbar();
+    uint32_t get_current_pressure_psi();
 
     /**
      * @brief returns the most recent temperature reading from the sensor

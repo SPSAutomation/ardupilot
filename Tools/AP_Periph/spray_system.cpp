@@ -44,7 +44,7 @@ void AP_Periph_FW::spray_system_send_status()
     /* Pressure sensor */
     uint8_t pressure_buffer[COM_SPSAUTOMATION_SPRAYSYSTEM_PRESSURESENSORSTATUS_MAX_SIZE];
     com_spsautomation_spraysystem_PressureSensorStatus pressure_status;
-    pressure_status.pressure_psi = spray_system.get_current_pressure_mbar();
+    pressure_status.pressure_psi = spray_system.get_current_pressure_psi();
     pressure_status.temperature_c = spray_system.get_current_temperature_c();
 
     uint16_t total_size = com_spsautomation_spraysystem_PressureSensorStatus_encode(
