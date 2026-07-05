@@ -8,6 +8,7 @@
 #include "stdint.h"
 #include "string.h"
 #include <AP_Param/AP_Param.h>
+#include <AP_HAL_ChibiOS/hwdef/common/stm32_util.h>
 
 /* This is specific to the GEMS 173936-C flow sensor,
  * which is the default sensor used by the BFD spray system.
