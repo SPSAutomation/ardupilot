@@ -2,7 +2,7 @@
 
 static AP_SpraySystem_FlowSensor* flow_sensor_instance = nullptr;
 
-void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul)
+void AP_SpraySystem_FlowSensor::init(EICUDriver *icu_drv, eicuchannel_t channel, eicuchannel_t aux_channel, float pulse_ul)
 {
     /* Set the local flow sensor instance to this */
     set_flow_sensor_instance(this);
