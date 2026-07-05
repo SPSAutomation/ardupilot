@@ -30,7 +30,7 @@ void AP_SpraySystem::init(void (*cb)(float, uint32_t, bool))
 
     /* Initialise flow sensor */
     flow_sensor = new(flow_sensor_data)AP_SpraySystem_FlowSensor();
-    flow_sensor->init(&FLOW_SENSE_ICU_TIMER,FLOW_SENSE_ICU_CHANNEL, _flow_sense_pulse_ul);
+    flow_sensor->init(&FLOW_SENSE_ICU_TIMER,FLOW_SENSE_ICU_CHANNEL, FLOW_SENSE_ICU_AUX_CHANNEL, _flow_sense_pulse_ul);
     flow_sensor->set_enabled(true);
 
     /* Initialise spray nozzle */
