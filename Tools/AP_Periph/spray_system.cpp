@@ -118,7 +118,7 @@ void AP_Periph_FW::spray_system_handle_global_timesync_message(CanardInstance * 
         spray_system.set_time_offset(time_offset_us);
     }
 
-    last_sync_rx_timestamp = rx_timestamp - time_offset_us;
+    last_sync_rx_timestamp = rx_timestamp;
 }
 
 void AP_Periph_FW::spray_system_handle_pump_control_message(CanardInstance * canard_instance,
