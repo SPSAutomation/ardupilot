@@ -11,6 +11,10 @@
 #define NOZZLE_OPENING_DELAY_MS 15
 #define NOZZLE_CLOSING_DELAY_MS 45
 
+/* How long to run the PWM at full duty to force the nozzle open
+ * before falling back to the configured duty cycle */
+#define NOZZLE_FULL_POWER_OPENING_TIME_MS   100
+
 /**
  * @brief This class provides a driver for externally connected spray nozzle solenoids.
  * Solenoids are controlled using a manual PWM. This is primarily to prevent overheating
@@ -80,6 +84,11 @@ private:
      * Current state of the solenoid
      */
     bool solenoid_open{false};
+
+    /**
+     * How long the nozzle has been open
+     */
+    uint32_t nozzle_open_time_ms;
 
     /**
      * Current open/close tick count

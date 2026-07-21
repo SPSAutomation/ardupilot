@@ -34,7 +34,9 @@ void AP_SpraySystem_Nozzle::iterate_pwm()
     /* Check how much time has passed in this period */
     const uint32_t now = AP_HAL::millis();
 
-    if (now - last_tick_time_ms < NOZZLE_UPDATE_PERIOD_MS) {
+    const uint32_t delta_ms = now - last_tick_time_ms;
+
+    if (delta_ms < NOZZLE_UPDATE_PERIOD_MS) {
         return;
     }
 
@@ -43,6 +45,18 @@ void AP_SpraySystem_Nozzle::iterate_pwm()
     /* If the solenoid is open, run the PWM */
     if (nozzle_open)
     {
+        nozzle_open_time_ms += delta_ms;
+
+        /* There is an initial period on opening where we want to
+         * drive the nozzle at a full duty cycle to overcome static
+         * friction that would otherwise stop the nozzle from opening
+         */
+        if (nozzle_open_time_ms <= NOZZLE_FULL_POWER_OPENING_TIME_MS)
+        {
+            set_solenoid_open(true);
+            return;
+        }
+
         /* PWM control is performed here */
         if (hal.gpio->read(nozzle_ctrl_pin))
         {
@@ -86,6 +100,7 @@ void AP_SpraySystem_Nozzle::open()
     /* Reset all counts */
     open_count = 0;
     close_count = 0;
+    nozzle_open_time_ms = 0;
 
     /* Emable the PWM */
     nozzle_open = true;
