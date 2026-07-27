@@ -3,6 +3,7 @@
 uint8_t flow_sensor_data[sizeof(AP_SpraySystem_FlowSensor)];
 uint8_t spray_nozzle_data[sizeof(AP_SpraySystem_Nozzle)];
 uint8_t pump_data[sizeof(AP_SpraySystem_Pump)];
+uint8_t pressure_sensor_data[sizeof(AP_SpraySystem_PressureSensor)];
 
 AP_SpraySystem *AP_SpraySystem::_singleton = nullptr;
 
@@ -29,6 +30,9 @@ void AP_SpraySystem::init()
 
     /* Initialise pump */
     pump = new(pump_data)AP_SpraySystem_Pump(&PWMD3, 0);
+
+    /* Initialise pressure sensor */
+    pressure_sensor = new(pressure_sensor_data)AP_SpraySystem_PressureSensor(0);
 }
 
 void AP_SpraySystem::update()
@@ -45,6 +49,16 @@ void AP_SpraySystem::update()
 
 uint32_t AP_SpraySystem::get_current_flow_rate_ml_min() {
     return flow_sensor->get_flow_rate_ml();
+}
+
+uint32_t AP_SpraySystem::get_current_pressure_mbar()
+{
+    return pressure_sensor->get_pressure_mbar();
+}
+
+float AP_SpraySystem::get_current_temperature_c()
+{
+    return pressure_sensor->get_temperature_c();
 }
 
 /* Parameters */
