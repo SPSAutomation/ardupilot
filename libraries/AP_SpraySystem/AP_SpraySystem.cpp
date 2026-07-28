@@ -290,7 +290,7 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
         // Use a PID to try to keep a constant flow rate;
         float correction = pid_instance->update_all(current_spray_routine.desired_flow_rate_ml_min,
                                                           flow_sensor->get_flow_rate_ml(),
-                                                        dt_pid_ms);
+                                                        static_cast<float>(dt_pid_ms) / 1000.0f);
 
         uint32_t new_pump_speed_us = pump->get_speed() + static_cast<int32_t>(correction);
 
