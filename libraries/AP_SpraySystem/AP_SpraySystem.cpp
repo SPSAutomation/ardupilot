@@ -294,7 +294,7 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
 
         uint32_t new_pump_speed_us = pump->get_speed() + static_cast<int32_t>(correction);
 
-        constrain_float(new_pump_speed_us, PUMP_MIN_THROTTLE_PERIOD, PUMP_MAX_THROTTLE_PERIOD);
+        new_pump_speed_us = constrain_float(new_pump_speed_us, PUMP_MIN_THROTTLE_PERIOD, PUMP_MAX_THROTTLE_PERIOD);
 
         pump->set_speed(new_pump_speed_us);
     }
