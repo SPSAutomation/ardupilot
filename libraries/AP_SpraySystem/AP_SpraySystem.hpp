@@ -21,7 +21,6 @@
 #define PUMP_PRIME_TIME_MS              100
 
 #define PID_HOLDOFF_MS  50
-#define LAST_PUMP_SPEED_PRIME_MULTIPLIER 1.0
 
 typedef struct
 {

@@ -261,7 +261,7 @@ void AP_SpraySystem::flow_pid_step(uint32_t dt_ms)
     if (time_spraying_ms >= current_spray_routine.time_allowed_ms)
     {
         last_routine_pump_speed = PUMP_MIN_THROTTLE_PERIOD +
-                (get_current_pump_speed() - PUMP_MIN_THROTTLE_PERIOD) * LAST_PUMP_SPEED_PRIME_MULTIPLIER;
+                (get_current_pump_speed() - PUMP_MIN_THROTTLE_PERIOD);
 
         last_routine_pump_speed = MAX(last_routine_pump_speed, PUMP_MIN_THROTTLE_PERIOD);
 
