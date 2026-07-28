@@ -24,29 +24,22 @@ AP_SpraySystem::AP_SpraySystem()
 
 void AP_SpraySystem::init(void (*cb)(float, uint32_t, bool))
 {
-    /* Assign routine complete callback */
     routine_complete_cb = cb;
     last_routine_pump_speed = PUMP_DEFAULT_PRIME_THROTTLE_PERIOD;
 
-    /* Initialise flow sensor */
     flow_sensor = new(flow_sensor_data)AP_SpraySystem_FlowSensor();
     flow_sensor->init(&FLOW_SENSE_ICU_TIMER,FLOW_SENSE_ICU_CHANNEL, FLOW_SENSE_ICU_AUX_CHANNEL, _flow_sense_pulse_ul);
     flow_sensor->set_enabled(true);
 
-    /* Initialise spray nozzle */
     spray_nozzle = new(spray_nozzle_data)AP_SpraySystem_Nozzle(NOZZLE_CTRL_GPIO, NOZZLE_DUTY);
     return_line = new(return_line_data)AP_SpraySystem_Nozzle(RETURN_LINE_CTRL_GPIO, RETURN_LINE_DUTY);
-
     spray_nozzle->init();
     return_line->init();
 
-    /* Initialise pump */
     pump = new(pump_data)AP_SpraySystem_Pump(&PUMP_PWM_DRIVER, PUMP_PWM_CHANNEL);
 
-    /* Initialise pressure sensor */
     pressure_sensor = new(pressure_sensor_data)AP_SpraySystem_PressureSensor(PRESSURE_SENSOR_I2C_BUS);
 
-    /* Initialise PID controller */
     pid_instance = new(pid_data)AC_PID(_p_gain, _i_gain, _d_gain, 0, 10.0f, 0, 0, 0);
 }
 
@@ -55,13 +48,7 @@ void AP_SpraySystem::update()
     uint32_t now = AP_HAL::millis();
 
     uint32_t dt_ms = now - last_update_ms;
-
-    /* Flow controller state machine is updated at a high rate
-     * to ensure that nozzle opening/closing is responsive */
-    if (dt_ms < FLOW_CONTROLLER_UPDATE_PERIOD_MS) {
-        return;
-    }
-
+    
     last_update_ms = now;
 
     /* Check for changes in the PID settings and update controller accordingly
