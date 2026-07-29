@@ -8,6 +8,13 @@
 #define NOZZLE_UPDATE_PERIOD_MS 1
 #define NOZZLE_PWM_FREQUENCY_HZ 200
 
+#define NOZZLE_OPENING_DELAY_MS 15
+#define NOZZLE_CLOSING_DELAY_MS 45
+
+/* How long to run the PWM at full duty to force the nozzle open
+ * before falling back to the configured duty cycle */
+#define NOZZLE_FULL_POWER_OPENING_TIME_MS   100
+
 /**
  * @brief This class provides a driver for externally connected spray nozzle solenoids.
  * Solenoids are controlled using a manual PWM. This is primarily to prevent overheating
@@ -19,9 +26,9 @@ public:
     explicit AP_SpraySystem_Nozzle(uint32_t ctrl_pin, uint32_t duty_percent);
 
     /**
-     * @brief Iterates nozzle on/off timer counts and toggles the solenoid state if necessary.
+     *
      */
-    void update();
+    void init();
 
     /**
      * @brief Sets the nozzle to be open using the configured frequency and duty cycle
@@ -40,6 +47,20 @@ public:
      */
     bool is_open();
 
+    /**
+     * @brief Gets the time in ms for the nozzle to open
+     *
+     * @return nozzle opening time in ms
+     */
+    uint32_t get_opening_delay_ms();
+
+    /**
+     * @brief Gets the time in ms for the nozzle to close
+     *
+     * @return nozzle closing time in ms
+     */
+    uint32_t get_closing_delay_ms();
+
 private:
 
     /**
@@ -50,6 +71,11 @@ private:
     void set_solenoid_open(bool open);
 
     /**
+     * @brief Iterates nozzle on/off timer counts and toggles the solenoid state if necessary.
+     */
+    void iterate_pwm();
+
+    /**
      * Current state of the nozzle
      */
     bool nozzle_open{false};
@@ -58,6 +84,11 @@ private:
      * Current state of the solenoid
      */
     bool solenoid_open{false};
+
+    /**
+     * How long the nozzle has been open
+     */
+    uint32_t nozzle_open_time_ms;
 
     /**
      * Current open/close tick count
@@ -71,6 +102,9 @@ private:
      */
     uint32_t open_count_target{0};
     uint32_t close_count_target{0};
+
+    /* Keep track of when the last PWM update was performed */
+    uint32_t last_tick_time_ms{0};
 
     uint32_t nozzle_ctrl_pin;
 };

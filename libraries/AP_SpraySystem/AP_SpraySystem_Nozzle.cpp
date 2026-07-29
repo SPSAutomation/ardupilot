@@ -21,11 +21,42 @@ AP_SpraySystem_Nozzle::AP_SpraySystem_Nozzle(uint32_t ctrl_pin, uint32_t duty_pe
     close_count_target = static_cast<uint32_t>(total_pwm_period_ticks) - open_count_target;
 }
 
-void AP_SpraySystem_Nozzle::update()
+void AP_SpraySystem_Nozzle::init()
 {
+    /* Register soft timer update */
+    hal.scheduler->register_timer_process(
+            FUNCTOR_BIND_MEMBER(&AP_SpraySystem_Nozzle::iterate_pwm, void)
+    );
+}
+
+void AP_SpraySystem_Nozzle::iterate_pwm()
+{
+    /* Check how much time has passed in this period */
+    const uint32_t now = AP_HAL::millis();
+
+    const uint32_t delta_ms = now - last_tick_time_ms;
+
+    if (delta_ms < NOZZLE_UPDATE_PERIOD_MS) {
+        return;
+    }
+
+    last_tick_time_ms = now;
+
     /* If the solenoid is open, run the PWM */
     if (nozzle_open)
     {
+        nozzle_open_time_ms += delta_ms;
+
+        /* There is an initial period on opening where we want to
+         * drive the nozzle at a full duty cycle to overcome static
+         * friction that would otherwise stop the nozzle from opening
+         */
+        if (nozzle_open_time_ms <= NOZZLE_FULL_POWER_OPENING_TIME_MS)
+        {
+            set_solenoid_open(true);
+            return;
+        }
+
         /* PWM control is performed here */
         if (hal.gpio->read(nozzle_ctrl_pin))
         {
@@ -69,6 +100,7 @@ void AP_SpraySystem_Nozzle::open()
     /* Reset all counts */
     open_count = 0;
     close_count = 0;
+    nozzle_open_time_ms = 0;
 
     /* Emable the PWM */
     nozzle_open = true;
@@ -93,4 +125,14 @@ bool AP_SpraySystem_Nozzle::is_open()
 inline void AP_SpraySystem_Nozzle::set_solenoid_open(bool open)
 {
     hal.gpio->write(nozzle_ctrl_pin, open ? 1 : 0);
+}
+
+uint32_t AP_SpraySystem_Nozzle::get_opening_delay_ms()
+{
+    return NOZZLE_OPENING_DELAY_MS;
+}
+
+uint32_t AP_SpraySystem_Nozzle::get_closing_delay_ms()
+{
+    return NOZZLE_CLOSING_DELAY_MS;
 }

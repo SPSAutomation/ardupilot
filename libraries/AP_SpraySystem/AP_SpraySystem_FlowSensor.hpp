@@ -8,6 +8,7 @@
 #include "stdint.h"
 #include "string.h"
 #include <AP_Param/AP_Param.h>
+#include <AP_HAL_ChibiOS/hwdef/common/stm32_util.h>
 
 /* This is specific to the GEMS 173936-C flow sensor,
  * which is the default sensor used by the BFD spray system.
@@ -16,9 +17,11 @@
 
 #define PULSE_TIME_TO_FLOW_ML_MIN 60000.0F
 
+#define FLOW_SENSOR_PULSE_DEBOUNCE_TIME_US  60
+
 /* Keep a rolling average of 5 samples for the flow rate buffer
  * to mitigate jitter in the flow sensor pulse timing */
-#define FLOW_RATE_DATA_BUF_SIZE 5
+#define FLOW_RATE_DATA_BUF_SIZE 6
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +45,7 @@ public:
      * @brief Initialises the flow sensor driver with given EICU driver
      * and channel as well as flow sensor volume per pulse configuration
      */
-    void init(EICUDriver *icu_drv, eicuchannel_t channel, float pulse_ul);
+    void init(EICUDriver *icu_drv, eicuchannel_t channel, eicuchannel_t aux_channel, float pulse_ul);
 
     /**
      * @brief Link a reference to the flow sensor to a static pointer
@@ -123,11 +126,13 @@ public:
     void reset_flow_amount();
 
     /**
-     * Increments the number of flow sensor pulses detected and calculates the
+     * @brief Increments the number of flow sensor pulses detected and calculates the
      * instantaneous and rolling average flow rate. This is generall called
      * from an ISR.
+     *
+     * @param eicup pointer to driver instance from which pulse times can be read
      */
-    void increment_flow_sensor_pulse(uint32_t time_us);
+    void increment_flow_sensor_pulse(EICUDriver *eicup);
 
 private:
 
@@ -144,14 +149,18 @@ private:
     /*
      * Track time at which pulses are received
      */
-    uint32_t last_pulse_time_us{0};
+    uint32_t last_rising_edge_time{0};
+    uint32_t last_falling_edge_time_us{0};
 
     /* Track the total flow volume */
     uint32_t flow_amount_ul{0};
 
     /* EICU driver used for accurate timestamping of pulses */
     EICUConfig icucfg;
+    eicuchannel_t rising_edge_channel;
+    eicuchannel_t falling_edge_channel;
     EICUChannelConfig channel_config;
+    EICUChannelConfig aux_config;
     EICUDriver* _icu_drv = nullptr;
 
      /**

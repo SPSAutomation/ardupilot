@@ -11,12 +11,12 @@
 
 /* These values are provided by the datasheet for the sensor
  * https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English */
-#define PRESSURE_SENSOR_MIN_MBAR 0
-#define PRESSURE_SENSOR_MAX_MBAR 6894
+#define PRESSURE_SENSOR_MIN_PSI 0
+#define PRESSURE_SENSOR_MAX_PSI 100
 
 /* Theses multiplier and offset values are provided by the datasheet
  * https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm=MSP300&DocType=Data+Sheet&DocLang=English */
-#define PRESSURE_DATA_MULTIPLIER    (PRESSURE_SENSOR_MAX_MBAR - PRESSURE_SENSOR_MIN_MBAR) / (14000)
+#define PRESSURE_DATA_MULTIPLIER    (PRESSURE_SENSOR_MAX_PSI - PRESSURE_SENSOR_MIN_PSI) / (14000)
 #define PRESSURE_DATA_OFFSET        1000
 
 #define TEMP_DATA_MULTIPLIER (200 / 2048)
@@ -51,7 +51,7 @@ public:
      *
      * @return pressure value in bar
      */
-    uint32_t get_pressure_mbar();
+    uint32_t get_pressure_psi();
 
     /**
      * Get the last read temperature value in degrees celsius
@@ -78,7 +78,7 @@ private:
      *
      * @return pressure value in mBar
      */
-    uint32_t get_converted_pressure_value_mbar(uint16_t raw_pressure_data);
+    uint32_t get_converted_pressure_value_psi(uint16_t raw_pressure_data);
 
     /**
      * @brief Converts the raw numerical value provided by the sensor into a
@@ -90,7 +90,7 @@ private:
     bool device_connected{false};
 
     /* Holders for calculated values */
-    uint32_t last_read_pressure_mbar{0};
+    uint32_t last_read_pressure_psi{0};
     uint32_t last_read_temperature_c{0};
 
     /* I2C device provided by the AP device manager */

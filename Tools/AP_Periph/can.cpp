@@ -913,6 +913,24 @@ void AP_Periph_FW::onTransferReceived(CanardInstance* canard_instance,
         break;
 #endif
 
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    case UAVCAN_PROTOCOL_GLOBALTIMESYNC_ID:
+        spray_system_handle_global_timesync_message(canard_instance, transfer);
+        break;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_ID:
+        spray_system_handle_pump_control_message(canard_instance, transfer);
+        break;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_REQUEST_ID:
+        spray_system_handle_nozzle_control_message(canard_instance, transfer);
+        break;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_ID:
+        spray_system_handle_schedule_routine_message(canard_instance, transfer);
+        break;
+#endif
+
     }
 }
 
@@ -1031,6 +1049,23 @@ bool AP_Periph_FW::shouldAcceptTransfer(const CanardInstance* canard_instance,
     case DRONECAN_PROTOCOL_GLOBALTIME_ID:
         *out_data_type_signature = DRONECAN_PROTOCOL_GLOBALTIME_SIGNATURE;
         return true;
+#endif
+#if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+    case UAVCAN_PROTOCOL_GLOBALTIMESYNC_ID:
+        *out_data_type_signature = UAVCAN_PROTOCOL_GLOBALTIMESYNC_SIGNATURE;
+        return true;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_ID:
+        *out_data_type_signature = COM_SPSAUTOMATION_SPRAYSYSTEM_PUMPCONTROL_REQUEST_SIGNATURE;
+        return true;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_REQUEST_ID:
+         *out_data_type_signature = COM_SPSAUTOMATION_SPRAYSYSTEM_NOZZLEMANUALCONTROL_REQUEST_SIGNATURE;
+         return true;
+
+    case COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_ID:
+         *out_data_type_signature = COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_SIGNATURE;
+         return true;
 #endif
     default:
         break;

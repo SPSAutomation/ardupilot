@@ -242,7 +242,8 @@ public:
 
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
     AP_SpraySystem spray_system;
-    uint32_t last_spray_system_update_ms;
+    uint32_t last_spray_system_update_ms{0};
+    uint64_t last_sync_rx_timestamp{0};
 #endif
 
 #if AP_PERIPH_IMU_ENABLED
@@ -308,6 +309,19 @@ public:
     void spray_system_init();
     void spray_system_update();
     void spray_system_send_status();
+    static void spray_system_send_routine_complete_message(float amount_sprayed_ml, uint32_t time_taken_ms, bool within_range);
+
+    void spray_system_handle_pump_control_message(CanardInstance * canard_instance,
+                                                  CanardRxTransfer * transfer);
+
+    void spray_system_handle_nozzle_control_message(CanardInstance * canard_instance,
+                                                    CanardRxTransfer * transfer);
+
+    void spray_system_handle_schedule_routine_message(CanardInstance * canard_instance,
+                                                      CanardRxTransfer * transfer);
+
+    void spray_system_handle_global_timesync_message(CanardInstance * canard_instance,
+                                                     CanardRxTransfer * transfer);
 #endif
 
 #if AP_PERIPH_AIRSPEED_ENABLED
