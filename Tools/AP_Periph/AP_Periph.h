@@ -244,6 +244,7 @@ public:
     AP_SpraySystem spray_system;
     uint32_t last_spray_system_update_ms{0};
     uint64_t last_sync_rx_timestamp{0};
+    uint64_t last_generator_telem_timestamp{0};
 #endif
 
 #if AP_PERIPH_IMU_ENABLED
@@ -322,6 +323,13 @@ public:
 
     void spray_system_handle_global_timesync_message(CanardInstance * canard_instance,
                                                      CanardRxTransfer * transfer);
+
+    void spray_system_handle_gx16extender_info_message(CanardInstance * canard_instance,
+                                                        CanardRxTransfer * transfer);
+
+    void spray_system_handle_gx16extender_control_message(CanardInstance * canard_instance,
+                                                           CanardRxTransfer * transfer);
+
 #endif
 
 #if AP_PERIPH_AIRSPEED_ENABLED

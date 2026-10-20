@@ -1,7 +1,12 @@
 #include "AP_Periph.h"
 #include <dronecan_msgs.h>
 
+#include "AP_Periph.h"
+#include "../../modules/DroneCAN/libcanard/canard.h"
+
 #if AP_PERIPH_BFD_SPRAY_SYSTEM_ENABLED
+
+#define GENERATOR_TELEMETRY_RATE_HZ 2
 
 void AP_Periph_FW::spray_system_init()
 {
@@ -253,6 +258,33 @@ void AP_Periph_FW::spray_system_handle_schedule_routine_message(CanardInstance *
                    COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_RESPONSE_ID,
                    response_buffer,
                    total_size);
+}
+
+void AP_Periph_FW::spray_system_handle_gx16extender_info_message(CanardInstance * canard_instance,
+                                                                CanardRxTransfer * transfer)
+{
+    /* Ensure that enough time has passed since the last message of this type and rebroadcast */
+    if (AP_HAL::millis() - last_generator_telem_timestamp >= (1000 / GENERATOR_TELEMETRY_RATE_HZ))
+    {
+        canard_broadcast(COM_AERONAVICS_GX16EXTENDERINFO_SIGNATURE,
+                    COM_AERONAVICS_GX16EXTENDERINFO_ID,
+                    CANARD_TRANSFER_PRIORITY_LOW,
+                    transfer->payload_head,
+                    transfer->payload_len);
+
+        last_generator_telem_timestamp = AP_HAL::millis();
+    }
+}
+
+void AP_Periph_FW::spray_system_handle_gx16extender_control_message(CanardInstance* instance,
+                                                                     CanardRxTransfer* transfer)
+{
+    /* Rebroadcast control message to generator */
+    canard_broadcast(COM_AERONAVICS_GX16EXTENDERCTRL_SIGNATURE,
+        COM_AERONAVICS_GX16EXTENDERCTRL_ID,
+        CANARD_TRANSFER_PRIORITY_LOW,
+        transfer->payload_head,
+        transfer->payload_len);
 }
 
 #endif
