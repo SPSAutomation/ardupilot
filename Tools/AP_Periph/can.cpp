@@ -929,6 +929,15 @@ void AP_Periph_FW::onTransferReceived(CanardInstance* canard_instance,
     case COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_ID:
         spray_system_handle_schedule_routine_message(canard_instance, transfer);
         break;
+
+    case COM_AERONAVICS_GX16EXTENDERCTRL_ID:
+        spray_system_handle_gx16extender_control_message(canard_instance, transfer);
+        break;
+
+    case COM_AERONAVICS_GX16EXTENDERINFO_ID:
+        spray_system_handle_gx16extender_info_message(canard_instance, transfer);
+        break;
+
 #endif
 
     }
@@ -1066,6 +1075,15 @@ bool AP_Periph_FW::shouldAcceptTransfer(const CanardInstance* canard_instance,
     case COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_ID:
          *out_data_type_signature = COM_SPSAUTOMATION_SPRAYSYSTEM_FLOWNOZCONTROL_REQUEST_SIGNATURE;
          return true;
+
+    case COM_AERONAVICS_GX16EXTENDERINFO_ID:
+        *out_data_type_signature = COM_AERONAVICS_GX16EXTENDERINFO_SIGNATURE;
+        return true;
+
+    case COM_AERONAVICS_GX16EXTENDERCTRL_ID:
+        *out_data_type_signature = COM_AERONAVICS_GX16EXTENDERCTRL_SIGNATURE;
+        return true;
+
 #endif
     default:
         break;
