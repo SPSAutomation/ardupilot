@@ -1,0 +1,61 @@
+# hw definition file for the SPSA-WAND-CTRL AP_Periph CAN node
+#
+# The SPSA-WAND-CTRL board is a pin-for-pin clone of the Matek CAN-L4-PWM
+# (STM32L431 CAN node). The shared pin mapping -- MCU, 8MHz crystal, flash
+# layout, CAN1 on PB8/PB9, SPI1 RM3100 compass, I2C2, USART1/2/3 and the
+# blue ACT LED -- is therefore inherited unchanged from the MatekL431 base
+# include rather than duplicated here.
+#
+# Only the output configuration and the set of enabled peripheral functions
+# are specified below.
+
+include ../MatekL431/hwdef.inc
+
+# The board is pin-compatible with the Matek L431 CAN node, so reuse that
+# bootloader instead of maintaining a second one. This also means the
+# inherited APJ_BOARD_ID (AP_HW_MatekL431) is kept, so firmware built for
+# this target loads on a stock MatekL431 bootloader.
+USE_BOOTLOADER_FROM_BOARD MatekL431
+
+# No analog inputs are used on this target: PA0/PA1 are consumed as outputs
+# below, so the ADC is compiled out to save flash.
+define HAL_USE_ADC FALSE
+
+# Free USART2's pins (PA2/PA3) so they can be used as PWM outputs 6 and 7.
+# SERIAL_ORDER keeps USART1 as the debug/console port and USART3 in third
+# position, with the freed slot left EMPTY to preserve port numbering.
+undef SERIAL_ORDER
+undef USART2 USART2_TX USART2_RX
+undef PA2 PA3
+
+SERIAL_ORDER USART1 EMPTY USART3
+
+# --------------------- PWM outputs -----------------------
+PA8   TIM1_CH1  TIM1 PWM(1) GPIO(50)
+PA9   TIM1_CH2  TIM1 PWM(2) GPIO(51)
+PA10  TIM1_CH3  TIM1 PWM(3) GPIO(52)
+PA11  TIM1_CH4  TIM1 PWM(4) GPIO(53)
+PA15  TIM2_CH1  TIM2 PWM(5) GPIO(54)
+
+# TX2/RX2 pads repurposed as PWM 6 and 7
+PA2   TIM2_CH3  TIM2 PWM(6) GPIO(55)
+PA3   TIM2_CH4  TIM2 PWM(7) GPIO(56)
+
+# "curr" pad repurposed as PWM 8
+PA1   TIM2_CH2  TIM2 PWM(8) GPIO(57)
+
+# "beeper" pad repurposed as PWM 9 (no DMA stream available on TIM16)
+PA6   TIM16_CH1 TIM16 PWM(9) GPIO(58) NODMA
+
+# ------------------ enabled peripheral functions ------------------
+define AP_PERIPH_RC_OUT_ENABLED 1
+define AP_PERIPH_NOTIFY_ENABLED 1
+
+# ESC control and telemetry over the serial output protocol
+define HAL_SERIAL_ESC_COMM_ENABLED 1
+define HAL_SUPPORT_RCOUT_SERIAL 1
+define HAL_WITH_ESC_TELEM 1
+
+# Relay output driven via DroneCAN hardpoint messages
+define AP_PERIPH_RELAY_ENABLED 1
+define AP_RELAY_ENABLED 1
